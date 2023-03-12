@@ -54,9 +54,12 @@ flutter:
   assets:
     #images  
     - assets/img/moon.png
+    - assets/img/logo.png
     - assets/img/404.png
     - assets/img/Login.png
     - assets/img/profile.png
+    #svg
+    - assets/svg/login.svg
     #icons
     - assets/icons/Accu.svg  
     - assets/icons/Battery.svg

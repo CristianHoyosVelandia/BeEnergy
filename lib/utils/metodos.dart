@@ -1,4 +1,6 @@
 import 'package:another_flushbar/flushbar.dart';
+export 'package:be_energy/data/iconos.dart';
+export 'package:be_energy/data/svg.dart';
 // import 'package:etrader/data/database_Helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -199,6 +201,11 @@ class Metodos {
   static Color colorInverso( BuildContext context) {
     return Theme.of(context).focusColor;
   }
+
+  static Color colorTitulos( BuildContext context) {
+    return Theme.of(context).primaryColor;
+  }
+
   //metodo que me permite sacar el ancho de la pantalla del dispositivo
   static double width(BuildContext context){
     return MediaQuery.of(context).size.width;
@@ -217,7 +224,6 @@ class Metodos {
     );
   }
 
-
   static TextStyle tittleTextStyle2( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
     return textStyle(context, color, 25, fontWeight, 1.5);
   }
@@ -230,7 +236,6 @@ class Metodos {
     return textStyle(context, color, 15, fontWeight, 1.5);
   }
 
-
   static TextStyle textStyle( BuildContext context, [Color? color, double? fontSize, FontWeight? fontWeight, double? letterSpacing]) {
     return TextStyle(
       color: (color != null) ? color :  Theme.of(context).scaffoldBackgroundColor,
@@ -239,7 +244,6 @@ class Metodos {
       letterSpacing: letterSpacing,
     );
   }
-
 
   static String saldo(String valor) {
     var decimal = NumberFormat("###,###.##");
@@ -312,7 +316,7 @@ class GradientBack extends StatelessWidget {
         Container(
           width: screenWidth,
           height: screenHeight,
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).primaryColor.withOpacity(0.90),
           child: FittedBox(
             fit: BoxFit.none,
             alignment: const Alignment(0, 4),
@@ -346,7 +350,7 @@ class InputTextFieldWidget extends StatelessWidget {
     this.textType,
     this.readOnly,
     this.obscureText,
-    required this.context,
+    required this.context, required String? Function(dynamic value) validador,
   }) : super(key: key);
 
   String labelText;

@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 
+
+class ColorsApp {
+  //azul
+  static const color1 = '0070C0';
+  //morado
+  static const color2 = '7E57C2';
+  //amarillo
+  static const color3 = '26A69A';
+  //verde
+  static const color4 = 'FFD966';
+}
+
+
 // ignore: must_be_immutable
 class FondoScreen extends StatefulWidget {
 
@@ -18,7 +31,7 @@ class FondoScreen extends StatefulWidget {
   Function()? backButtonPressed;
 
   FondoScreen({
-    Key? key,
+    super.key, 
     required this.body,
     this.marginBody,
     this.toolbarHeight,

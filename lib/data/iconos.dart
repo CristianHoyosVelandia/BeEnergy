@@ -1,4 +1,4 @@
-class EtraderIcons {
+class BeenergyIcons {
 
   //comand
   // for (String assetName in _assetNames) {

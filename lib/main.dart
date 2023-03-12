@@ -14,7 +14,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Be Energy',
       // home: HomeScreen(),
-      initialRoute: 'home',
+      initialRoute: 'beEnergy',
+      theme: MyThemes.maintheme,
       routes: {
         // Main Route:
         'beEnergy'        : (context) => const Beenergy(),
@@ -27,6 +28,8 @@ class MyApp extends StatelessWidget {
         'notificaciones'  : (context) => const NotificacionesScreen(),
         'register'        : (context) => const RegisterScreen(),
         'trading'         : (context) => const TradingScreen(),
+        'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
+
       },
     );
   }
