@@ -1,3 +1,4 @@
+export 'package:be_energy/screens/main_screens/Login/register_screen.dart';
 export 'package:be_energy/screens/main_screen.dart';
 export 'package:be_energy/screens/main_screens/Trading/trading_screen.dart';
 export 'package:be_energy/screens/main_screens/energy/energy_screen.dart';

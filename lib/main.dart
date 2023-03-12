@@ -1,9 +1,7 @@
-import 'package:be_energy/screens/main_screens/Login/register_screen.dart';
 import 'package:flutter/material.dart';
-
 import 'routes.dart';
 
-void main() {
+void main() async {
   runApp(const MyApp());
 }
 
@@ -18,14 +16,17 @@ class MyApp extends StatelessWidget {
       // home: HomeScreen(),
       initialRoute: 'home',
       routes: {
-        'configuration':(context) => const ConfiguracionScreen(),
-        'energy':(context) => const EnergyScreen(),
-        'historial':(context) => const HistorialScreen(),
-        'home':(context) => const HomeScreen(),
-        'login':(context) => const LoginScreen(),
-        'notificaciones':(context) => const NotificacionesScreen(),
-        'register':(context) => const RegisterScreen(),
-        'trading':(context) => const TradingScreen(),
+        // Main Route:
+        'beEnergy'        : (context) => const Beenergy(),
+        //others routes
+        'configuration'   : (context) => const ConfiguracionScreen(),
+        'energy'          : (context) => const EnergyScreen(),
+        'historial'       : (context) => const HistorialScreen(),
+        'home'            : (context) => const HomeScreen(),
+        'login'           : (context) => const LoginScreen(),
+        'notificaciones'  : (context) => const NotificacionesScreen(),
+        'register'        : (context) => const RegisterScreen(),
+        'trading'         : (context) => const TradingScreen(),
       },
     );
   }
