@@ -3,7 +3,6 @@ class MyUser {
 
   final int?  idUser; 
   final String? nombre;
-  final String? apellido; 
   final String? telefono;
   final String? correo; 
   final String? clave;
@@ -15,7 +14,6 @@ class MyUser {
   MyUser({
     this.idUser,
     this.nombre,
-    this.apellido,
     this.telefono,
     this.correo,
     this.clave,
@@ -29,7 +27,6 @@ class MyUser {
     return {
       'idUser': idUser,
       'nombre': nombre,
-      'apellido': apellido,
       'telefono': telefono,
       'correo': correo,
       'clave': clave,
@@ -52,7 +49,6 @@ class MyUserResponse{
   late String?  _clave;
   
   late String?  _nombre;
-  late String?  _apellido;
   late String?  _telefono;
   late String?  _energia;
   late String?  _dinero;
@@ -75,7 +71,6 @@ class MyUserResponse{
     _correo   = parsedJson['correo'];
     _clave    = parsedJson['clave'];
     _nombre   = parsedJson['nombre'];
-    _apellido = parsedJson['apellido'];
     _telefono = parsedJson['telefono'];
     _energia  = parsedJson['energia'];
     _dinero   = parsedJson['dinero'];
@@ -96,7 +91,6 @@ class MyUserResponse{
   String? get clave     => _clave;
 
   String? get nombre    => _nombre;
-  String? get apellido  => _apellido;
   String? get telefono  => _telefono;
   String? get energia   => _energia;
   String? get dinero    => _dinero;

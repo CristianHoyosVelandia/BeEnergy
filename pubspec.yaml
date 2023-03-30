@@ -23,10 +23,15 @@ dependencies:
   auto_size_text: ^3.0.0
   #C
   cupertino_icons: ^1.0.2
+  #D
+  draggable_widget: ^2.0.0
+  #F
+  flutter_svg: ^2.0.3
   #I
   intl: ^0.18.0
   #S
   sqflite: ^2.2.5
+  syncfusion_flutter_charts: ^20.4.54
 
 dev_dependencies:
   flutter_test:
@@ -51,6 +56,9 @@ flutter:
       - family: Garet
         fonts:
           - asset: fonts/Garet-Book.ttf
+      - family: SEGOEUI
+        fonts:
+          - asset: fonts/SEGOEUI.ttf
   assets:
     #images  
     - assets/img/moon.png

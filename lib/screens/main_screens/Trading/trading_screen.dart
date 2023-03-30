@@ -11,7 +11,7 @@ class _TradingScreenState extends State<TradingScreen> {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Text("HomeScreen"),
+      child: Text("Trading"),
     );
   }
 }

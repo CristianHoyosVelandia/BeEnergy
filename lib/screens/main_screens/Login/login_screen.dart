@@ -1,8 +1,8 @@
-import 'package:be_energy/screens/main_screens/Login/noRecuerdomiClave_screen.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
+import '../../../routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -146,9 +146,8 @@ class _LoginScreenState extends State<LoginScreen> {
     DatabaseHelper dbHelper = DatabaseHelper();
 
     MyUser usuariolocal = MyUser(
-      idUser    : 1,
+      idUser    : usuario.idUser,
       nombre    : usuario.nombre,
-      apellido  : usuario.apellido,
       telefono  : usuario.telefono,
       correo    : usuario.correo,
       clave     : usuario.clave,
@@ -156,6 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
       dinero    : usuario.dinero,
       idCiudad  : usuario.idCiudad
     );
+
 
     dbHelper.addUser(usuariolocal);
   }
@@ -174,24 +174,26 @@ class _LoginScreenState extends State<LoginScreen> {
           DatabaseHelper dbHelper = DatabaseHelper();
           final au= await dbHelper.getUsers();
           List usuariosList =  (au.usuarios != null) ? au.usuarios!  : [];
-          
           for (var i = 0; i < usuariosList.length; i++) {
             if(_email.value.text == usuariosList[i].correo){
+
               if(_clave.value.text== usuariosList[i].clave){
                 iniciarSesion(usuariosList[i]);
                 await Metodos.flushbarPositivo(context, 'Ingresando a App');
-                // Navigator.of(context).pushAndRemoveUntil( 
-                //   MaterialPageRoute(
-                //     builder: (context) => NavPages(myUser: usuariosList[i],)
-                //   ),
-                //   (Route<dynamic> route) => false
-                // );
-                //      
+                Navigator.of(context).pushAndRemoveUntil( 
+                  MaterialPageRoute(
+                    builder: (context) => NavPages(myUser: usuariosList[i],)
+                  ),
+                  (Route<dynamic> route) => false
+                );
+                     
               }
 
               else{
                 Metodos.flushbarNegativo(context, 'Clave Incorrecta, intente nuevamente');
               }
+            } else{
+              Metodos.flushbarNegativo(context, 'Usuario no encontrado en la base de datos, por favor registrese.');
             }
           }
           // print(usuariosList.length);
@@ -244,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: Metodos.textStyle(context, Theme.of(context).primaryColor, 22, FontWeight.bold)
               ),
               onTap: () {
-                // Navigator.push(context,MaterialPageRoute(builder: (context) => RegistrarUsuario()));
+                Navigator.push(context,MaterialPageRoute(builder: (context) => const RegisterScreen()));
               },
             )
         )

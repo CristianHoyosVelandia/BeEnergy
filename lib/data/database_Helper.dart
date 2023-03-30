@@ -1,4 +1,5 @@
 // ignore_for_file: file_names, avoid_print
+
 import 'package:sqflite/sqflite.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart';
@@ -27,9 +28,9 @@ class DatabaseHelper{
     final databasesPath = await getDatabasesPath();
     //Creo la base de datos de la app
     String path = join(databasesPath, "beEnergy.db");
-    var db = await openDatabase(path, version: 1, onCreate: onCreate, onUpgrade: onUpgrade);
-    var version = await db.getVersion();
-    print("-------------------> Database version: $version");
+    var db = await openDatabase(path, version: 2, onCreate: onCreate, onUpgrade: onUpgrade);
+    // var version = await db.getVersion();
+    // print("-------------------> Database version: $version");
 
     return db;
   }
@@ -37,23 +38,23 @@ class DatabaseHelper{
   //Crea la base de datos del usuario
   void onCreate(Database db, int version) async {
     // se crean las tablas
-    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn(idUser INTEGER PRIMARY KEY, nombre TEXT, apellido TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
-    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios    (idUser INTEGER PRIMARY KEY, nombre TEXT, apellido TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
+    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn(idUser INTEGER PRIMARY KEY, nombre TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
+    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios    (idUser INTEGER PRIMARY KEY, nombre TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
   }
 
   //Actualiza la base de datos interna del usuario
   void onUpgrade(Database db, int oldVersion, int newVersion) async {
     // se actualizan las tablas
-    print("Version vieja: $oldVersion, version nueva: $newVersion");
+    // print("Version vieja: $oldVersion, version nueva: $newVersion");
     if( oldVersion < newVersion)
     {
-      print('Reset base de datos');
+      // print('Reset base de datos');
       //DROPSS
       await db.execute('DROP TABLE IF EXISTS $tbUsuarioLogIn');
       await db.execute('DROP TABLE IF EXISTS $tbUsuarios');
       //CREATEE
-      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn (idUser INTEGER PRIMARY KEY, nombre TEXT, apellido TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
-      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios (idUser INTEGER PRIMARY KEY, nombre TEXT, apellido TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
+      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn (idUser INTEGER PRIMARY KEY, nombre TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
+      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios (idUser INTEGER PRIMARY KEY, nombre TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER);');
     }
   }
 
@@ -68,7 +69,6 @@ class DatabaseHelper{
       final emptyUser = MyUser(
         idUser: 0,
         nombre: "",
-        apellido: "",
         telefono: "",
         correo: "",
         clave: "",
@@ -82,7 +82,6 @@ class DatabaseHelper{
           return MyUser(
             idUser    : maps[i]['idUser'],
             nombre    : maps[i]['nombre'],
-            apellido  : maps[i]['apellido'],
             telefono  : maps[i]['telefono'],
             correo    : maps[i]['correo'],
             clave     : maps[i]['clave'],
@@ -101,7 +100,7 @@ class DatabaseHelper{
       var dbConnection = await db;
       int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarioLogIn'));
       if(nUsers! < 1){
-        String query = 'INSERT INTO $tbUsuarioLogIn (idUser, nombre, apellido, telefono, correo, clave, energia, dinero, idCiudad) VALUES(\'${usuarioLocal.idUser}\', \'${usuarioLocal.nombre}\', \'${usuarioLocal.apellido}\', \'${usuarioLocal.telefono}\', \'${usuarioLocal.correo}\', \'${usuarioLocal.clave}\', \'${usuarioLocal.energia}\',\'${usuarioLocal.dinero}\', \'${usuarioLocal.idCiudad}\')';
+        String query = 'INSERT INTO $tbUsuarioLogIn (idUser, nombre, telefono, correo, clave, energia, dinero, idCiudad) VALUES(\'${usuarioLocal.idUser}\', \'${usuarioLocal.nombre}\', \'${usuarioLocal.telefono}\', \'${usuarioLocal.correo}\', \'${usuarioLocal.clave}\', \'${usuarioLocal.energia}\',\'${usuarioLocal.dinero}\', \'${usuarioLocal.idCiudad}\')';
         await dbConnection.transaction((transaction) async {
           return await transaction.rawInsert(query);
         });
@@ -112,20 +111,40 @@ class DatabaseHelper{
     Future<void> addUser(MyUser usuarioLocal) async {
       final Database? dbConnection = await db;
       int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarioLogIn'));
+      final user = await getUser();
+      // final users = await getUsers();
+      // print("--> ${users.usuarios.toMap()}");
+      // print("---> ${user.toMap()}");
+      // print("---> ${usuarioLocal.toMap()}");
+      // print("---> $nUsers");
       if(nUsers! < 1){
-        //print("-----------------------------------------------------------------------------------------------> creando usuarios nuevo insert");
         await dbConnection.insert(
           tbUsuarioLogIn,
           usuarioLocal.toMap(),
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
+      } 
+      if (nUsers == 1) {
+        if(user.idUser == 0) {
+          // print("-----> Borrando registros");
+          await dbConnection.delete(
+            tbUsuarioLogIn,
+            where: "idUser = 0"
+          );
+
+          // print("-----> Creando nuevo registros");
+          await dbConnection.insert(
+            tbUsuarioLogIn,
+            usuarioLocal.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
       }
-      print('ok');
     }
 
     // Acualiza los datos del usuario
     void updateUserLoginLocal(MyUser usuarioLocal) async {
-      print('Usuario actualizaco en la base de datos local');
+      // print('Usuario actualizaco en la base de datos local');
       final dbConnection = await db;
       await dbConnection!.update(
         tbUsuarioLogIn, 
@@ -136,7 +155,7 @@ class DatabaseHelper{
     }
 
     // Elimino la data de usuario al cerrar sec
-    void deleteUserLocal(int idUser) async {
+    void deleteUserLocal(int? idUser) async {
       final dbConnection = await db;
       await dbConnection!.delete(
         tbUsuarioLogIn,
@@ -165,7 +184,6 @@ class DatabaseHelper{
       final emptyUser = MyUser(
         idUser: 0,
         nombre: "",
-        apellido: "",
         telefono: "",
         correo: "",
         clave: "",
@@ -183,7 +201,6 @@ class DatabaseHelper{
           MyUser usuario = MyUser(
             idUser    : maps[i]['idUser'],
             nombre    : maps[i]['nombre'],
-            apellido  : maps[i]['apellido'],
             telefono  : maps[i]['telefono'],
             correo    : maps[i]['correo'],
             clave     : maps[i]['clave'],
@@ -204,7 +221,7 @@ class DatabaseHelper{
       else {
         List<MyUser> usersList = [];
         usersList.add(emptyUser);
-        print('Sin usuarios registrados');
+        // print('Sin usuarios registrados');
         return Usuarios(
           status: false,
           message:'Sin usuarios registrados',
@@ -215,10 +232,10 @@ class DatabaseHelper{
 
     // Agrega el usuario a la tabla de usuarios
     Future<void> addUsertbUsuarios(MyUser usuarioLocal) async {
-    final Database? dbConnection = await db;
-    int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarios'));
-    print(nUsers);
-      print("----> creando usuarios nuevo insert");
+      final Database? dbConnection = await db;
+      int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarios'));
+      print(nUsers);
+      // print("----> creando usuarios nuevo insert");
       await dbConnection.insert( tbUsuarios, usuarioLocal.toMap());
 
     }

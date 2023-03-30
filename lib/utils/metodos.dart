@@ -1,4 +1,5 @@
 import 'package:another_flushbar/flushbar.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 export 'package:be_energy/data/iconos.dart';
 export 'package:be_energy/data/svg.dart';
 // import 'package:etrader/data/database_Helper.dart';
@@ -6,141 +7,141 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import '../data/constants.dart';
+import '../models/callmodels.dart';
+
 class Metodos {
 
-  //  actionBtn(BuildContext context, int accionbtn){
+   actionBtn(BuildContext context, int accionbtn){
    
-  //   switch (accionbtn) {
-  //       case 0:
-  //         Navigator.of(context).pop();
-  //         break;
-  //       case 1:
-  //         Navigator.of(context).pushNamedAndRemoveUntil('/kupi', (Route<dynamic> route) => false);
-  //         break;
-  //       case 2:
-  //         Navigator.pop(context, false);
-  //         break;
-  //       case 3:
-  //         DatabaseHelper dbHelper = new DatabaseHelper();
-  //         dbHelper.deleteUserLocal(0);
-  //         Navigator.of(context).pushNamedAndRemoveUntil('/etrader', (Route<dynamic> route) => false);                 
-  //         break;
-  //       case 4:
-  //         Navigator.pop(context, true);
-  //         break;
-  //       default:
-  //         print("no reconoce ninguna accion");
-  //         break;
-  //     }
-  // }
+    switch (accionbtn) {
+        case 0:
+          Navigator.of(context).pop();
+          break;
+        case 1:
+          Navigator.of(context).pushNamedAndRemoveUntil('/beEnergy', (Route<dynamic> route) => false);
+          break;
+        case 2:
+          Navigator.pop(context, false);
+          break;
+        case 3:
+          DatabaseHelper dbHelper = DatabaseHelper();
+          dbHelper.deleteUserLocal(0);
+          Navigator.of(context).pushNamedAndRemoveUntil('/beEnergy', (Route<dynamic> route) => false);                 
+          break;
+        case 4:
+          Navigator.pop(context, true);
+          break;
+        default:
+          break;
+      }
+  }
 
-  //  alertsDialog(BuildContext context, String mensaje, double width, String btn1, int accionbtn1, String btn2, int accionbtn2){    
+   alertsDialog(BuildContext context, String mensaje, double width, String btn1, int accionbtn1, String btn2, int accionbtn2){    
 
-  //   return showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       shape: RoundedRectangleBorder(
-  //         borderRadius: BorderRadius.all(Radius.circular(25.0))
-  //       ),
-  //       title: Container(
-  //         alignment: Alignment.center,
-  //         width: 4*width/5,
-  //         height: 80,
-  //         margin: EdgeInsets.only( bottom: 10),
-  //         child: Image(
-  //           image: AssetImage("assets/img/head.png"),
-  //         ),
-  //       ),
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(25.0))
+        ),
+        title: Container(
+          alignment: Alignment.center,
+          width: 4*width/5,
+          height: 80,
+          margin: const EdgeInsets.only( bottom: 10),
+          child: const Image(
+            image: AssetImage("assets/img/logo.png"),
+          ),
+        ),
 
-  //       content: Container(
-  //         height: 70,
-  //         width: 4*width/5,
-  //         alignment: Alignment.center,
-  //         margin: EdgeInsets.only(bottom: 5),
-  //         child: FittedBox(
-  //           fit: BoxFit.fitWidth,
-  //           child: Text(
-  //             "$mensaje",
-  //             style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
-  //           ),
-  //         ),
-  //       ),
+        content: Container(
+          height: 70,
+          width: 4*width/5,
+          alignment: Alignment.center,
+          margin: const EdgeInsets.only(bottom: 5),
+          child: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: Text(
+              mensaje,
+              style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+            ),
+          ),
+        ),
 
-  //       actions: <Widget>[
-  //         Container(
-  //           width: 4*width/5,
-  //           child: Row(
-  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //             children: [
+        actions: <Widget>[
+          SizedBox(
+            width: 4*width/5,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
 
-  //               Flexible(
-  //                 child: FractionallySizedBox(
-  //                   widthFactor: 1,
-  //                   child:Container(
-  //                     decoration: BoxDecoration(
-  //                     border: Border(
-  //                       top: BorderSide(
-  //                           color: Colors.black38,
-  //                           width: 1.0,
-  //                         ),
-  //                         right: BorderSide(
-  //                           color: Colors.black38,
-  //                           width: 1.0,
-  //                         ),
-  //                     )
-  //                     ),
-  //                     child: TextButton(
-  //                       child: Text(
-  //                         btn1,
-  //                         style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
-  //                       ),
-  //                       onPressed: () => actionBtn(context, accionbtn1)
-  //                     ),
-  //                   ),
-  //                 )
-  //               ),
+                Flexible(
+                  child: FractionallySizedBox(
+                    widthFactor: 1,
+                    child:Container(
+                      decoration: const BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                            color: Colors.black38,
+                            width: 1.0,
+                          ),
+                          right: BorderSide(
+                            color: Colors.black38,
+                            width: 1.0,
+                          ),
+                      )
+                      ),
+                      child: TextButton(
+                        child: Text(
+                          btn1,
+                          style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+                        ),
+                        onPressed: () => actionBtn(context, accionbtn1)
+                      ),
+                    ),
+                  )
+                ),
 
-  //               Flexible(
-  //                 child: FractionallySizedBox(
-  //                   widthFactor: 1,
-  //                   child: Container(
-  //                     decoration: BoxDecoration(
-  //                     border: Border(
-  //                       top: BorderSide(
-  //                           color: Colors.black38,
-  //                           width: 1.0,
-  //                         ),
-  //                     )
-  //                     ),
-  //                     child: TextButton(
-  //                       child: Text(
-  //                         btn2,
-  //                         style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
-  //                       ),
-  //                       onPressed: () async {
-  //                         actionBtn(context, accionbtn2);
-  //                       }
-  //                     ),
-  //                   ),
-  //                 ),
-  //               ),
-  //             ]
-  //           ),
-  //         ),
+                Flexible(
+                  child: FractionallySizedBox(
+                    widthFactor: 1,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                            color: Colors.black38,
+                            width: 1.0,
+                          ),
+                      )
+                      ),
+                      child: TextButton(
+                        child: Text(
+                          btn2,
+                          style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+                        ),
+                        onPressed: () async {
+                          actionBtn(context, accionbtn2);
+                        }
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+            ),
+          ),
           
           
-  //       ]
-  //     )
-  //   );
+        ]
+      )
+    );
                                 
-  // }
-
-
+  }
 
   static Future flushbarPositivo(context, mensaje) {
     return Flushbar(
       message:mensaje,
-      backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: Theme.of(context).canvasColor,
       messageColor: Colors.white,
       duration: const Duration(seconds: 3),
       icon: const Icon(
@@ -153,7 +154,7 @@ class Metodos {
   static Future flushbarPositivoLargo(context, mensaje) {
     return Flushbar(
       message:mensaje,
-      backgroundColor: Theme.of(context).cardColor,
+      backgroundColor: Theme.of(context).canvasColor,
       messageColor: Colors.white,
       duration: const Duration(seconds: 5),
       icon: const Icon(
@@ -190,6 +191,7 @@ class Metodos {
     ),
     
     child:Scaffold(
+        extendBody: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: body
       )
@@ -215,13 +217,128 @@ class Metodos {
     return MediaQuery.of(context).size.height;
   }
 
-  AppBar appbarPrincipal(context, title, actions ){
+  static TextStyle appBartextStyle( BuildContext context, [Color? color, double? fontSize, FontWeight? fontWeight, double? letterSpacing]) {
+    return TextStyle(
+      color: (color != null) ? color :  Theme.of(context).scaffoldBackgroundColor,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  AppBar appbarPrincipal(context, nombre){
 
     return  AppBar(
-      backgroundColor: Theme.of(context).primaryColor,
-      title: title,
-      actions: actions,
-    );
+        toolbarHeight: 60,
+        // backgroundColor: const Color.fromRGBO(230, 230, 230, 1),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
+        title: Container(
+          margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              
+              Icon(
+                Icons.account_circle,
+                color: Theme.of(context).focusColor,
+                size: 45.0,
+              ),
+                    
+              const SizedBox(width: 15.0),
+                    
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          
+                          AutoSizeText(
+                            "¡Hola, ",
+                            maxLines: 2,
+                            textAlign: TextAlign.start,
+                            style: Metodos.textStyle(
+                              context,
+                              Metodos.colorInverso(context),
+                              15,
+                              FontWeight.bold,
+                              1
+                            ),
+                          ),
+
+                          AutoSizeText(
+                            (nombre != null ) ? " $nombre ! ": "Cristian !", 
+                            textAlign: TextAlign.start,
+                            maxLines: 2,
+                            style: Metodos.textStyle(
+                              context,
+                              Metodos.colorInverso(context),
+                              15,
+                              FontWeight.bold,
+                              1
+                            ),
+                          )
+
+                        ],
+                      ),
+                    ),
+                  
+            ],
+          ),
+              
+          
+          
+          
+        ),
+        actions: [
+          Container(
+            width: 45.0,
+            height: 45.0,
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: 2.5,
+                color: Theme.of(context).focusColor.withOpacity(0.25)
+              ),
+              borderRadius: BorderRadius.circular(22.5),
+            ),
+            margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 15.0, left: 15.0),
+            child: IconButton(
+              icon: const Icon(
+                Icons.search,
+                size: 25.0,
+              ),
+              color: Theme.of(context).primaryColor,
+              tooltip: "Cerrar Sesión",
+              onPressed: () async {
+                alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
+              }
+            ),
+          ),
+          Container(
+            width: 45.0,
+            height: 45.0,
+            decoration: BoxDecoration(
+              border: Border.all(
+                width: 2.0,
+                color: Theme.of(context).primaryColor
+              ),
+              borderRadius: BorderRadius.circular(25.0),
+            ),
+            margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 15.0, left: 0.0),
+            child: IconButton(
+              icon: const Icon(
+                Icons.notifications_active_outlined,
+                size: 25.0,
+              ),
+              color: Theme.of(context).primaryColor,
+              tooltip: "Cerrar Sesión",
+              onPressed: () async {
+                alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
+              }
+            ),
+          ),
+        ],
+      );
   }
 
   static TextStyle tittleTextStyle2( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
@@ -244,6 +361,26 @@ class Metodos {
       letterSpacing: letterSpacing,
     );
   }
+  
+  static TextStyle textosSimple(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).focusColor,
+      fontSize: 14.0,
+      fontWeight: FontWeight.w400,
+      letterSpacing: 1.5,
+    );
+  }
+
+  static TextStyle subtitulosSimple(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).focusColor,
+      fontSize: 14.0,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 1.5,
+    );
+  }
+
+
 
   static String saldo(String valor) {
     var decimal = NumberFormat("###,###.##");
@@ -336,6 +473,52 @@ class GradientBack extends StatelessWidget {
 
 }
 
+
+
+class GradientBackInsideApp extends StatelessWidget {
+  
+  final double height;
+  final String? color;
+  final double opacity;
+
+  const GradientBackInsideApp({
+    Key? key,
+    this.color,
+    required this.height,
+    required this.opacity,
+  }): super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Stack(
+      children: <Widget>[
+        Container(
+          width: screenWidth,
+          height: screenHeight,
+          color: Theme.of(context).primaryColor.withOpacity(opacity),
+          child: FittedBox(
+            fit: BoxFit.none,
+            alignment: const Alignment(0, 4),
+            child: Container(
+              width: screenWidth,
+              height: screenHeight- height,
+              decoration: BoxDecoration(
+                color: color != null ? Theme.of(context).scaffoldBackgroundColor : Color(int.parse("0xff$color")),
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+}
+
 // ignore: must_be_immutable
 class InputTextFieldWidget extends StatelessWidget {
 
@@ -390,7 +573,7 @@ class InputTextFieldWidget extends StatelessWidget {
           readOnly ?? false
             ? Colors.grey.shade600
             : Metodos.colorInverso(context),
-          18,
+          15,
           FontWeight.w300,
           1.5
         ),
@@ -401,4 +584,163 @@ class InputTextFieldWidget extends StatelessWidget {
       ),
     );
   }
+}
+
+
+
+class AppbarBtns extends StatelessWidget {
+  
+  final double height;
+  final String? color;
+  final double opacity;
+
+  const AppbarBtns({
+    Key? key,
+    this.color,
+    required this.height,
+    required this.opacity,
+  }): super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    return Stack(
+      children: <Widget>[
+        Container(
+          width: screenWidth,
+          height: screenHeight,
+          color: Theme.of(context).primaryColor.withOpacity(opacity),
+          child: FittedBox(
+            fit: BoxFit.none,
+            alignment: const Alignment(0, 4),
+            child: Container(
+              width: screenWidth,
+              height: screenHeight- height,
+              decoration: BoxDecoration(
+                color: color != null ? Theme.of(context).scaffoldBackgroundColor : Color(int.parse("0xff$color")),
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+}
+
+
+
+
+// ignore: must_be_immutable
+class FondoScreen extends StatefulWidget {
+  
+  final Widget body;
+  double marginBody;
+  double heightAppBar;
+  double radiusAppBar;
+  bool showCircles;
+  bool backButton;
+  bool floatingButton;
+  bool buttonQR;
+  bool showLogo;
+  bool? showAppBar;
+  double? toolbarHeight;
+  double? topCircles;
+  Widget? leading;
+  Size? sizeLogo;
+  List<Widget>? actions;
+  MyUser? myUser;
+  Widget? floatingButtonIcon;
+  Function()? floatingButtonOnTap;
+  Function()? backButtonPressed;
+
+  FondoScreen({
+    super.key, 
+    required this.body,
+    this.marginBody = 0,
+    required this.heightAppBar,
+    this.radiusAppBar = 0,
+    this.showCircles = false,
+    this.backButton = false,
+    this.showLogo = true,
+    this.buttonQR = false,
+    this.floatingButton = false,
+    this.toolbarHeight,
+    this.topCircles,
+    this.leading,
+    this.actions,
+    this.sizeLogo,
+    this.showAppBar,
+    this.myUser,
+    this.floatingButtonIcon,
+    this.floatingButtonOnTap,
+    this.backButtonPressed,
+  });
+
+  @override
+  State<FondoScreen> createState() => _FondoScreenState();
+}
+
+class _FondoScreenState extends State<FondoScreen> {
+  //atirbutos de clase
+  String result = "No data";
+  bool qrEncontrado = false;
+
+  @override
+  Widget build(BuildContext context) {
+
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
+      ),
+      child: widget.showAppBar ?? true 
+      ? Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.9),
+          centerTitle: true,
+          title: const Text( 
+            'Be Energy',
+            style: TextStyle(
+              fontSize: 25,
+              fontWeight: FontWeight.w800
+            ),
+          
+          ),
+          // title: Placeholder(),
+          toolbarHeight: 50,
+          leading: widget.leading ?? (widget.backButton ? BackButton(onPressed: widget.backButtonPressed, color: Theme.of(context).indicatorColor ): Container()),
+          actions: widget.actions,
+        ),
+        body:  Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            SingleChildScrollView(
+              // ignore: prefer_const_constructors
+              child: GradientBackInsideApp(
+                color: ColorsApp.color1,
+                height: widget.heightAppBar,
+                opacity: 0.9,
+              )
+            ),
+
+            ListView(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(top: widget.marginBody),
+                  child: widget.body,
+                ),
+              ],
+            ),
+          ]
+        )
+      ) 
+      : Container()
+    );
+ }
 }

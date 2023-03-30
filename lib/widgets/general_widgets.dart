@@ -21,6 +21,7 @@ class MyProgressIndicator extends StatelessWidget{
     Color colApp4 = Theme.of(context).indicatorColor;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: colApp1,
       body: Stack(
         children: <Widget>[
