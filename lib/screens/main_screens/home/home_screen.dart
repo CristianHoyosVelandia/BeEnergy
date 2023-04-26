@@ -290,7 +290,12 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(5.0),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: BorderRadius.circular(15.0)
+        // border: metodos.borderCajas(context),
+        borderRadius: BorderRadius.circular(15.0),
+        border: Border.all(
+          color: Theme.of(context).focusColor,
+          width: 0.25
+        )
       ),
       child: Row(
     
@@ -334,7 +339,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(15.0)
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Border.all(
+                    width: 0.25,
+                    color: Theme.of(context).focusColor
+                  )
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
@@ -371,7 +380,52 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 decoration: BoxDecoration(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(15.0)
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Border.all(
+                    width: 0.25,
+                    color: Theme.of(context).focusColor
+                  )
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Image(
+                      image: AssetImage("assets/img/energy.png"),
+                      width: 40,
+                      height: 40,
+                    ),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+                      child: Text(
+                        "Bolsa",
+                        style: Metodos.descripcionTextStyle(context, Theme.of(context).focusColor, 15),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+
+          ),
+          
+          Expanded(
+            flex: 1,
+            child: InkWell(
+              onTap: () async {
+                Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              },
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                margin: const EdgeInsets.all(10.0),
+
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Border.all(
+                    width: 0.25,
+                    color: Theme.of(context).focusColor
+                  )
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
@@ -396,7 +450,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
           ),
           
-
         ],
       ),
     );
@@ -411,18 +464,23 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (BuildContext context, int index){
         return InkWell(
           child:Container(
-            margin: const EdgeInsets.only(right: 5, left: 5, bottom: 15),
+
+            margin: const EdgeInsets.only(right: 2.5, left: 2.5, top:5, bottom: 15),
             // child: const Placeholder(),
 
             child: Card(
               color: Theme.of(context).scaffoldBackgroundColor,
-              elevation: 5,
+              elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25.0),
+                borderRadius: BorderRadius.circular(15.0),
+                side: BorderSide(
+                  width: 0.25,
+                  color: Theme.of(context).focusColor
+                )
               ),
               
               child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 2.5, vertical: 2.5),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 15),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -626,7 +684,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: metodos.appbarPrincipal(context, widget.myUser!.nombre),
-      backgroundColor: const Color.fromRGBO(230, 230, 230, 0.8),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: body(),
     );
   }

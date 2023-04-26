@@ -6,8 +6,6 @@ export 'package:be_energy/data/svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-
-import '../data/constants.dart';
 import '../models/callmodels.dart';
 
 class Metodos {
@@ -226,12 +224,19 @@ class Metodos {
     );
   }
 
+  Border borderCajas(context){
+    return Border.all(
+      width: 1,
+      color: Theme.of(context).focusColor
+    );
+  }
   AppBar appbarPrincipal(context, nombre){
 
     return  AppBar(
         toolbarHeight: 60,
-        // backgroundColor: const Color.fromRGBO(230, 230, 230, 1),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0.0,
+        backgroundColor: Colors.transparent,
+        // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
         title: Container(
           margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
@@ -239,12 +244,17 @@ class Metodos {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               
-              Icon(
-                Icons.account_circle,
-                color: Theme.of(context).focusColor,
-                size: 45.0,
+              // Icon(
+              //   Icons.account_circle,
+              //   color: Theme.of(context).focusColor,
+              //   size: 45.0,
+              // ),
+              const Image(
+                alignment: AlignmentDirectional.center,
+                image:  AssetImage("assets/img/logo.png"),
+                width: 45.0,
+                height: 45.0,
               ),
-                    
               const SizedBox(width: 15.0),
                     
                     Expanded(
@@ -295,42 +305,20 @@ class Metodos {
             width: 45.0,
             height: 45.0,
             decoration: BoxDecoration(
-              border: Border.all(
-                width: 2.5,
-                color: Theme.of(context).focusColor.withOpacity(0.25)
-              ),
-              borderRadius: BorderRadius.circular(22.5),
-            ),
-            margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 15.0, left: 15.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.search,
-                size: 25.0,
-              ),
-              color: Theme.of(context).primaryColor,
-              tooltip: "Cerrar Sesión",
-              onPressed: () async {
-                alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
-              }
-            ),
-          ),
-          Container(
-            width: 45.0,
-            height: 45.0,
-            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
               border: Border.all(
                 width: 2.0,
-                color: Theme.of(context).primaryColor
+                color: Theme.of(context).scaffoldBackgroundColor
               ),
               borderRadius: BorderRadius.circular(25.0),
             ),
             margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 15.0, left: 0.0),
             child: IconButton(
               icon: const Icon(
-                Icons.notifications_active_outlined,
+                Icons.notifications,
                 size: 25.0,
               ),
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).focusColor,
               tooltip: "Cerrar Sesión",
               onPressed: () async {
                 alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
@@ -341,6 +329,65 @@ class Metodos {
       );
   }
 
+  AppBar appbarSecundaria(context, titulo, color){
+
+    return  AppBar(
+        toolbarHeight: 60,
+        elevation: 0.0,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            size: 28.0,
+          ),
+          color: Theme.of(context).canvasColor,
+          tooltip: "Volver",
+          onPressed: () async {
+            Navigator.pop(context);
+          }
+        ),
+        title:  Center(
+          child: Text(
+            titulo, 
+            textAlign: TextAlign.center,
+            style: Metodos.textStyle(
+              context,
+              Metodos.colorInverso(context),
+              20,
+              FontWeight.w600,
+              2.5
+            ),
+          ),
+        ),
+        actions: [
+          Container(
+            width: 45.0,
+            height: 45.0,
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              border: Border.all(
+                width: 2.0,
+                color: Theme.of(context).scaffoldBackgroundColor
+              ),
+              borderRadius: BorderRadius.circular(25.0),
+            ),
+            margin: const EdgeInsets.only( top: 2.0, bottom: 2.0, right: 15.0, left: 0.0),
+            child: IconButton(
+              icon: const Icon(
+                Icons.donut_large_rounded,
+                size: 30.0,
+              ),
+              color: Theme.of(context).canvasColor,
+              tooltip: "Mis estadisticas",
+              onPressed: () async {
+                Navigator.pop(context);
+              }
+            ),
+          ),
+        ],
+      );
+  }
+  
   static TextStyle tittleTextStyle2( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
     return textStyle(context, color, 25, fontWeight, 1.5);
   }
@@ -349,6 +396,21 @@ class Metodos {
     return textStyle(context, color, 20, fontWeight, 1.5);
   }
 
+  static LinearGradient gradientClasic(BuildContext context){
+    return LinearGradient(
+      colors: [Theme.of(context).canvasColor, Theme.of(context).focusColor],
+      stops: const [0, 1],
+      begin: const AlignmentDirectional(0.94, -1),
+      end:   const AlignmentDirectional(-0.94, 1),
+    );
+  }
+
+  static Border borderClasic(BuildContext context) {
+    return Border.all(
+      width: 0.25,
+      color: Theme.of(context).focusColor
+    );
+  }
   static TextStyle alertDialogTextStyle( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
     return textStyle(context, color, 15, fontWeight, 1.5);
   }
@@ -374,9 +436,10 @@ class Metodos {
   static TextStyle subtitulosSimple(BuildContext context){
     return TextStyle(
       color: Theme.of(context).focusColor,
-      fontSize: 14.0,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 1.5,
+      fontSize: 19.0,
+      fontFamily: "LilitaOne",
+      fontWeight: FontWeight.w200,
+      letterSpacing: 1.10,
     );
   }
 
@@ -475,15 +538,16 @@ class GradientBack extends StatelessWidget {
 
 
 
+// ignore: must_be_immutable
 class GradientBackInsideApp extends StatelessWidget {
   
   final double height;
-  final String? color;
+  Color? color;
   final double opacity;
 
-  const GradientBackInsideApp({
+  GradientBackInsideApp({
     Key? key,
-    this.color,
+    required this.color,
     required this.height,
     required this.opacity,
   }): super(key: key);
@@ -499,7 +563,7 @@ class GradientBackInsideApp extends StatelessWidget {
         Container(
           width: screenWidth,
           height: screenHeight,
-          color: Theme.of(context).primaryColor.withOpacity(opacity),
+          color: Theme.of(context).scaffoldBackgroundColor,
           child: FittedBox(
             fit: BoxFit.none,
             alignment: const Alignment(0, 4),
@@ -507,7 +571,7 @@ class GradientBackInsideApp extends StatelessWidget {
               width: screenWidth,
               height: screenHeight- height,
               decoration: BoxDecoration(
-                color: color != null ? Theme.of(context).scaffoldBackgroundColor : Color(int.parse("0xff$color")),
+                color: color,
                 borderRadius: BorderRadius.circular(25),
               ),
             ),
@@ -723,7 +787,7 @@ class _FondoScreenState extends State<FondoScreen> {
             SingleChildScrollView(
               // ignore: prefer_const_constructors
               child: GradientBackInsideApp(
-                color: ColorsApp.color1,
+                color: Theme.of(context).primaryColor,
                 height: widget.heightAppBar,
                 opacity: 0.9,
               )

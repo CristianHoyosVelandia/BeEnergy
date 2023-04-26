@@ -100,7 +100,7 @@ class _NavPagesState extends State<NavPages> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(100),
           border: Border.all(
-            color: Theme.of(context).cardColor,
+            color: Theme.of(context).scaffoldBackgroundColor,
             width: 2.0
           )
         ),
@@ -110,18 +110,23 @@ class _NavPagesState extends State<NavPages> {
               currentIndex=2;
             });
           },
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Theme.of(context).primaryColor,
           // child: SvgPicture.asset(
           //   BeenergyIcons.climatechange,
           //   height: 30,
           //   width: 30,
           // ),
-          child: const Image(
-            alignment: AlignmentDirectional.center,
-            image:  AssetImage("assets/img/logo.png"),
-            width: 30,
-            height: 30,
-          ),
+          // child: const Image(
+          //   alignment: AlignmentDirectional.center,
+          //   image:  AssetImage("assets/img/logo.png"),
+          //   width: 30,
+          //   height: 30,
+          // ),
+          child: Icon(
+            Icons.add_outlined,
+            size: 35,
+            color: Theme.of(context).scaffoldBackgroundColor,
+          )
         ),
       );
   }

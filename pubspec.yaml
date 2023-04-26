@@ -32,6 +32,7 @@ dependencies:
   #S
   sqflite: ^2.2.5
   syncfusion_flutter_charts: ^20.4.54
+  flutter_speed_dial: ^6.2.0
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +60,11 @@ flutter:
       - family: SEGOEUI
         fonts:
           - asset: fonts/SEGOEUI.ttf
+      - family: LilitaOne
+        fonts:
+          - asset: fonts/LilitaOne-Regular.ttf
+      
+      
   assets:
     #images  
     - assets/img/moon.png
@@ -66,8 +72,23 @@ flutter:
     - assets/img/404.png
     - assets/img/Login.png
     - assets/img/profile.png
+    - assets/img/1.png
+    - assets/img/2.png
+    - assets/img/3.png
+    - assets/img/4.png
+    - assets/img/5.png
+    - assets/img/energy.png
+    - assets/img/moneybag.png
+    - assets/img/bolsillo.png
+
+
+
+
     #svg
     - assets/svg/login.svg
+    - assets/svg/aroundWorld.svg
+    - assets/svg/transaction.svg
+
     #icons
     - assets/icons/Accu.svg  
     - assets/icons/Battery.svg
