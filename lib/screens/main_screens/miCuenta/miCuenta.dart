@@ -207,6 +207,18 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                       case 2:
                         Navigator.push(context, MaterialPageRoute(builder: (context) => CambiarClavePerfilScreen(myUser: widget.myUser,)));
                       break;
+                      case 3:
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CentroNotificacionesPerfilScreen(myUser: widget.myUser,)));
+                      break;
+                      case 4:
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => TutorialScreen(myUser: widget.myUser,)));
+                      break;
+                      case 5:
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => AprendeScreen(myUser: widget.myUser,)));
+                      break;
+                      case 6:
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => TutorialScreen(myUser: widget.myUser,)));
+                      break;
                       default:
                       break;
                     }
@@ -270,19 +282,19 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
             ),
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Configuración De Las Notificaciones", 1),
+              child: _optiones("Configuración De Las Notificaciones", 3),
             ),
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Tutorial", 1),
+              child: _optiones("Tutorial", 4),
             ),
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Aprende sobre DERs", 1),
+              child: _optiones("Aprende sobre DERs", 5),
             ),
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Política De Privacidad", 1),
+              child: _optiones("Política De Privacidad", 6),
             )
 
             

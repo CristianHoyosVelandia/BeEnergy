@@ -235,6 +235,19 @@ class Metodos {
     return  AppBar(
         toolbarHeight: 60,
         elevation: 0.0,
+        flexibleSpace: Container(
+        width: MediaQuery.of(context).size.width,
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x4B1A1F24),
+              offset: Offset(0, 2),
+            )
+          ],
+          gradient: Metodos.gradientClasic(context),
+          borderRadius: BorderRadius.circular(0),
+        )),
         backgroundColor: Colors.transparent,
         // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
@@ -249,50 +262,58 @@ class Metodos {
               //   color: Theme.of(context).focusColor,
               //   size: 45.0,
               // ),
-              const Image(
-                alignment: AlignmentDirectional.center,
-                image:  AssetImage("assets/img/logo.png"),
-                width: 45.0,
-                height: 45.0,
+              Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: const Image(
+                  alignment: AlignmentDirectional.center,
+                  image: AssetImage("assets/img/avatar.jpg"),
+                  // image:  AssetImage("assets/img/logo.png"),
+                  width: 55.0,
+                  height: 55.0,
+                ),
               ),
+              
               const SizedBox(width: 15.0),
                     
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          
-                          AutoSizeText(
-                            "¡Hola, ",
-                            maxLines: 2,
-                            textAlign: TextAlign.start,
-                            style: Metodos.textStyle(
-                              context,
-                              Metodos.colorInverso(context),
-                              15,
-                              FontWeight.bold,
-                              1
-                            ),
-                          ),
-
-                          AutoSizeText(
-                            (nombre != null ) ? " $nombre ! ": "Cristian !", 
-                            textAlign: TextAlign.start,
-                            maxLines: 2,
-                            style: Metodos.textStyle(
-                              context,
-                              Metodos.colorInverso(context),
-                              15,
-                              FontWeight.bold,
-                              1
-                            ),
-                          )
-
-                        ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    
+                    AutoSizeText(
+                      "¡Hola, ",
+                      maxLines: 2,
+                      textAlign: TextAlign.start,
+                      style: Metodos.textStyle(
+                        context,
+                        Theme.of(context).scaffoldBackgroundColor,
+                        15,
+                        FontWeight.bold,
+                        1
                       ),
                     ),
-                  
+
+                    AutoSizeText(
+                      (nombre != null ) ? " $nombre ! ": "Cristian !", 
+                      textAlign: TextAlign.start,
+                      maxLines: 2,
+                      style: Metodos.textStyle(
+                        context,
+                        Theme.of(context).scaffoldBackgroundColor,
+                        15,
+                        FontWeight.bold,
+                        1
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+            
             ],
           ),
               
@@ -305,7 +326,7 @@ class Metodos {
             width: 45.0,
             height: 45.0,
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
+              color: Theme.of(context).canvasColor,
               border: Border.all(
                 width: 2.0,
                 color: Theme.of(context).scaffoldBackgroundColor
@@ -318,7 +339,7 @@ class Metodos {
                 Icons.notifications,
                 size: 25.0,
               ),
-              color: Theme.of(context).focusColor,
+              color: Theme.of(context).scaffoldBackgroundColor,
               tooltip: "Cerrar Sesión",
               onPressed: () async {
                 alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);

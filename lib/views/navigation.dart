@@ -79,14 +79,14 @@ class _NavPagesState extends State<NavPages> {
         children: [
           Icon(
             icon,
-            color: currentIndex == currentIndexTap ? Theme.of(context).primaryColor : Theme.of(context).focusColor,
+            color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
           ),
           AutoSizeText(
             tituloBtn,
             maxFontSize: 20,
             minFontSize: 12,
             style: TextStyle(
-              color: currentIndex == currentIndexTap ? Theme.of(context).primaryColor : Theme.of(context).focusColor,
+              color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
             ),
           )
         ],
@@ -110,7 +110,7 @@ class _NavPagesState extends State<NavPages> {
               currentIndex=2;
             });
           },
-          backgroundColor: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).canvasColor,
           // child: SvgPicture.asset(
           //   BeenergyIcons.climatechange,
           //   height: 30,
