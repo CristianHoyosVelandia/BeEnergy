@@ -396,6 +396,10 @@ class Metodos {
     return textStyle(context, color, 20, fontWeight, 1.5);
   }
 
+  static TextStyle btnTextStyleFondo( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
+    return textStyle(context, color, 15, fontWeight, 1.5);
+  }
+
   static LinearGradient gradientClasic(BuildContext context){
     return LinearGradient(
       colors: [Theme.of(context).canvasColor, Theme.of(context).focusColor],
@@ -409,6 +413,13 @@ class Metodos {
     return Border.all(
       width: 0.25,
       color: Theme.of(context).focusColor
+    );
+  }
+
+  static Border borderClasicFondoNegro(BuildContext context) {
+    return Border.all(
+      width: 0.25,
+      color: Theme.of(context).scaffoldBackgroundColor
     );
   }
   static TextStyle alertDialogTextStyle( BuildContext context,  [ Color? color, FontWeight? fontWeight]){
@@ -436,9 +447,49 @@ class Metodos {
   static TextStyle subtitulosSimple(BuildContext context){
     return TextStyle(
       color: Theme.of(context).focusColor,
-      fontSize: 19.0,
+      fontSize: 15.0,
       fontFamily: "LilitaOne",
       fontWeight: FontWeight.w200,
+      letterSpacing: 1.10,
+    );
+  }
+
+  static TextStyle subtitulosInformativos(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).focusColor,
+      fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.10,
+    );
+  }
+
+  static TextStyle subtitulosInformativosFondoNegro(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.10,
+    );
+  }
+
+  static TextStyle textofromEditingFondoNegro(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.w100,
+      letterSpacing: 2.5,
+    );
+  }
+
+  static TextStyle subtitulosInformativosW(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.bold,
       letterSpacing: 1.10,
     );
   }

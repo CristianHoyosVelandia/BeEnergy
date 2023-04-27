@@ -197,7 +197,7 @@ class _NavPagesState extends State<NavPages> {
                         child: btnNavBar(3, context, 'Alertas', Icons.notification_add), 
                       ),
                       Expanded(
-                        child: btnNavBar(4, context, 'Home', Icons.home),
+                        child: btnNavBar(4, context, 'Perfil', Icons.home),
                       )
                     ],
                   ),

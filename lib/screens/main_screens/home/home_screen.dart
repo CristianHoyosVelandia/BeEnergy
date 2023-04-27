@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.only(top: 10.0, bottom: 10.0),
             child: Text(
               "Importe:",
-              style: Metodos.subtitulosSimple(context)
+              style: Metodos.subtitulosInformativos(context)
             ),
           ),
           Row(
@@ -188,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.only(top: 10.0, bottom: 10.0),
             child: Text(
               "Exporte:",
-              style: Metodos.subtitulosSimple(context)
+              style: Metodos.subtitulosInformativos(context)
             ),
           ),
           Row(
@@ -273,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
             margin: const EdgeInsets.only(top: 10.0),
             child: Text(
               "Tus movimientos Hoy (kWh):",
-              style: Metodos.subtitulosSimple(context)
+              style: Metodos.subtitulosInformativos(context)
             ),
           ),
         ],
@@ -319,6 +319,115 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ignore: unused_element
+  Widget _btnActividad(String nombre,BuildContext context, int onTap, String image){
+    return Expanded(
+      flex: 1,
+      child: InkWell(
+        onTap: () async {
+          switch (onTap) {
+            case 1:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break;
+            case 2:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break; 
+            default:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          margin: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(15.0),
+            border: Metodos.borderClasic(context)
+            // border: Border.all(
+            //   width: 0.25,
+            //   color: Theme.of(context).focusColor
+            // )
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image(
+                image: AssetImage(image),
+                width: 40,
+                height: 40,
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
+                child: Text(
+                  nombre,
+                  style: Metodos.subtitulosInformativos(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+
+    );
+          
+  }
+  
+  Widget _btnActividadIcon(String nombre,BuildContext context, int onTap, IconData icon){
+    return Expanded(
+      flex: 1,
+      child: InkWell(
+        onTap: () async {
+          switch (onTap) {
+            case 1:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break;
+            case 2:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break; 
+            default:
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              break;
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          margin: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: BorderRadius.circular(15.0),
+            border: Metodos.borderClasic(context)
+            // border: Border.all(
+            //   width: 0.25,
+            //   color: Theme.of(context).focusColor
+            // )
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: Theme.of(context).focusColor,
+                size: 35,
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
+                child: Text(
+                  nombre,
+                  style: Metodos.subtitulosInformativos(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+
+    );
+          
+  }
+  
   Widget _actividades(){
     return Container(
       // height: 50,
@@ -327,129 +436,30 @@ class _HomeScreenState extends State<HomeScreen> {
     
         children: [
 
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: () async {
-                Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                margin: const EdgeInsets.all(10.0),
-
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(15.0),
-                  border: Border.all(
-                    width: 0.25,
-                    color: Theme.of(context).focusColor
-                  )
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.swap_horiz_rounded,
-                      color: Theme.of(context).focusColor,
-                      size: 40,
-                    ),
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
-                      child: Text(
-                        "Transferir",
-                        style: Metodos.descripcionTextStyle(context, Theme.of(context).focusColor, 15),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-
+          _btnActividadIcon(
+            "Transferir",
+            context,
+            1, 
+            Icons.swap_horiz_rounded
           ),
-          
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: () async {
-                Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                margin: const EdgeInsets.all(10.0),
-
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(15.0),
-                  border: Border.all(
-                    width: 0.25,
-                    color: Theme.of(context).focusColor
-                  )
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Image(
-                      image: AssetImage("assets/img/energy.png"),
-                      width: 40,
-                      height: 40,
-                    ),
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
-                      child: Text(
-                        "Bolsa",
-                        style: Metodos.descripcionTextStyle(context, Theme.of(context).focusColor, 15),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-
+          // _btnActividad(
+          //   "bolsa",
+          //   context,
+          //   2,
+          //   "assets/img/energy.png"
+          // ),
+          _btnActividadIcon(
+            "bolsa",
+            context,
+            2, 
+            Icons.account_balance_outlined
           ),
-          
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: () async {
-                Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
-              },
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                margin: const EdgeInsets.all(10.0),
-
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  borderRadius: BorderRadius.circular(15.0),
-                  border: Border.all(
-                    width: 0.25,
-                    color: Theme.of(context).focusColor
-                  )
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.bookmark,
-                      color: Theme.of(context).focusColor,
-                      size: 40,
-                    ),
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
-                      child: Text(
-                        "Aprende",
-                        style: Metodos.descripcionTextStyle(context, Theme.of(context).focusColor, 15),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-
+          _btnActividadIcon(
+            "Aprende",
+            context,
+            1, 
+            Icons.bookmark
           ),
-          
         ],
       ),
     );
@@ -598,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> {
           margin: const EdgeInsets.only(left: 15, top: 10.0),
           child: Text(
             "Transacciones:",
-            style: Metodos.subtitulosSimple(context)
+            style: Metodos.subtitulosInformativos(context)
           ),
         ),
               
@@ -660,10 +670,10 @@ class _HomeScreenState extends State<HomeScreen> {
             
             Container(
               width:  Metodos.width(context),
-              margin: const EdgeInsets.only(left: 20, top: 10.0),
+              margin: const EdgeInsets.only(left: 20, top: 25.0),
               child: Text(
                 "Actividades:",
-                style: Metodos.subtitulosSimple(context)
+                style: Metodos.subtitulosInformativos(context)
               ),
             ),
 

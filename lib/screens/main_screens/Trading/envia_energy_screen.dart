@@ -2,18 +2,17 @@ import 'package:be_energy/data/constants.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-
 import '../../../routes.dart';
 
-class TradingScreen extends StatefulWidget {
-  const TradingScreen({Key? key}) : super(key: key);
+class EEscreen extends StatefulWidget {
+  const EEscreen({Key? key}) : super(key: key);
 
   @override
-  State<TradingScreen> createState() => _TradingScreenState();
+  State<EEscreen> createState() => _EEscreenState();
 }
 
  
-class _TradingScreenState extends State<TradingScreen> {
+class _EEscreenState extends State<EEscreen> {
     
   Metodos metodos = Metodos();
 
@@ -167,7 +166,7 @@ class _TradingScreenState extends State<TradingScreen> {
               Navigator.push(context,MaterialPageRoute(builder: (context) => const EEscreen()));
             break;
             case 2:
-              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const EEscreen()));
             break;
             default:
               Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
@@ -324,7 +323,7 @@ class _TradingScreenState extends State<TradingScreen> {
         textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
       ),
       child: Scaffold(
-      appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
+      appBar: metodos.appbarSecundaria(context, "Enviar Energia", ColorsApp.color4),
       // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         alignment: Alignment.center,
@@ -349,4 +348,3 @@ class _TradingScreenState extends State<TradingScreen> {
       ));
   }
 }
-
