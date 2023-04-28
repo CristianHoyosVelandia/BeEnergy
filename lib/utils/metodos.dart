@@ -350,6 +350,144 @@ class Metodos {
       );
   }
 
+  AppBar appbarEnergia(context, nombre){
+
+    return  AppBar(
+        toolbarHeight: 150,
+        elevation: 0.0,
+        flexibleSpace: Container(
+        width: MediaQuery.of(context).size.width,
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x4B1A1F24),
+              offset: Offset(0, 2),
+            )
+          ],
+          gradient: Metodos.gradientClasic(context),
+          borderRadius: BorderRadius.circular(0),
+        )),
+        backgroundColor: Colors.transparent,
+        // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
+        title: Container(
+          margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              
+              Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: const Image(
+                  alignment: AlignmentDirectional.center,
+                  image: AssetImage("assets/img/avatar.jpg"),
+                  // image:  AssetImage("assets/img/logo.png"),
+                  width: 55.0,
+                  height: 55.0,
+                ),
+              ),
+              
+              const SizedBox(width: 15.0),
+                    
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+
+                    AutoSizeText(
+                      (nombre != null ) ? "Casa de $nombre ": "Casa de Cristian", 
+                      textAlign: TextAlign.start,
+                      maxLines: 2,
+                      style: Metodos.textStyle(
+                        context,
+                        Theme.of(context).scaffoldBackgroundColor,
+                        15,
+                        FontWeight.bold,
+                        1
+                      ),
+                    ),
+
+                    AutoSizeText(
+                      "Sistema PV On", 
+                      textAlign: TextAlign.start,
+                      maxLines: 2,
+                      style: Metodos.textStyle(
+                        context,
+                        Theme.of(context).indicatorColor,
+                        14,
+                        FontWeight.bold,
+                        1
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+            
+            ],
+          ),
+              
+          
+          
+          
+        ),
+        
+        actions: [
+          Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.fromLTRB(15.0, 40.0, 20.0, 10.0),
+                width: 50.0,
+                height: 50.0,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).canvasColor,
+                  border: Border.all(
+                    width: 2.0,
+                    color: Theme.of(context).indicatorColor
+                  ),
+                  borderRadius: BorderRadius.circular(25.0),
+                ),
+                // margin: const EdgeInsets.only( top: 7.5, bottom: 7.5, right: 15.0, left: 0.0),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.swap_horiz_rounded,
+                    size: 30.0,
+                  ),
+                  color: Theme.of(context).indicatorColor,
+                  tooltip: "Transferido Hoy",
+                  onPressed: () async {
+                    // alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
+                  }
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only( top: 0, bottom: 7.5, right: 15.0, left: 0.0),
+                child: Row(
+                  children: [
+                    Text(
+                      "50 kWh - \$ 14.300",
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color: Theme.of(context).indicatorColor,
+                        fontWeight: FontWeight.bold
+                      ),
+                    )
+                  ],
+                )
+              ),
+            
+            ],
+          ),
+        ],
+      );
+  }
+
+
   AppBar appbarSecundaria(context, titulo, color){
 
     return  AppBar(

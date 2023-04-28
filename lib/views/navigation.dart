@@ -35,7 +35,7 @@ class _NavPagesState extends State<NavPages> {
     super.initState();
     pages = [
       HomeScreen(myUser: widget.myUser,),
-      EnergyScreen(),
+      EnergyScreen(myUser: widget.myUser),
       TradingScreen(),
       NotificacionesScreen(),
       MicuentaScreen(myUser: widget.myUser,),

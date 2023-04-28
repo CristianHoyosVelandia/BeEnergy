@@ -18,6 +18,80 @@ class CambiarClavePerfilScreen extends StatefulWidget {
 
 class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
   Metodos metodos = Metodos();
+  
+  final TextEditingController _email = TextEditingController();
+  
+  
+  Widget _btnOption(String label, String hintText, TextEditingController controller){
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 0),
+      child: TextFormField(
+        controller: controller,
+        obscureText: false,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: Metodos.subtitulosInformativosFondoNegro(context),
+          hintText: hintText,
+          hintStyle: Metodos.textofromEditingFondoNegro(context),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              width: 0.25,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              width: 0.25,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 0.25,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              width: 0.25,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          filled: true,
+          fillColor: Theme.of(context).focusColor,
+          contentPadding: const EdgeInsetsDirectional.fromSTEB(20, 10, 20, 10),
+        ),
+        style: Metodos.textofromEditingFondoNegro(context),
+        validator: (value) {
+          if (value!.length < 4) {
+            return 'Ingrese una clave mayor a 3 caracetes';
+          }
+          return null;
+        },
+      ),
+    );
+
+  }
+
+  Widget _optiones(String label, String hintText, TextEditingController controller){
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(5, 5, 5, 0),
+            child: _btnOption(label, hintText, controller),
+          ),
+        ),// _btnOption(textTitulo, action),
+       ],
+    );  
+  }
+  
 
   Widget _texto(){
     return Row(
@@ -42,6 +116,7 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
             ),
           ),
         ),// _btnOption(textTitulo, action),
+       
        ],
     );  
   }
@@ -89,6 +164,11 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
               padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
               child: _texto(),
             ),
+            
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
+              child: _optiones("Correo", "Ingrese por favor su correo", _email),
+            ),
 
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
@@ -128,7 +208,7 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
   }
   @override
   Widget build(BuildContext context) {
-
+    _email.text = "Ingrese por favor su correo";
     return Scaffold(
       appBar: _appbarEditarPerfil(),
       backgroundColor: Theme.of(context).focusColor,
