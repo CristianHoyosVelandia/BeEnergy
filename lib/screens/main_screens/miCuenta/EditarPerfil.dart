@@ -220,6 +220,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     );     
   
   }
+  
   Widget _cartaPrincipal(){
     return SizedBox(
       width: MediaQuery.of(context).size.width,

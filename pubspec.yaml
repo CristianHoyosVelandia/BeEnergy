@@ -91,6 +91,7 @@ flutter:
 
     #svg
     - assets/svg/login.svg
+    - assets/svg/success.svg
     - assets/svg/aroundWorld.svg
     - assets/svg/transaction.svg
 

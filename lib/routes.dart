@@ -1,3 +1,7 @@
+export 'package:be_energy/screens/main_screens/Trading/enviar_redirection.dart';
+export 'package:be_energy/screens/main_screens/Trading/intercambios_energy_screen.dart';
+
+
 export 'package:be_energy/screens/main_screens/miCuenta/EditarPerfil.dart';
 export 'package:be_energy/screens/main_screens/miCuenta/tutorial.dart';
 export 'package:be_energy/screens/main_screens/miCuenta/aprende.dart';
@@ -19,3 +23,4 @@ export 'package:be_energy/screens/main_screens/Trading/envia_energy_screen.dart'
 export 'package:be_energy/views/navigation.dart';
 //themes 
 export 'package:be_energy/themes/app_themes.dart';
+

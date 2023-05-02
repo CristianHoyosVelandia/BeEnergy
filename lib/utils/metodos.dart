@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/callmodels.dart';
+import '../routes.dart';
 
 class Metodos {
 
@@ -17,7 +18,11 @@ class Metodos {
           Navigator.of(context).pop();
           break;
         case 1:
-          Navigator.of(context).pushNamedAndRemoveUntil('/beEnergy', (Route<dynamic> route) => false);
+          Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const Beenergy()),
+          (Route<dynamic> route) => false
+          );
           break;
         case 2:
           Navigator.pop(context, false);
@@ -25,7 +30,11 @@ class Metodos {
         case 3:
           DatabaseHelper dbHelper = DatabaseHelper();
           dbHelper.deleteUserLocal(0);
-          Navigator.of(context).pushNamedAndRemoveUntil('/beEnergy', (Route<dynamic> route) => false);                 
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Beenergy()),
+            (Route<dynamic> route) => false
+          );
           break;
         case 4:
           Navigator.pop(context, true);
@@ -607,7 +616,8 @@ class Metodos {
     return TextStyle(
       color: Theme.of(context).focusColor,
       fontSize: 15.0,
-      fontFamily: "LilitaOne",
+      height: 1.5,
+      fontFamily: "SEGOEUI",
       fontWeight: FontWeight.w200,
       letterSpacing: 1.10,
     );
@@ -637,6 +647,17 @@ class Metodos {
     return TextStyle(
       color: Theme.of(context).scaffoldBackgroundColor,
       fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.w100,
+      letterSpacing: 2.5,
+    );
+  }
+
+  
+  static TextStyle textofromEditingFondoBlanco(BuildContext context){
+    return TextStyle(
+      color: Theme.of(context).focusColor,
+      fontSize: 12.0,
       fontFamily:"SEGOEUI",
       fontWeight: FontWeight.w100,
       letterSpacing: 2.5,

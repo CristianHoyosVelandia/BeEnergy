@@ -209,6 +209,11 @@ class _EnergyScreenState extends State<EnergyScreen> {
   Widget _figura1() {
     return const LineChartSample();
   }
+
+  Widget _figura2() {
+    return const LineChartSample1();
+  }
+
   Widget _indicadoresLine(){
     return Container(
       margin: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
@@ -249,6 +254,130 @@ class _EnergyScreenState extends State<EnergyScreen> {
     );
   }
 
+
+  Widget _indicadoresLine2(){
+    return Container(
+      margin: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
+      padding: const EdgeInsets.all(5.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        // border: metodos.borderCajas(context),
+        borderRadius: BorderRadius.circular(15.0),
+        border: Border.all(
+          color: Theme.of(context).focusColor,
+          width: 0.25
+        )
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 15.0),
+                child: Text(
+                  "Potencia exporta e importada mensual",
+                  style: TextStyle(
+                    color: Theme.of(context).focusColor,
+                    fontSize: 15.0,
+                    fontFamily:"SEGOEUI",
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.10,
+                  )
+                ),
+              ),
+            ],
+          ),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10.0, 5.0, 5.0, 0.0),
+                    child: Container(
+                      height: 15,
+                      width: 15,
+                      color: Color(int.parse("0xff${ColorsApp.color2}")),
+                    )
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0.0, 5.0, 5.0, 0.0),
+                    child: Text(
+                      "Potencia importada",
+                      style: TextStyle(
+                        color: Theme.of(context).focusColor,
+                        fontSize: 14.0,
+                        fontFamily:"SEGOEUI",
+                        fontWeight: FontWeight.w200,
+                        letterSpacing: 1.10,
+                      )
+                    ),
+                  ),
+              ],),
+              Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10.0, 5.0, 5.0, 0.0),
+                    child: Container(
+                      height: 15,
+                      width: 15,
+                      color: Colors.green,
+                    )
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0.0, 5.0, 5.0, 0.0),
+                    child: Text(
+                      "Potencia exporta",
+                      style: TextStyle(
+                        color: Theme.of(context).focusColor,
+                        fontSize: 14.0,
+                        fontFamily:"SEGOEUI",
+                        fontWeight: FontWeight.w200,
+                        letterSpacing: 1.10,
+                      )
+                    ),
+                  ),
+                ],
+              ),
+          
+            
+            ],
+          ),
+          Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 10.0),
+                child: Container(
+                  height: 15,
+                  width: 15,
+                  color: Color(int.parse("0xff${ColorsApp.color4}")),
+                )
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0.0, 10.0, 5.0, 10.0),
+                child: Text(
+                  "Demanda",
+                  style: TextStyle(
+                    color: Theme.of(context).focusColor,
+                    fontSize: 14.0,
+                    fontFamily:"SEGOEUI",
+                    fontWeight: FontWeight.w200,
+                    letterSpacing: 1.10,
+                  )
+                ),
+              ),
+            ],
+          ),
+          
+          _figura2()
+
+        ]
+      )
+    );
+  }
+
   Widget body(){
     return Stack(
 
@@ -261,6 +390,9 @@ class _EnergyScreenState extends State<EnergyScreen> {
             _indicadoresCasa(),
 
             _indicadoresLine(),
+
+            _indicadoresLine2(),
+
 
 
           ],
@@ -393,18 +525,18 @@ class _LineChartSampleState extends State<LineChartSample> {
     return LineChartData(
       gridData: FlGridData(
         show: true,
-        drawVerticalLine: true,
-        horizontalInterval: 1,
+        drawHorizontalLine: true,
         verticalInterval: 1,
-        getDrawingHorizontalLine: (value) {
+        horizontalInterval: 1,
+        getDrawingVerticalLine: (value) {
           return FlLine(
-            color: const Color(0xff212D3D)  ,
+            color: const Color(0xff37434d),
             strokeWidth: 1,
           );
         },
-        getDrawingVerticalLine: (value) {
+        getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: Color(int.parse("0xff${ColorsApp.color3}")),
+            color: const Color(0xff37434d),
             strokeWidth: 1,
           );
         },
@@ -591,3 +723,276 @@ class _LineChartSampleState extends State<LineChartSample> {
 }
 
 
+
+class _LineChart extends StatelessWidget {
+  const _LineChart({required this.isShowingMainData});
+
+  final bool isShowingMainData;
+
+  @override
+  Widget build(BuildContext context) {
+    return LineChart(
+      sampleData2,
+      swapAnimationDuration: const Duration(milliseconds: 500),
+    );
+  }
+
+  LineChartData get sampleData2 => LineChartData(
+    lineTouchData: lineTouchData2,
+    gridData: gridData,
+    titlesData: titlesData2,
+    borderData: borderData,
+    lineBarsData: lineBarsData2,
+    minX: 0,
+    maxX: 29,
+    maxY: 8,
+    minY: 0,
+  );
+
+  LineTouchData get lineTouchData2 => LineTouchData(
+    enabled: false,
+  );
+
+  FlTitlesData get titlesData2 => FlTitlesData(
+    bottomTitles: AxisTitles(
+      sideTitles: bottomTitles,
+    ),
+    rightTitles: AxisTitles(
+      sideTitles: SideTitles(showTitles: false),
+    ),
+    topTitles: AxisTitles(
+      sideTitles: SideTitles(showTitles: false),
+    ),
+    leftTitles: AxisTitles(
+      sideTitles: leftTitles(),
+    ),
+  );
+
+  List<LineChartBarData> get lineBarsData2 => [
+    lineChartBarData2_1,
+    lineChartBarData2_2,
+    lineChartBarData2_3,
+  ];
+
+  Widget leftTitleWidgets(double value, TitleMeta meta) {
+    const style = TextStyle(
+      color: Color(0xff212D3D),
+      fontSize: 12.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.10,
+    );
+    String text;
+    switch (value.toInt()) {
+      case 2:
+        text = '2 kW';
+        break;
+      case 4:
+        text = '4 kW';
+        break;
+      case 6:
+        text = '6 kW';
+        break;
+      case 8:
+        text = '8 kW';
+        break;
+      default:
+        return Container();
+    }
+
+    return Text(text, style: style, textAlign: TextAlign.center);
+  }
+
+  SideTitles leftTitles() => SideTitles(
+    getTitlesWidget: leftTitleWidgets,
+    showTitles: true,
+    interval: 1,
+    reservedSize: 45,
+  );
+
+  Widget bottomTitleWidgets(double value, TitleMeta meta) {
+    
+    const style = TextStyle(
+      color: Color(0xff212D3D)  ,
+      fontSize: 15.0,
+      fontFamily:"SEGOEUI",
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.10,
+    );
+
+    Widget text;
+
+    switch (value.toInt()) {
+      case 5:
+        text = const Text('05-04', style: style);
+        break;
+      case 10:
+        text = const Text('10-04', style: style);
+        break;
+      case 15:
+        text = const Text('15-04', style: style);
+        break;
+      case 20:
+        text = const Text('20-04', style: style);
+        break;
+      case 25:
+        text = const Text('25-04', style: style);
+        break;
+      case 30:
+        text = const Text('30-04', style: style);
+        break;
+      default:
+        text = const Text('');
+        break;
+    }
+
+    return SideTitleWidget(
+      axisSide: meta.axisSide,
+      space: 10,
+      child: text,
+    );
+  }
+
+  SideTitles get bottomTitles => SideTitles(
+    showTitles: true,
+    reservedSize: 32,
+    interval: 1,
+    getTitlesWidget: bottomTitleWidgets,
+  );
+
+  FlGridData get gridData => FlGridData(show: true);
+
+  FlBorderData get borderData => FlBorderData(
+    show: true,
+    border: Border(
+      bottom: BorderSide(color: Color(int.parse("0xff${ColorsApp.color1}")).withOpacity(0.2), width: 4),
+      left: const BorderSide(color: Colors.transparent),
+      right: const BorderSide(color: Colors.transparent),
+      top: const BorderSide(color: Colors.transparent),
+    ),
+  );
+
+  LineChartBarData get lineChartBarData2_1 => LineChartBarData(
+        isCurved: true,
+        curveSmoothness: 0,
+        color: Color(int.parse("0xff${ColorsApp.color3}")).withOpacity(0.5),
+        barWidth: 2,
+        isStrokeCapRound: true,
+        dotData: FlDotData(show: true),
+        spots: const [
+          FlSpot(1, 6),
+          FlSpot(3, 1.5),
+          FlSpot(5, 1.4),
+          FlSpot(7, 3.4),
+          FlSpot(9, 2),
+          FlSpot(11, 2.2),
+          FlSpot(13, 1.8),
+          FlSpot(15, 1),
+          FlSpot(17, 1.5),
+          FlSpot(19, 1.4),
+          FlSpot(21, 3.4),
+          FlSpot(23, 2),
+          FlSpot(25, 2.2),
+          FlSpot(27, 1.8),
+        ],
+      );
+
+  LineChartBarData get lineChartBarData2_2 => LineChartBarData(
+        isCurved: true,
+        color: Color(int.parse("0xff${ColorsApp.color4}")).withOpacity(0.5),
+        barWidth: 2,
+        isStrokeCapRound: true,
+        dotData: FlDotData(show: true),
+        belowBarData: BarAreaData(
+          show: true,
+          color: Color(int.parse("0xff${ColorsApp.color4}")).withOpacity(0.2),
+        ),
+        spots: const [
+          FlSpot(1, 0.5),
+          FlSpot(3, 2.5),
+          FlSpot(5, 2.4),
+          FlSpot(7, 2.4),
+          FlSpot(9, 3),
+          FlSpot(11, 4.2),
+          FlSpot(13, 4.8),
+          FlSpot(15, 5.5),
+          FlSpot(17, 4.5),
+          FlSpot(19, 4.0),
+          FlSpot(21, 3.4),
+          FlSpot(23, 3.0),
+          FlSpot(25, 3.4),
+          FlSpot(27, 3.8),
+        ],
+      );
+
+  LineChartBarData get lineChartBarData2_3 => LineChartBarData(
+        isCurved: true,
+        curveSmoothness: 0,
+        color: Color(int.parse("0xff${ColorsApp.color2}")).withOpacity(0.5),
+        barWidth: 2,
+        isStrokeCapRound: true,
+        dotData: FlDotData(show: true),
+        belowBarData: BarAreaData(show: false),
+        spots: const [
+          FlSpot(1, 1.8),
+          FlSpot(3, 1.9),
+          FlSpot(5, 1.0),
+          FlSpot(7, 1.3),
+          FlSpot(9, 1.5),
+          FlSpot(11, 1.7),
+          FlSpot(13, 1.8),
+          FlSpot(15, 1.5),
+          FlSpot(17, 0.5),
+          FlSpot(19, 0.6),
+          FlSpot(21, 1.4),
+          FlSpot(23, 1.5),
+          FlSpot(25, 1.0),
+          FlSpot(27, 1.2),
+        ],
+      );
+}
+
+class LineChartSample1 extends StatefulWidget {
+  const LineChartSample1({super.key});
+
+  @override
+  State<StatefulWidget> createState() => LineChartSample1State();
+}
+
+class LineChartSample1State extends State<LineChartSample1> {
+  late bool isShowingMainData;
+
+  @override
+  void initState() {
+    super.initState();
+    isShowingMainData = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1.23,
+      child: Stack(
+        children: <Widget>[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: const <Widget>[
+              SizedBox(
+                height: 20,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: 16, left: 16),
+                  child: _LineChart(isShowingMainData: false),
+                ),
+              ),
+              SizedBox(
+                height: 50,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}

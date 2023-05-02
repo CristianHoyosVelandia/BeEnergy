@@ -272,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width:  Metodos.width(context),
             margin: const EdgeInsets.only(top: 10.0),
             child: Text(
-              "Tus movimientos Hoy (kWh):",
+              "Tus movimientos Mensuales (kWh):",
               style: Metodos.subtitulosInformativos(context)
             ),
           ),
