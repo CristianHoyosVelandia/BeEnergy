@@ -27,13 +27,15 @@ dependencies:
   draggable_widget: ^2.0.0
   #F
   flutter_svg: ^2.0.3
+  flutter_speed_dial: ^6.2.0
+  fl_chart: ^0.62.0
+  font_awesome_flutter: ^10.4.0
+
   #I
   intl: ^0.18.0
   #S
   sqflite: ^2.2.5
   syncfusion_flutter_charts: ^20.4.54
-  flutter_speed_dial: ^6.2.0
-  fl_chart: ^0.62.0
 
 dev_dependencies:
   flutter_test:
@@ -94,6 +96,8 @@ flutter:
     - assets/svg/success.svg
     - assets/svg/aroundWorld.svg
     - assets/svg/transaction.svg
+    - assets/svg/trading.svg
+
 
     #icons
     - assets/icons/Accu.svg  

@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:be_energy/models/callmodels.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,9 +23,9 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
       'numTransaccion': 1,
       'entrada': true,
       'nombre': 'Estiven Hoyos',
-      'dinero':  ' \$ 250.00',
+      'dinero':  '\$ 250.00',
       'energia':  '25 kW',
-      'fecha':  '02-May',
+      'fecha':  '02-Mayo',
       'fuente':  'Solar-Eólica',
       'fuenteIcon': 5,
       'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
@@ -34,9 +35,9 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
       'numTransaccion': 1,
       'entrada': true,
       'nombre': 'Estiven Hoyos',
-      'dinero':  ' \$ 500.00',
+      'dinero':  '\$ 500.00',
       'energia':  '25 kW',
-      'fecha':  '25-Feb',
+      'fecha':  '25-Febrero',
       'fuente':  'Solar',
       'fuenteIcon': 1,
       'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
@@ -46,9 +47,9 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
       'numTransaccion': 2,
       'entrada': true,
       'nombre': 'Angel Hoyos',
-      'dinero':  ' \$ 240.00',
+      'dinero':  '\$ 240.00',
       'energia':  '5 kW',
-      'fecha':  '27-Feb',
+      'fecha':  '27-Febrero',
       'fuente':  'Solar',
       'fuenteIcon': 1,
       'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
@@ -58,9 +59,9 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
       'numTransaccion': 3,
       'entrada': false,
       'nombre': 'Clara Velandia',
-      'dinero':  ' \$ 150.00',
+      'dinero':  '\$ 150.00',
       'energia':  '8 kW',
-      'fecha':  '28-Feb',
+      'fecha':  '28-Febrero',
       'fuente':  'Solar',
       'fuenteIcon': 1,
       'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
@@ -302,112 +303,131 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
     return au;
   }
   Widget _card(var data){
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: (data['entrada'] == true )?Theme.of(context).canvasColor: Colors.red,
-          width: 1
+    Intercambio dataIntercmabio = Intercambio(
+      numTransaccion: data['numTransaccion'], 
+      entrada: data['entrada'], 
+      nombre: data['nombre'], 
+      dinero: data['dinero'], 
+      energia: data['energia'], 
+      fecha: data['fecha'], 
+      fuente: data['fuente'], 
+      fuenteIcon: data['fuenteIcon'], 
+      horarioSuminsitro: data['horarioSuminsitro'], 
+      estado: data['estado']
+    );
+    return InkWell(
+      highlightColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      onTap: () {
+        Navigator.push(context,MaterialPageRoute(builder: (context) => ErecordScreen(dataScreen: dataIntercmabio,)));
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: (data['entrada'] == true )?Theme.of(context).canvasColor: Colors.red,
+            width: 1
+          ),
+          borderRadius: BorderRadius.circular(15.0)
         ),
-        borderRadius: BorderRadius.circular(15.0)
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
-                )
-              ),
-              Expanded(
-                child: Column(
-                children: [
-      
-                Icon(
-                  (data['entrada'] == false )? Icons.trending_down_outlined: Icons.trending_up_outlined,
-                  size: 30,
-                  color: (data['entrada'] == false )? Colors.red: Theme.of(context).canvasColor,
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
+                  )
                 ),
-
-                const SizedBox(height: 5.0),
-
-                AutoSizeText(
-                  data['estado'],
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  style: Metodos.subtitulosInformativos(context)
-                ),
-            ],
-          ),
-      
-              ),
-            ],
-            )
-          ),
-          
-          Expanded(
-            child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Text(
-                    data['nombre'].toString().split(' ').first,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15.0,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).focusColor
-                    ),
+                Expanded(
+                  child: Column(
+                  children: [
+        
+                  Icon(
+                    (data['entrada'] == false )? Icons.trending_down_outlined: Icons.trending_up_outlined,
+                    size: 30,
+                    color: (data['entrada'] == false )? Colors.red: Theme.of(context).canvasColor,
                   ),
-                )
-              ),
-              
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    
-                    AutoSizeText(
-                      data['dinero'],
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 12.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.10,
-                      )
-                    ),
-                                  
-                    const SizedBox(height: 5.0),
-
-                    AutoSizeText(
-                      data['energia'],
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 12.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.10,
-                      )
-                    ),
-                  
-
-                  ],
+    
+                  const SizedBox(height: 5.0),
+    
+                  AutoSizeText(
+                    data['estado'],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: Metodos.subtitulosInformativos(context)
+                  ),
+              ],
+            ),
+        
                 ),
-
-              ),
-            ],
-            )
-          ),
-          
-        ],
+              ],
+              )
+            ),
+            
+            Expanded(
+              child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      data['nombre'].toString().split(' ').first,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).focusColor
+                      ),
+                    ),
+                  )
+                ),
+                
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      
+                      AutoSizeText(
+                        data['dinero'],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: Theme.of(context).focusColor,
+                          fontSize: 12.0,
+                          fontFamily:"SEGOEUI",
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.10,
+                        )
+                      ),
+                                    
+                      const SizedBox(height: 5.0),
+    
+                      AutoSizeText(
+                        data['energia'],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: Theme.of(context).focusColor,
+                          fontSize: 12.0,
+                          fontFamily:"SEGOEUI",
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.10,
+                        )
+                      ),
+                    
+    
+                    ],
+                  ),
+    
+                ),
+              ],
+              )
+            ),
+            
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 export 'package:be_energy/screens/main_screens/Trading/enviar_redirection.dart';
 export 'package:be_energy/screens/main_screens/Trading/intercambios_energy_screen.dart';
-
+export 'package:be_energy/screens/main_screens/Trading/envia_record.dart';
 
 export 'package:be_energy/screens/main_screens/miCuenta/EditarPerfil.dart';
 export 'package:be_energy/screens/main_screens/miCuenta/tutorial.dart';
