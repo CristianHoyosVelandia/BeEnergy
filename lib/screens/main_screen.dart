@@ -52,12 +52,12 @@ class _BeenergyState extends State<Beenergy> {
             //de ser el caso cargamos los datos en el menu de codigo de usuario, codigo ciudad y nomCiudad y redirigimos.
             if (snapshotUser.hasData) {
 
-              // print("data Snapshot: ${snapshotUser.data.toMap()}");
+              print("data Snapshot: ${snapshotUser.data.toMap()}");
 
               if (snapshotUser.data.idUser != 0) {
                 
-                // print('Usuario ya logueado exitosamente');
-                // print(snapshotUser.data);
+                print('Usuario ya logueado exitosamente');
+                print(snapshotUser.data);
                 return NavPages( myUser: snapshotUser.data);
                 
               } else {

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:another_flushbar/flushbar.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 export 'package:be_energy/data/iconos.dart';
@@ -29,7 +31,7 @@ class Metodos {
           break;
         case 3:
           DatabaseHelper dbHelper = DatabaseHelper();
-          dbHelper.deleteUserLocal(0);
+          dbHelper.deleteUserLocal(1);
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const Beenergy()),
@@ -39,12 +41,23 @@ class Metodos {
         case 4:
           Navigator.pop(context, true);
           break;
+        case 5:
+          // Navigator.push(context,MaterialPageRoute(builder: (context) => Mapas(
+          //   empresas: [empresaAux], 
+          //   filtroDistancia: false, 
+          //   distancia: 0, 
+          //   todasEmpresas: [empresaAux], 
+          //   buscador: '', 
+          //   posicionInicial: widget.ubicacionUsuario
+          // )));
+          break;
         default:
           break;
       }
   }
 
-   alertsDialog(BuildContext context, String mensaje, double width, String btn1, int accionbtn1, String btn2, int accionbtn2){    
+  
+  alertsDialogBotonUnico(BuildContext context, String mensaje, double width, double height, String btn1, int accionbtn1){    
 
     return showDialog(
       context: context,
@@ -58,22 +71,26 @@ class Metodos {
           height: 80,
           margin: const EdgeInsets.only( bottom: 10),
           child: const Image(
-            image: AssetImage("assets/img/logo.png"),
+            alignment: AlignmentDirectional.center,
+            image:  AssetImage("assets/img/logo.png"),
+            height: 100.0,
           ),
         ),
 
-        content: Container(
-          height: 70,
-          width: 4*width/5,
-          alignment: Alignment.center,
-          margin: const EdgeInsets.only(bottom: 5),
-          child: FittedBox(
-            fit: BoxFit.fitWidth,
-            child: Text(
-              mensaje,
-              style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
-            ),
-          ),
+        content:Container(
+            width: 4*width/5,
+            height: 120,
+            alignment: Alignment.center,
+            margin: const EdgeInsets.only(bottom: 5, left: 10, right: 10),
+            child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: Text(
+                mensaje,
+                textAlign: TextAlign.center,
+                maxLines: 5,
+                style: Metodos.descripcionTextStyle(context),
+                ),
+              )
         ),
 
         actions: <Widget>[
@@ -90,49 +107,20 @@ class Metodos {
                       decoration: const BoxDecoration(
                       border: Border(
                         top: BorderSide(
-                            color: Colors.black38,
-                            width: 1.0,
-                          ),
-                          right: BorderSide(
-                            color: Colors.black38,
-                            width: 1.0,
-                          ),
+                          color: Colors.black38,
+                          width: 1.0,
+                        ),
                       )
                       ),
                       child: TextButton(
                         child: Text(
                           btn1,
-                          style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+                          style: Metodos.tittleTextStyle2(context),
                         ),
                         onPressed: () => actionBtn(context, accionbtn1)
                       ),
                     ),
                   )
-                ),
-
-                Flexible(
-                  child: FractionallySizedBox(
-                    widthFactor: 1,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                            color: Colors.black38,
-                            width: 1.0,
-                          ),
-                      )
-                      ),
-                      child: TextButton(
-                        child: Text(
-                          btn2,
-                          style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
-                        ),
-                        onPressed: () async {
-                          actionBtn(context, accionbtn2);
-                        }
-                      ),
-                    ),
-                  ),
                 ),
               ]
             ),
@@ -143,7 +131,108 @@ class Metodos {
       )
     );
                                 
-  }
+  }            
+   
+  alertsDialog(BuildContext context, String mensaje, double width, String btn1, int accionbtn1, String btn2, int accionbtn2){    
+
+  return showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(25.0))
+      ),
+      title: Container(
+        alignment: Alignment.center,
+        width: 4*width/5,
+        height: 80,
+        margin: const EdgeInsets.only( bottom: 10),
+        child: const Image(
+          image: AssetImage("assets/img/logo.png"),
+        ),
+      ),
+
+      content: Container(
+        height: 70,
+        width: 4*width/5,
+        alignment: Alignment.center,
+        margin: const EdgeInsets.only(bottom: 5),
+        child: FittedBox(
+          fit: BoxFit.fitWidth,
+          child: Text(
+            mensaje,
+            style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+          ),
+        ),
+      ),
+
+      actions: <Widget>[
+        SizedBox(
+          width: 4*width/5,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+
+              Flexible(
+                child: FractionallySizedBox(
+                  widthFactor: 1,
+                  child:Container(
+                    decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                          color: Colors.black38,
+                          width: 1.0,
+                        ),
+                        right: BorderSide(
+                          color: Colors.black38,
+                          width: 1.0,
+                        ),
+                    )
+                    ),
+                    child: TextButton(
+                      child: Text(
+                        btn1,
+                        style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+                      ),
+                      onPressed: () => actionBtn(context, accionbtn1)
+                    ),
+                  ),
+                )
+              ),
+
+              Flexible(
+                child: FractionallySizedBox(
+                  widthFactor: 1,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                          color: Colors.black38,
+                          width: 1.0,
+                        ),
+                    )
+                    ),
+                    child: TextButton(
+                      child: Text(
+                        btn2,
+                        style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
+                      ),
+                      onPressed: () async {
+                        actionBtn(context, accionbtn2);
+                      }
+                    ),
+                  ),
+                ),
+              ),
+            ]
+          ),
+        ),
+        
+        
+      ]
+    )
+  );
+                              
+}
 
   static Future flushbarPositivo(context, mensaje) {
     return Flushbar(
@@ -724,7 +813,18 @@ class Metodos {
       counterStyle: descripcionTextStyle(context, null,18)
     );
   }
-  
+
+  static bool distancia(double latActual, double lonActual, double latDestino, double lonDestino, double distanciaMaxima) {
+    const R = 6371e3; // metres
+      var v1 = latActual * pi/180; // φ, λ in radians
+      var v2 = latDestino * pi/180;
+      var v3 = (latDestino - latActual) * pi/180;
+      var v4 = (lonDestino - lonActual) * pi/180;
+      var a = sin(v3/2) * sin(v3/2) + cos(v1) * cos(v2) * sin(v4/2) * sin(v4/2);
+      var c = 2 * atan2(sqrt(a), sqrt(1-a));
+      var d = R * c; // in metres
+      return d <= distanciaMaxima*1000;
+  }
 }
 
 class GradientBack extends StatelessWidget {

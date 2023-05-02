@@ -1,5 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:be_energy/screens/main_screens/Trading/trading_screen.dart';
+import 'package:be_energy/routes.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
               break;
             case 2:
-              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const BolsaScreen()));
               break; 
             default:
               Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));

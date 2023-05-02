@@ -30,12 +30,20 @@ dependencies:
   flutter_speed_dial: ^6.2.0
   fl_chart: ^0.62.0
   font_awesome_flutter: ^10.4.0
+  latlong2: ^0.8.1
 
   #I
-  intl: ^0.18.0
+  intl: ^0.17.0
+
   #S
   sqflite: ^2.2.5
   syncfusion_flutter_charts: ^20.4.54
+  flutter_map: ^0.14.0
+  flutter_map_marker_popup: ^2.1.2
+  location: ^4.3.0
+  bloc_provider: ^1.0.0
+  rxdart: ^0.27.7
+
 
 dev_dependencies:
   flutter_test:
