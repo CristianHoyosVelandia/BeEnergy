@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 import '../../../routes.dart';
+import '../Dinero/card_screen.dart';
 
 class TradingScreen extends StatefulWidget {
   const TradingScreen({Key? key}) : super(key: key);
@@ -167,7 +168,7 @@ class _TradingScreenState extends State<TradingScreen> {
               Navigator.push(context,MaterialPageRoute(builder: (context) => const EEscreen()));
             break;
             case 2:
-              Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
+              Navigator.push(context,MaterialPageRoute(builder: (context) => const Cardscreen()));
             break;
             default:
               Navigator.push(context,MaterialPageRoute(builder: (context) => const TradingScreen()));
@@ -215,7 +216,7 @@ class _TradingScreenState extends State<TradingScreen> {
         children: [
           
           _actions(1, "Energia", Icons.energy_savings_leaf),
-          _actions(1, "Dinero", Icons.transform_rounded),
+          _actions(2, "Dinero", Icons.transform_rounded),
 
         ],
       ),

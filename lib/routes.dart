@@ -1,3 +1,4 @@
+export 'package:be_energy/screens/main_screens/Bolsa/confirmbolsa_screen.dart';
 export 'package:be_energy/screens/main_screens/Mapas/mapas.dart';
 
 export 'package:be_energy/screens/main_screens/Trading/enviar_redirection.dart';
@@ -28,4 +29,4 @@ export 'package:be_energy/views/navigation.dart';
 //themes 
 export 'package:be_energy/themes/app_themes.dart';
 
-// Navigator.push(context,MaterialPageRoute(builder: (context) => const Mapas()));
+// Navigator.push(context,MaterialPageRoute(builder: (context) => const ConfirmchangeScreen()));

@@ -559,6 +559,7 @@ class Metodos {
                   color: Theme.of(context).indicatorColor,
                   tooltip: "Transferido Hoy",
                   onPressed: () async {
+                    Navigator.push(context,MaterialPageRoute(builder: (context) => const BolsaScreen()));
                     // alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", Metodos.width(context), "Cancelar", 2, "Si", 3);
                   }
                 ),
@@ -1097,8 +1098,9 @@ class _FondoScreenState extends State<FondoScreen> {
       ? Scaffold(
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.9),
+          
           centerTitle: true,
+          
           title: const Text( 
             'Be Energy',
             style: TextStyle(

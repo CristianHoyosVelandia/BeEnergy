@@ -84,27 +84,197 @@ class _MapasState extends State<Mapas> {
     });
   }
 
+  IconButton _leading(BuildContext context, double width) {
+    return IconButton(
+      //icono de cerrar sesion
+      icon: Icon(
+        Icons.arrow_back_ios_rounded,
+        color: Theme.of(context).scaffoldBackgroundColor,
+        size: 25,
+      ),
+      style: ButtonStyle(
+        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+      ),
+
+      tooltip: "Volver",
+      onPressed: () {
+        Navigator.pop(context);
+        // metodos.alertsDialog(context, "¿Deseas ver en mapa los peers en tu ciudad?", width, "Cancelar", 2, "Si", 5);
+      }
+    );
+  }
+  
+  Widget _contenPrincipalCard(){
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 50, 0, 0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              //Image
+              Card(
+                clipBehavior: Clip.antiAliasWithSaveLayer,
+                color: Theme.of(context).scaffoldBackgroundColor,
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: Image.asset(
+                      "assets/img/avatar.jpg",
+                    ),
+                  ),
+                ),
+              ),
+              
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0x40000000),
+                          borderRadius:
+                              BorderRadius.circular(8),
+                        ),
+                        child: _leading(context, Metodos.width(context))
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text(
+                "Cristian Hoyos V",
+                style: TextStyle(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.5,
+                )
+              ),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            const Padding(
+              padding:
+                  EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+              child: Text(
+                'Ing. mecatrónico - ',
+                style: TextStyle(
+                  fontFamily: 'Lexend',
+                  color: Color(0xB3FFFFFF),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(4, 8, 0, 0),
+              child: Text(
+                "cristiannhoyoss@gmail.com",
+                style: TextStyle(
+                  fontFamily: 'Lexend',
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+    
+      
+  Widget _cartaPrincipal(){
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: 200,
+      decoration: BoxDecoration(
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 6,
+            color: Color(0x4B1A1F24),
+            offset: Offset(0, 2),
+          )
+        ],
+        gradient: Metodos.gradientClasic(context),
+        borderRadius: BorderRadius.circular(0),
+      ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
+        child: _contenPrincipalCard()
+      ),
+    );
+            
+  }
+  
   @override
   void dispose() {
     timer.cancel();
     esDispose = false;
     super.dispose();
   }
-
+  List<Widget> body(){
+    return [
+      _cartaPrincipal(),
+      _body()
+    ];
+  }
   @override
   Widget build(BuildContext context) {
     _actualizarMarcas();
-    return FondoScreen(
-      showCircles: true,
-      backButton: true,
-      marginBody: 20,
-      heightAppBar: 20,
-      radiusAppBar: 20,
-      body: _body(),
-      backButtonPressed: () {
-        Navigator.pop(context);
-      },
-    );
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
+      ),
+      child: Scaffold(
+      // appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
+      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          SingleChildScrollView(
+            // ignore: prefer_const_constructors
+            child: GradientBackInsideApp(
+              color: Theme.of(context).focusColor,
+              height: 85,
+              opacity: 0.75,
+            )
+          ),
+          ListView(
+            children: body()
+          ),
+        ]
+      ),
+    ));
   }
 
   List<Marker> _marcasMapa() {
@@ -147,23 +317,25 @@ class _MapasState extends State<Mapas> {
             subdomains: <String>['a', 'b', 'c'],
           ),
         ),
-        PopupMarkerLayerWidget(
-          options: PopupMarkerLayerOptions(
-            markers: _marcasMapa(),
-            popupController: _popupLayerController,
-            popupBuilder: (_, Marker marker) {
-              if (marker is MapMarker) {
-                return MapMarkerPopup(
-                  empresa: marker.empresa, 
-                  empresaAgrupada: marker.empresasAgrupadas,
-                  esAgrupado: marker.esAgrupado,
-                  ubicacionActual: _posicionActual!,
-                );
-              }
-              return _cartaUsario();
-            },
-          ),
-        ),
+      
+        // PopupMarkerLayerWidget(
+        //   options: PopupMarkerLayerOptions(
+        //     markers: _marcasMapa(),
+        //     popupController: _popupLayerController,
+        //     popupBuilder: (_, Marker marker) {
+        //       if (marker is MapMarker) {
+        //         return MapMarkerPopup(
+        //           empresa: marker.empresa, 
+        //           empresaAgrupada: marker.empresasAgrupadas,
+        //           esAgrupado: marker.esAgrupado,
+        //           ubicacionActual: _posicionActual!,
+        //         );
+        //       }
+        //       return _cartaUsario();
+        //     },
+        //   ),
+        // ),
+      
       ],
     );
   }

@@ -22,7 +22,9 @@ class ApiBe{
       "codVersion" : codVersion,
       "buscar" : "",
       "categoria" : "",
-      "codCiudad" : "4136"
+      "codCiudad" : "4110" //Cali
+      // "codCiudad" : "4136" //tulua
+
     });
     if(response.statusCode == 200){
       // for (var item in EmpresasResponse.fromJsonEmpresas(json.decode(response.body)).empresas) {

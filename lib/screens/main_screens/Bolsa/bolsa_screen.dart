@@ -1,4 +1,6 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:location/location.dart';
 import '../../../bloc/user_bloc.dart';
@@ -23,13 +25,323 @@ class _BolsaScreenState extends State<BolsaScreen> {
   bool filtroComerciosAgrupados = false;
   double distanciaComercios = 0.5;
   String buscador = '';
+  bool ofertas = true;
 
+  
+  final dataIntercambiosEnergia = [
+    {
+      'numTransaccion': 1,
+      'entrada': true,
+      'nombre': 'Estiven Hoyos',
+      'dinero':  '\$ 150.00',
+      'energia':  '250 kW',
+      'fecha':  '02-Mayo',
+      'fuente':  'Solar-Eólica',
+      'fuenteIcon': 5,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'En curso'
+    },
+    {
+      'numTransaccion': 3,
+      'entrada': false,
+      'nombre': 'Clara Velandia',
+      'dinero':  '\$ 450.00',
+      'energia':  '7 kW',
+      'fecha':  '28-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
 
+      'estado': 'Finalizada'
 
+    },
+    
+    {
+      'numTransaccion': 1,
+      'entrada': true,
+      'nombre': 'Daniel Hoyos',
+      'dinero':  '\$ 650.00',
+      'energia':  '300 kW',
+      'fecha':  '25-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'Finalizada'
+    },
+    {
+      'numTransaccion': 2,
+      'entrada': true,
+      'nombre': 'Camilo Hoyos',
+      'dinero':  '\$ 240.00',
+      'energia':  '15 kW',
+      'fecha':  '27-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'Finalizada'
+    },
+    
+    {
+      'numTransaccion': 3,
+      'entrada': false,
+      'nombre': 'Maria Velandia',
+      'dinero':  '\$ 150.00',
+      'energia':  '8 kW',
+      'fecha':  '28-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+
+      'estado': 'Finalizada'
+
+    },
+    {
+      'numTransaccion': 3,
+      'entrada': false,
+      'nombre': 'Mercedes Velandia',
+      'dinero':  '\$ 150.00',
+      'energia':  '8 kW',
+      'fecha':  '28-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+
+      'estado': 'Finalizada'
+
+    }
+  ];
+
+  
+  final dataIntercambiosDinero = [
+    {
+      'numTransaccion': 1,
+      'entrada': true,
+      'nombre': 'Estiven Hoyos',
+      'dinero':  '\$ 250.00',
+      'energia':  '25 kW',
+      'fecha':  '02-Mayo',
+      'fuente':  'Solar-Eólica',
+      'fuenteIcon': 5,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'En curso'
+    },
+    {
+      'numTransaccion': 1,
+      'entrada': true,
+      'nombre': 'Estiven Hoyos',
+      'dinero':  '\$ 500.00',
+      'energia':  '25 kW',
+      'fecha':  '25-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'Finalizada'
+    },
+    {
+      'numTransaccion': 2,
+      'entrada': true,
+      'nombre': 'Angel Hoyos',
+      'dinero':  '\$ 240.00',
+      'energia':  '5 kW',
+      'fecha':  '27-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+      'estado': 'Finalizada'
+    },
+    {
+      'numTransaccion': 3,
+      'entrada': false,
+      'nombre': 'Clara Velandia',
+      'dinero':  '\$ 150.00',
+      'energia':  '8 kW',
+      'fecha':  '28-Febrero',
+      'fuente':  'Solar',
+      'fuenteIcon': 1,
+      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
+
+      'estado': 'Finalizada'
+
+    }
+  ];
+
+  String _iconCard(int numero) {
+    var au = 'assets/icons/CleanWater.svg';
+    
+    switch (numero) {
+      case 1:
+        au = BeenergyIcons.solarPanel;
+      break;
+      case 5:
+        au = BeenergyIcons.ecoHouse;
+      break;
+      default:
+      au = au;
+    }
+
+    return au;
+  }
+  
+
+  Widget _card(var data){
+    Intercambio dataIntercmabio = Intercambio(
+      numTransaccion: data['numTransaccion'], 
+      entrada: data['entrada'], 
+      nombre: data['nombre'], 
+      dinero: data['dinero'], 
+      energia: data['energia'], 
+      fecha: data['fecha'], 
+      fuente: data['fuente'], 
+      fuenteIcon: data['fuenteIcon'], 
+      horarioSuminsitro: data['horarioSuminsitro'], 
+      estado: data['estado']
+    );
+    return InkWell(
+      highlightColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      onTap: () {
+        Navigator.push(context,MaterialPageRoute(builder: (context) => ConfirmchangeScreen(dataScreen: dataIntercmabio,)));
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: (data['entrada'] == true )?Theme.of(context).canvasColor: Colors.red,
+            width: 1
+          ),
+          borderRadius: BorderRadius.circular(15.0)
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
+                  )
+                ),
+                Expanded(
+                  child: Column(
+                  children: [
+        
+                  Icon(
+                    (data['entrada'] == false )? Icons.trending_down_outlined: Icons.trending_up_outlined,
+                    size: 30,
+                    color: (data['entrada'] == false )? Colors.red: Theme.of(context).canvasColor,
+                  ),
+    
+                  const SizedBox(height: 5.0),
+    
+                  AutoSizeText(
+                    data['horarioSuminsitro'],
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: Metodos.subtitulosInformativosFondoNegro(context)
+                  ),
+              ],
+            ),
+        
+                ),
+              ],
+              )
+            ),
+            
+            Expanded(
+              child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      data['nombre'].toString().split(' ').first,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).scaffoldBackgroundColor
+                      ),
+                    ),
+                  )
+                ),
+                
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      
+                      AutoSizeText(
+                        data['dinero'],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          fontSize: 12.0,
+                          fontFamily:"SEGOEUI",
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.10,
+                        )
+                      ),
+                                    
+                      const SizedBox(height: 5.0),
+    
+                      AutoSizeText(
+                        data['energia'],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: TextStyle(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          fontSize: 12.0,
+                          fontFamily:"SEGOEUI",
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.10,
+                        )
+                      ),
+                    
+    
+                    ],
+                  ),
+    
+                ),
+              ],
+              )
+            ),
+            
+          ],
+        ),
+      ),
+    );
+  }
+  
+
+  Widget _gridViewCards(var dataInter) {
+    return  Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        margin: const EdgeInsets.only(top: 20),
+        child: GridView.builder(
+          shrinkWrap: true,
+          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+            childAspectRatio: 5/4,
+            crossAxisSpacing: 10, // espaciado horizontal
+            mainAxisSpacing: 10, // espaciado vertical
+            mainAxisExtent: 150,
+            maxCrossAxisExtent: 3*Metodos.width(context) / 4,
+          ),
+          itemCount: dataInter.length,
+          itemBuilder: (context, index){
+            return _card(dataInter[index]);
+          }
+        ),
+      ),
+    );
+  }
+  
   Future<EmpresasResponse> _getEmpresas() async {
     UserBloc userBloc = UserBloc();
     return await userBloc.empresas();
   }
+  
   _permission() async {
     Location location = Location();
 
@@ -76,7 +388,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
     return IconButton(
       //icono de cerrar sesion
       icon: Icon(
-        Icons.search,
+        Icons.map,
         color: Theme.of(context).scaffoldBackgroundColor,
         size: 25,
       ),
@@ -241,9 +553,97 @@ class _BolsaScreenState extends State<BolsaScreen> {
             
   }
   
+  Widget _ofertasSelected(){
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 1,
+            child: InkWell(
+              onTap: () async {
+                setState(() {
+                  ofertas = true;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric( horizontal: 15, vertical: 10),
+                margin: const EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                  color: (ofertas==true)?Theme.of(context).canvasColor:Colors.grey,
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Metodos.borderClasic(context)
+                  // border: Border.all(
+                  //   width: 0.25,
+                  //   color: Theme.of(context).focusColor
+                  // )
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
+                      child: Text(
+                        "Ofertas Energia",
+                        style: Metodos.subtitulosInformativosFondoNegro(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          ),
+
+          Expanded(
+            flex: 1,
+            child: InkWell(
+              onTap: () async {
+                setState(() {
+                  ofertas = false;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric( horizontal: 15, vertical: 10),
+                margin: const EdgeInsets.all(10.0),
+                decoration: BoxDecoration(
+                  color: (ofertas==false)?Theme.of(context).canvasColor:Colors.grey,
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Metodos.borderClasic(context)
+                  // border: Border.all(
+                  //   width: 0.25,
+                  //   color: Theme.of(context).focusColor
+                  // )
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
+                      child: Text(
+                        "Ofertas Dinero",
+                        style: Metodos.subtitulosInformativosFondoNegro(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          )
+        
+        ],
+      ),
+    );
+  }
   List<Widget> body() {
     return [
       _cartaPrincipal(),
+      _ofertasSelected(),
+      (ofertas==true)?_gridViewCards(dataIntercambiosDinero):_gridViewCards(dataIntercambiosEnergia),
+
     ];
   }
 
