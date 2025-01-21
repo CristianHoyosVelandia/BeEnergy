@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../routes.dart';
 
 class IntercambiosEnergyScreen extends StatefulWidget {
-  const IntercambiosEnergyScreen({Key? key}) : super(key: key);
+  const IntercambiosEnergyScreen({super.key});
 
   @override
   State<IntercambiosEnergyScreen> createState() => _IntercambiosEnergyScreenState();
@@ -171,8 +171,8 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Buscar",
@@ -197,8 +197,8 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Volver",
@@ -475,9 +475,7 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
   Widget build(BuildContext context) {
         
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
         body: body(),
       )

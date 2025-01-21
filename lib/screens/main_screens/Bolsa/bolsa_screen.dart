@@ -10,7 +10,7 @@ import '../../../utils/metodos.dart';
 import '../../../widgets/general_widgets.dart';
 
 class BolsaScreen extends StatefulWidget {
-  const BolsaScreen({Key? key}) : super(key: key);
+  const BolsaScreen({super.key});
 
   @override
   State<BolsaScreen> createState() => _BolsaScreenState();
@@ -393,8 +393,8 @@ class _BolsaScreenState extends State<BolsaScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Ver en Mapa",
@@ -650,9 +650,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
   @override
   Widget build(BuildContext context) {
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       // appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
       // backgroundColor: Theme.of(context).scaffoldBackgroundColor,

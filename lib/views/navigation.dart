@@ -11,7 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class NavPages extends StatefulWidget {
   final MyUser myUser;
-  const NavPages({Key? key, required this.myUser}) : super(key: key);
+  const NavPages({super.key, required this.myUser});
 
   @override
   State<NavPages> createState() => _NavPagesState();
@@ -53,7 +53,7 @@ class _NavPagesState extends State<NavPages> {
           height: height,
           width: width,
         ),
-        backgroundColor: (color != null) ? color : Colors.white.withOpacity(0.5),
+        backgroundColor: (color != null) ? color : Colors.white.withAlpha((0.5 * 255).toInt()),
       );
     }
     else{
@@ -62,14 +62,14 @@ class _NavPagesState extends State<NavPages> {
         icon: SvgPicture.asset(
           icono,
         ),
-        backgroundColor: (color != null) ? color : Colors.white.withOpacity(0.5),
+        backgroundColor: (color != null) ? color : Colors.white.withAlpha((0.5 * 255).toInt()),
       );
     }
   }
 
   MaterialButton btnNavBar(int currentIndexTap, BuildContext context, String tituloBtn, IconData icon){
     return MaterialButton(
-      minWidth: 20,
+      minWidth: 15,
       onPressed: () {  
         setState(() {
           currentIndex=currentIndexTap;
@@ -84,8 +84,8 @@ class _NavPagesState extends State<NavPages> {
           ),
           AutoSizeText(
             tituloBtn,
-            maxFontSize: 20,
-            minFontSize: 12,
+            maxFontSize: 12,
+            minFontSize: 8,
             style: TextStyle(
               color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
             ),
@@ -172,7 +172,7 @@ class _NavPagesState extends State<NavPages> {
                     children: [
                                         
                       Expanded(
-                        child: btnNavBar(0, context, 'Principal', Icons.dashboard)
+                        child: btnNavBar(0, context, 'Home', Icons.dashboard)
                       ), 
                       
                       Expanded(

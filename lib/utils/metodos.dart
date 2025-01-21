@@ -281,16 +281,12 @@ class Metodos {
   
   static Widget mediaQuery(BuildContext context, Widget body) {
     return  MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-      textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      // textScaleFactor:0.5,
-    ),
-    
-    child:Scaffold(
-        extendBody: true,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: body
-      )
+      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
+      child:Scaffold(
+          extendBody: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: body
+        )
     );
   }
   //Metodo que no hace nada para cuando se piden los retornos de los futuros
@@ -848,7 +844,7 @@ class GradientBack extends StatelessWidget {
         Container(
           width: screenWidth,
           height: screenHeight,
-          color: Theme.of(context).primaryColor.withOpacity(0.90),
+          color: Theme.of(context).primaryColor.withAlpha((0.90 * 255).toInt()),
           child: FittedBox(
             fit: BoxFit.none,
             alignment: const Alignment(0, 4),
@@ -878,11 +874,11 @@ class GradientBackInsideApp extends StatelessWidget {
   final double opacity;
 
   GradientBackInsideApp({
-    Key? key,
+    super.key,
     required this.color,
     required this.height,
     required this.opacity,
-  }): super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -921,7 +917,7 @@ class InputTextFieldWidget extends StatelessWidget {
 
 
   InputTextFieldWidget({
-    Key? key,
+    super.key,
     required this.labelText,
     required this.controller,
     this.formato,
@@ -930,7 +926,7 @@ class InputTextFieldWidget extends StatelessWidget {
     this.readOnly,
     this.obscureText,
     required this.context, required String? Function(dynamic value) validador,
-  }) : super(key: key);
+  });
 
   String labelText;
   TextEditingController controller;
@@ -991,11 +987,11 @@ class AppbarBtns extends StatelessWidget {
   final double opacity;
 
   const AppbarBtns({
-    Key? key,
+    super.key,
     this.color,
     required this.height,
     required this.opacity,
-  }): super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1008,7 +1004,7 @@ class AppbarBtns extends StatelessWidget {
         Container(
           width: screenWidth,
           height: screenHeight,
-          color: Theme.of(context).primaryColor.withOpacity(opacity),
+          color: Theme.of(context).primaryColor.withAlpha((opacity* 255).toInt()),
           child: FittedBox(
             fit: BoxFit.none,
             alignment: const Alignment(0, 4),
@@ -1091,9 +1087,7 @@ class _FondoScreenState extends State<FondoScreen> {
 
 
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: widget.showAppBar ?? true 
       ? Scaffold(
         appBar: AppBar(

@@ -7,7 +7,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 class EnergyScreen extends StatefulWidget {
   final MyUser? myUser;
-  const EnergyScreen({Key? key, this.myUser}) : super(key: key);
+  const EnergyScreen({super.key, this.myUser});
 
   @override
   State<EnergyScreen> createState() => _EnergyScreenState();
@@ -458,7 +458,7 @@ class _LineChartSampleState extends State<LineChartSample> {
               'avg',
               style: TextStyle(
                 fontSize: 12,
-                color: showAvg ? Colors.white.withOpacity(0.5) : Colors.white,
+                color: showAvg ? Colors.white.withAlpha((0.5 * 255).toInt()) : Colors.white,
               ),
             ),
           ),
@@ -490,7 +490,8 @@ class _LineChartSampleState extends State<LineChartSample> {
     }
 
     return SideTitleWidget(
-      axisSide: meta.axisSide,
+      // axisSide: meta.axisSide,
+      meta: meta,
       child: text,
     );
   }
@@ -615,7 +616,7 @@ class _LineChartSampleState extends State<LineChartSample> {
             show: true,
             gradient: LinearGradient(
               colors: gradientColors
-                  .map((color) => color.withOpacity(0.3))
+                  .map((color) => color.withAlpha((0.3 * 255).toInt()))
                   .toList(),
             ),
           ),
@@ -709,10 +710,10 @@ class _LineChartSampleState extends State<LineChartSample> {
               colors: [
                 ColorTween(begin: gradientColors[0], end: gradientColors[1])
                     .lerp(0.2)!
-                    .withOpacity(0.1),
+                    .withAlpha((0.1 * 255).toInt()),
                 ColorTween(begin: gradientColors[0], end: gradientColors[1])
                     .lerp(0.2)!
-                    .withOpacity(0.1),
+                    .withAlpha((0.1 * 255).toInt()),
               ],
             ),
           ),
@@ -733,7 +734,7 @@ class _LineChart extends StatelessWidget {
   Widget build(BuildContext context) {
     return LineChart(
       sampleData2,
-      swapAnimationDuration: const Duration(milliseconds: 500),
+      // swapAnimationDuration: const Duration(milliseconds: 500),
     );
   }
 
@@ -846,11 +847,12 @@ class _LineChart extends StatelessWidget {
         break;
     }
 
-    return SideTitleWidget(
-      axisSide: meta.axisSide,
-      space: 10,
-      child: text,
-    );
+     return SideTitleWidget(
+      // Reemplaza axisSide con meta.side
+      meta: meta, // Este es el nuevo nombre del parámetro
+      space: 10,       // Espaciado entre el texto y el gráfico
+      child: text,     // Widget hijo que se mostrará
+  );
   }
 
   SideTitles get bottomTitles => SideTitles(
@@ -865,7 +867,7 @@ class _LineChart extends StatelessWidget {
   FlBorderData get borderData => FlBorderData(
     show: true,
     border: Border(
-      bottom: BorderSide(color: Color(int.parse("0xff${ColorsApp.color1}")).withOpacity(0.2), width: 4),
+      bottom: BorderSide(color: Color(int.parse("0xff${ColorsApp.color1}")).withAlpha((0.2*255).toInt()), width: 4),
       left: const BorderSide(color: Colors.transparent),
       right: const BorderSide(color: Colors.transparent),
       top: const BorderSide(color: Colors.transparent),
@@ -875,7 +877,7 @@ class _LineChart extends StatelessWidget {
   LineChartBarData get lineChartBarData2_1 => LineChartBarData(
         isCurved: true,
         curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color3}")).withOpacity(0.5),
+        color: Color(int.parse("0xff${ColorsApp.color3}")).withAlpha((0.5 * 255).toInt()),
         barWidth: 2,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),
@@ -899,13 +901,13 @@ class _LineChart extends StatelessWidget {
 
   LineChartBarData get lineChartBarData2_2 => LineChartBarData(
         isCurved: true,
-        color: Color(int.parse("0xff${ColorsApp.color4}")).withOpacity(0.5),
+        color: Color(int.parse("0xff${ColorsApp.color4}")).withAlpha((0.5 * 255).toInt()),
         barWidth: 2,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),
         belowBarData: BarAreaData(
           show: true,
-          color: Color(int.parse("0xff${ColorsApp.color4}")).withOpacity(0.2),
+          color: Color(int.parse("0xff${ColorsApp.color4}")).withAlpha((0.2 * 255).toInt()),
         ),
         spots: const [
           FlSpot(1, 0.5),
@@ -928,7 +930,7 @@ class _LineChart extends StatelessWidget {
   LineChartBarData get lineChartBarData2_3 => LineChartBarData(
         isCurved: true,
         curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color2}")).withOpacity(0.5),
+        color: Color(int.parse("0xff${ColorsApp.color2}")).withAlpha((0.5 * 255).toInt()),
         barWidth: 2,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),

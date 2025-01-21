@@ -4,7 +4,7 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
 class NoRecuerdomiclaveScreen extends StatefulWidget {
-  const NoRecuerdomiclaveScreen({Key? key}) : super(key: key);
+  const NoRecuerdomiclaveScreen({super.key});
 
   @override
   State<NoRecuerdomiclaveScreen> createState() => _NoRecuerdomiclaveScreenState();

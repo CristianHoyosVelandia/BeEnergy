@@ -8,7 +8,7 @@ import '../routes.dart';
 import '../widgets/general_widgets.dart';
 
 class Beenergy extends StatefulWidget {
-  const Beenergy({Key? key}) : super(key: key);
+  const Beenergy({super.key});
 
   @override
   State<Beenergy> createState() => _BeenergyState();

@@ -8,7 +8,7 @@ import '../../../models/my_user.dart';
 class MicuentaScreen extends StatefulWidget {
   final MyUser myUser;
 
-  const MicuentaScreen({Key? key, required this.myUser}) : super(key: key);
+  const MicuentaScreen({super.key, required this.myUser});
 
   @override
   State<MicuentaScreen> createState() => _MicuentaScreenState();
@@ -27,8 +27,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Cerrar Sesión",

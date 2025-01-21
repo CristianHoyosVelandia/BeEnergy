@@ -8,7 +8,7 @@ import '../../../models/callmodels.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
-  const HomeScreen({Key? key, this.myUser}) : super(key: key);
+  const HomeScreen({super.key, this.myUser});
   
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -213,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       maxLines: 2,
                       style: TextStyle(
                         color: Theme.of(context).canvasColor,
-                        fontSize: 15,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                       )
                     ),
@@ -226,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       maxLines: 2,
                       style: TextStyle(
                         color: Theme.of(context).canvasColor,
-                        fontSize: 15,
+                        fontSize: 12,
                         fontWeight: FontWeight.w800,
                       )
                     ),

@@ -8,7 +8,7 @@ import '../../../models/my_user.dart';
 class CentroNotificacionesPerfilScreen extends StatefulWidget {
   final MyUser myUser;
 
-  const CentroNotificacionesPerfilScreen({Key? key, required this.myUser}) : super(key: key);
+  const CentroNotificacionesPerfilScreen({super.key, required this.myUser});
 
   @override
   State<CentroNotificacionesPerfilScreen> createState() => _CentroNotificacionesPerfilScreenState();

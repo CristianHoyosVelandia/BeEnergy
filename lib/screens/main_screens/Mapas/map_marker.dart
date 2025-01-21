@@ -10,19 +10,20 @@ class MapMarker extends Marker {
     this.empresa, 
     this.empresasAgrupadas, 
     this.esAgrupado = false
-  })
-  : super(
+  }) : super(
       point: LatLng(
         double.parse(empresa?.latEmpresa ?? empresasAgrupadas?.latEmpresa), 
         double.parse(empresa?.lonEmpresa ?? empresasAgrupadas?.lonEmpresa)
       ),
-      builder: (context) => const Image(
-                  alignment: AlignmentDirectional.center,
-                  image: AssetImage("assets/img/logo.png"),
-                  width: 30.0,
-                  height: 30.0,
-                ),
-    );
+      child: const Image(
+        alignment: AlignmentDirectional.center,
+        image: AssetImage("assets/img/logo.png"),
+        width: 30.0,
+        height: 30.0,
+      ),
+  );
+
+
 
   final Empresa? empresa;
   final EmpresasAgrupadas? empresasAgrupadas;
@@ -31,12 +32,12 @@ class MapMarker extends Marker {
 
 class MapMarkerPopup extends StatelessWidget {
   const MapMarkerPopup({
-    Key? key, 
+    super.key, 
     required this.ubicacionActual,
     this.empresa, 
     this.empresaAgrupada, 
     this.esAgrupado = false,
-  }) : super(key: key);
+  });
 
   final Empresa? empresa;
   final EmpresasAgrupadas? empresaAgrupada;

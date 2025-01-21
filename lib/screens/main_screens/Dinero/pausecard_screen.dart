@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/metodos.dart';
 
 class PauseCardWidget extends StatefulWidget {
-  const PauseCardWidget({Key? key}) : super(key: key);
+  const PauseCardWidget({super.key});
 
   @override
   State<PauseCardWidget> createState() => _PauseCardWidgetState();

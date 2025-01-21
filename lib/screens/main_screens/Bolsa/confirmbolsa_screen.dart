@@ -7,7 +7,7 @@ import '../../../routes.dart';
 
 class ConfirmchangeScreen extends StatefulWidget {
   final Intercambio dataScreen;
-  const ConfirmchangeScreen({Key? key, required this.dataScreen}) : super(key: key);
+  const ConfirmchangeScreen({super.key, required this.dataScreen});
 
   @override
   State<ConfirmchangeScreen> createState() => _ConfirmchangeScreenState();
@@ -130,8 +130,8 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Cerrar Sesión",
@@ -150,8 +150,8 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Volver",
@@ -370,9 +370,7 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
     _expriracion.text = "1 Semana";
     
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       body: Stack(
         alignment: Alignment.center,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ConfiguracionScreen extends StatefulWidget {
-  const ConfiguracionScreen({Key? key}) : super(key: key);
+  const ConfiguracionScreen({super.key});
 
   @override
   State<ConfiguracionScreen> createState() => _ConfiguracionScreenState();

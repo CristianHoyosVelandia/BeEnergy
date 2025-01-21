@@ -9,7 +9,7 @@ import '../../../data/constants.dart';
 class ErecordScreen extends StatefulWidget {
   // ignore: prefer_typing_uninitialized_variables
   final Intercambio dataScreen;
-  const ErecordScreen({Key? key, required this.dataScreen}) : super(key: key);
+  const ErecordScreen({super.key, required this.dataScreen});
 
   @override
   State<ErecordScreen> createState() => _ErecordScreenState();
@@ -120,8 +120,8 @@ class _ErecordScreenState extends State<ErecordScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Cerrar Sesión",
@@ -140,8 +140,8 @@ class _ErecordScreenState extends State<ErecordScreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Volver",
@@ -317,7 +317,7 @@ class _ErecordScreenState extends State<ErecordScreen> {
               topLeft: Radius.circular(!left ? sizeWidth : 0),
               bottomLeft: Radius.circular(!left ? sizeWidth : 0)
             ),
-            color: Theme.of(context).cardColor.withOpacity(0.1)
+            color: Theme.of(context).cardColor.withAlpha((0.1 * 255).toInt()),
           ),
         ),
       );
@@ -339,7 +339,7 @@ class _ErecordScreenState extends State<ErecordScreen> {
                   width: 5,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).canvasColor.withOpacity(0.5)
+                      color: Theme.of(context).canvasColor.withAlpha((0.5 * 255).toInt()),
                     )
                   ))
                 )
@@ -526,9 +526,7 @@ class _ErecordScreenState extends State<ErecordScreen> {
     _expriracion.text = "1 Semana";
     
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       body: Stack(
         alignment: Alignment.center,

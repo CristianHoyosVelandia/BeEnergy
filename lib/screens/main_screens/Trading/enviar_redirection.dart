@@ -6,7 +6,7 @@ import '../../../utils/metodos.dart';
 
 
 class OnboardingWidget extends StatefulWidget {
-  const OnboardingWidget({Key? key}) : super(key: key);
+  const OnboardingWidget({super.key});
 
   @override
   State<OnboardingWidget> createState() => _OnboardingWidgetState();
@@ -163,9 +163,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
   @override
   Widget build(BuildContext context) {
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       backgroundColor: Theme.of(context).focusColor,
       body: Stack(

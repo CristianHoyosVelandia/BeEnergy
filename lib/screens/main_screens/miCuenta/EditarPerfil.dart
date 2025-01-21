@@ -9,7 +9,7 @@ import '../../../models/my_user.dart';
 class EditarPerfilScreen extends StatefulWidget {
   final MyUser myUser;
 
-  const EditarPerfilScreen({Key? key, required this.myUser}) : super(key: key);
+  const EditarPerfilScreen({super.key, required this.myUser});
 
   @override
   State<EditarPerfilScreen> createState() => _EditarPerfilScreenState();

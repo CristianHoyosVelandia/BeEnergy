@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/metodos.dart';
 
 class Cardscreen extends StatefulWidget {
-  const Cardscreen({Key? key}) : super(key: key);
+  const Cardscreen({super.key});
 
   @override
   State<Cardscreen> createState() => _CardscreenState();

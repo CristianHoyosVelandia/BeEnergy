@@ -27,22 +27,22 @@ dependencies:
   draggable_widget: ^2.0.0
   #F
   flutter_svg: ^2.0.3
-  flutter_speed_dial: ^6.2.0
-  fl_chart: ^0.62.0
+  flutter_speed_dial: ^7.0.0
+  fl_chart: ^0.70.2
   font_awesome_flutter: ^10.4.0
-  latlong2: ^0.8.1
+  latlong2: ^0.9.1
 
   #I
-  intl: ^0.17.0
+  intl: ^0.20.1
 
   #S
   sqflite: ^2.2.5
-  syncfusion_flutter_charts: ^20.4.54
-  flutter_map: ^0.14.0
-  flutter_map_marker_popup: ^2.1.2
-  location: ^4.3.0
+  syncfusion_flutter_charts: ^28.1.41
+  flutter_map: ^7.0.2
+  flutter_map_marker_popup: ^7.0.0
+  location: ^7.0.1
   bloc_provider: ^1.0.0
-  rxdart: ^0.27.7
+  rxdart: ^0.28.0
 
 
 dev_dependencies:
@@ -53,7 +53,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

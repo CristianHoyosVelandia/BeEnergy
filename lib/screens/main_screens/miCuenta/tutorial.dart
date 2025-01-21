@@ -8,7 +8,7 @@ import '../../../models/my_user.dart';
 class TutorialScreen extends StatefulWidget {
   final MyUser myUser;
 
-  const TutorialScreen({Key? key, required this.myUser}) : super(key: key);
+  const TutorialScreen({super.key, required this.myUser});
 
   @override
   State<TutorialScreen> createState() => _TutorialScreenState();

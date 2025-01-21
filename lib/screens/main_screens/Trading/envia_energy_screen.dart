@@ -6,7 +6,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../../../routes.dart';
 
 class EEscreen extends StatefulWidget {
-  const EEscreen({Key? key}) : super(key: key);
+  const EEscreen({super.key});
 
   @override
   State<EEscreen> createState() => _EEscreenState();
@@ -129,8 +129,8 @@ class _EEscreenState extends State<EEscreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Cerrar Sesión",
@@ -149,8 +149,8 @@ class _EEscreenState extends State<EEscreen> {
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: MaterialStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: MaterialStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
+        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
       ),
 
       tooltip: "Volver",
@@ -455,9 +455,7 @@ class _EEscreenState extends State<EEscreen> {
     _expriracion.text = "1 Semana";
     
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       body: Stack(
         alignment: Alignment.center,

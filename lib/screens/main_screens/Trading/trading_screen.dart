@@ -7,7 +7,7 @@ import '../../../routes.dart';
 import '../Dinero/card_screen.dart';
 
 class TradingScreen extends StatefulWidget {
-  const TradingScreen({Key? key}) : super(key: key);
+  const TradingScreen({super.key});
 
   @override
   State<TradingScreen> createState() => _TradingScreenState();
@@ -179,7 +179,7 @@ class _TradingScreenState extends State<TradingScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 15.0),
           margin: const EdgeInsets.only(right: 25.0, left: 25.0,),
           decoration: BoxDecoration(
-            color: Theme.of(context).canvasColor.withOpacity(0.75),
+            color: Theme.of(context).canvasColor.withAlpha((0.75 * 255).toInt()),
             borderRadius: BorderRadius.circular(15.0),
             gradient: Metodos.gradientClasic(context),
             border: Metodos.borderClasic(context)
@@ -321,9 +321,7 @@ class _TradingScreenState extends State<TradingScreen> {
   @override
   Widget build(BuildContext context) {
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.4),
-      ),
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
       child: Scaffold(
       appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
       // backgroundColor: Theme.of(context).scaffoldBackgroundColor,

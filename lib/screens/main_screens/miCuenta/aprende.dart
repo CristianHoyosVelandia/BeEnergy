@@ -8,7 +8,7 @@ import '../../../models/my_user.dart';
 class AprendeScreen extends StatefulWidget {
   final MyUser myUser;
 
-  const AprendeScreen({Key? key, required this.myUser}) : super(key: key);
+  const AprendeScreen({super.key, required this.myUser});
 
   @override
   State<AprendeScreen> createState() => _AprendeScreenState();
