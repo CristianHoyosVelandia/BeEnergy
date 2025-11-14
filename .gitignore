@@ -48,4 +48,8 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Font files (download manually - see download_fonts.md)
+fonts/*.ttf
+fonts/*.otf
+
 CLAUDE.md
