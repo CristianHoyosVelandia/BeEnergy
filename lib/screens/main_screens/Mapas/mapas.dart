@@ -211,7 +211,7 @@ class _MapasState extends State<Mapas> {
       ],
     );
   }
-    
+
       
   Widget _cartaPrincipal(){
     return Container(

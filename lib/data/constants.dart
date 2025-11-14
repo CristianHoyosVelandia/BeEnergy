@@ -7,8 +7,8 @@ class ColorsApp {
   static const color1 = '0070C0';
   //morado
   static const color2 = '7E57C2';
-  //amarillo
-  static const color3 = '26A69A';
+  //amarillo 
+  static const color3 = '891427';
   //verde
   static const color4 = 'FFD966';
 }
