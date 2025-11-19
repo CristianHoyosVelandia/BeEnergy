@@ -1,6 +1,6 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/routes.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
@@ -65,8 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return SfCircularChart(
       legend: Legend(
         isVisible: true,
-        overflowMode: LegendItemOverflowMode.scroll,
-        textStyle: context.textStyles.bodySmall,
+        overflowMode: LegendItemOverflowMode.wrap,
+        textStyle: context.textStyles.bodySmall?.copyWith(
+          fontSize: AppTokens.fontSize10,
+        ),
+        position: LegendPosition.bottom,
       ),
       series: <CircularSeries>[
         DoughnutSeries<GGData, String>(
@@ -75,11 +78,16 @@ class _HomeScreenState extends State<HomeScreen> {
           yValueMapper: (datum, _) => datum.consumo,
           dataLabelSettings: DataLabelSettings(
             isVisible: true,
+            labelPosition: ChartDataLabelPosition.outside,
+            connectorLineSettings: ConnectorLineSettings(
+              type: ConnectorType.curve,
+              length: '10%',
+            ),
             textStyle: TextStyle(
-              color: context.colors.surface,
-              fontSize: AppTokens.fontSize11,
+              color: context.colors.onSurface,
+              fontSize: AppTokens.fontSize10,
               fontWeight: AppTokens.fontWeightMedium,
-            )
+            ),
           ),
         )
       ],
@@ -89,133 +97,89 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _trData() {
     return Column(
       children: [
-        _importee(),
+        _energyCard(
+          title: "Importe",
+          energy: -20,
+          amount: 5720,
+          icon: Icons.trending_down_rounded,
+          color: AppTokens.error,
+        ),
         SizedBox(height: AppTokens.space8),
-        _exportee()
+        _energyCard(
+          title: "Exporte",
+          energy: 50,
+          amount: 14300,
+          icon: Icons.trending_up_rounded,
+          color: AppTokens.primaryRed,
+        ),
       ],
     );
   }
 
-  Widget _importee() {
+  /// Widget reutilizable para mostrar tarjetas de energía (import/export)
+  Widget _energyCard({
+    required String title,
+    required double energy,
+    required double amount,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
-      padding: EdgeInsets.all(AppTokens.space12),
+      padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusMedium,
         border: Border.all(
-          color: context.colors.outline.withOpacity(0.1),
+          color: context.colors.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            "Importe",
-            style: context.textStyles.labelMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: AppTokens.borderRadiusSmall,
+            ),
+            child: Icon(
+              icon,
+              size: 28,
+              color: color,
             ),
           ),
-          SizedBox(height: AppTokens.space12),
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(AppTokens.space8),
-                decoration: BoxDecoration(
-                  color: AppTokens.error.withOpacity(0.1),
-                  borderRadius: AppTokens.borderRadiusSmall,
-                ),
-                child: Icon(
-                  Icons.trending_down_rounded,
-                  size: 24,
-                  color: AppTokens.error,
-                ),
-              ),
-              SizedBox(width: AppTokens.space12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "-20 kWh",
-                    style: context.textStyles.titleMedium?.copyWith(
-                      color: AppTokens.error,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
+          SizedBox(width: AppTokens.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.textStyles.labelSmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    fontWeight: AppTokens.fontWeightMedium,
                   ),
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    "\$ 5.720",
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.error,
-                      fontWeight: AppTokens.fontWeightMedium,
-                    ),
+                ),
+                SizedBox(height: AppTokens.space8),
+                Text(
+                  Formatters.formatEnergy(energy),
+                  style: context.textStyles.headlineSmall?.copyWith(
+                    color: color,
+                    fontWeight: AppTokens.fontWeightBold,
                   ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _exportee() {
-    return Container(
-      padding: EdgeInsets.all(AppTokens.space12),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(
-          color: context.colors.outline.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Exporte",
-            style: context.textStyles.labelMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: AppTokens.space4),
+                Text(
+                  Formatters.formatCurrency(amount),
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: AppTokens.space12),
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(AppTokens.space8),
-                decoration: BoxDecoration(
-                  color: AppTokens.primaryRed.withOpacity(0.1),
-                  borderRadius: AppTokens.borderRadiusSmall,
-                ),
-                child: Icon(
-                  Icons.trending_up_rounded,
-                  size: 24,
-                  color: AppTokens.primaryRed,
-                ),
-              ),
-              SizedBox(width: AppTokens.space12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "+50 kWh",
-                    style: context.textStyles.titleMedium?.copyWith(
-                      color: AppTokens.primaryRed,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    "\$ 14.300",
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryRed,
-                      fontWeight: AppTokens.fontWeightMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ],
       ),
@@ -223,13 +187,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _saludoText() {
-    String nombre = "cristian";
-    if (widget.myUser != null) {
-      nombre = (widget.myUser!.nombre)!;
-      final splitted = nombre.split(' ');
-      nombre = splitted[0];
-    }
-
     return Container(
       width: context.width,
       padding: EdgeInsets.symmetric(
@@ -265,19 +222,19 @@ class _HomeScreenState extends State<HomeScreen> {
         color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusLarge,
         border: Border.all(
-          color: context.colors.outline.withOpacity(0.1),
+          color: context.colors.outline.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
       child: Row(
         children: [
           Expanded(
-            flex: 3,
+            flex: 2,
             child: _grafico(),
           ),
-          SizedBox(width: AppTokens.space8),
+          SizedBox(width: AppTokens.space12),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: _trData(),
           )
         ],
@@ -289,16 +246,16 @@ class _HomeScreenState extends State<HomeScreen> {
     return Expanded(
       flex: 1,
       child: InkWell(
-        onTap: () async {
+        onTap: () {
           switch (onTap) {
             case 1:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const TradingScreen()));
+              context.push(const TradingScreen());
               break;
             case 2:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const BolsaScreen()));
+              context.push(const BolsaScreen());
               break;
             default:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const TradingScreen()));
+              context.push(const TradingScreen());
               break;
           }
         },
@@ -312,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: context.colors.surface,
             borderRadius: AppTokens.borderRadiusMedium,
             border: Border.all(
-              color: context.colors.outline.withOpacity(0.1),
+              color: context.colors.outline.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -323,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: EdgeInsets.all(AppTokens.space12),
                 decoration: BoxDecoration(
-                  color: context.colors.primaryContainer.withOpacity(0.3),
+                  color: context.colors.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: AppTokens.borderRadiusSmall,
                 ),
                 child: Icon(
@@ -337,6 +294,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 nombre,
                 style: context.textStyles.labelMedium,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -383,14 +342,16 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: data.length,
       separatorBuilder: (context, index) => SizedBox(height: AppTokens.space8),
       itemBuilder: (BuildContext context, int index) {
-        final bool isIncome = data[index]['entrada'] as bool;
+        final transaction = data[index];
+        final bool isIncome = transaction['entrada'] as bool;
         final color = isIncome ? AppTokens.primaryRed : AppTokens.error;
 
         return InkWell(
-          onTap: () async {
-            if (data[index]['numTransaccion'] != "") {
-              print("Presiono la carta con numTransaccion ${data[index]['numTransaccion']}");
-            }
+          onTap: () {
+            // TODO: Navegar a detalle de transacción
+            context.showInfoSnackbar(
+              "Transacción #${transaction['numTransaccion']}"
+            );
           },
           borderRadius: AppTokens.borderRadiusMedium,
           child: Container(
@@ -399,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: context.colors.surface,
               borderRadius: AppTokens.borderRadiusMedium,
               border: Border.all(
-                color: context.colors.outline.withOpacity(0.1),
+                color: context.colors.outline.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
@@ -409,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: EdgeInsets.all(AppTokens.space8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: AppTokens.borderRadiusSmall,
                   ),
                   child: Icon(
@@ -425,7 +386,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "${data[index]['nombre']}",
+                        "${transaction['nombre']}",
                         style: context.textStyles.bodyMedium?.copyWith(
                           fontWeight: AppTokens.fontWeightMedium,
                         ),
@@ -434,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: AppTokens.space4),
                       Text(
-                        "${data[index]['fuente']} • ${data[index]['energia']}",
+                        "${transaction['fuente']} • ${transaction['energia']}",
                         style: context.textStyles.bodySmall?.copyWith(
                           color: context.colors.onSurfaceVariant,
                         ),
@@ -450,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      "${data[index]['dinero']}",
+                      "${transaction['dinero']}",
                       style: context.textStyles.bodyMedium?.copyWith(
                         color: color,
                         fontWeight: AppTokens.fontWeightBold,
@@ -458,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     SizedBox(height: AppTokens.space4),
                     Text(
-                      "${data[index]['fecha']}",
+                      "${transaction['fecha']}",
                       style: context.textStyles.bodySmall?.copyWith(
                         color: context.colors.onSurfaceVariant,
                       ),
@@ -487,21 +448,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: Icon(
-              Icons.add_circle_outline_rounded,
+              Icons.arrow_forward_rounded,
               size: 24,
               color: context.colors.primary,
             ),
-            tooltip: "Nueva transacción",
-            onPressed: () async {
-              metodos.alertsDialog(
-                context,
-                "¿Deseas cerrar tu sesión ahora?",
-                Metodos.width(context) - 50,
-                "Cancelar",
-                2,
-                "Si",
-                3
-              );
+            tooltip: "Ver todas",
+            onPressed: () {
+              // TODO: Navegar a la pantalla de historial completo
+              context.showInfoSnackbar("Próximamente: Ver historial completo");
             },
           ),
         ],
@@ -559,7 +513,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: metodos.appbarPrincipal(context, widget.myUser!.nombre),
+      appBar: metodos.appbarPrincipal(
+        context,
+        widget.myUser?.nombre ?? "Usuario"
+      ),
       backgroundColor: context.colors.background,
       body: body(),
     );

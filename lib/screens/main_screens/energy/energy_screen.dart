@@ -1,5 +1,8 @@
 // ignore_for_file: file_names
 import 'package:flutter/material.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/constants.dart';
 import '../../../models/my_user.dart';
 import '../../../utils/metodos.dart';
@@ -23,71 +26,52 @@ class _EnergyScreenState extends State<EnergyScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(10.0, 0.0, 5.0, 5.0),
-          child: Image(
+        Padding(
+          padding: EdgeInsets.only(
+            left: AppTokens.space8,
+            right: AppTokens.space4,
+            bottom: AppTokens.space4,
+          ),
+          child: const Image(
             alignment: AlignmentDirectional.center,
             image: AssetImage("assets/img/ecoHouse.jpg"),
-            width: 275.0,
+            width: 225.0,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 0.0),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTokens.space8,
+            vertical: AppTokens.space8,
+          ),
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 0.0),
-                child: Text(
-                  "10 kW",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 25.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.10,
-                  )
+              Text(
+                Formatters.formatPower(10),
+                style: context.textStyles.headlineMedium?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 0.0, 5.0, 0.0),
-                child: Text(
-                  "Capacidad",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 12.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.w200,
-                    letterSpacing: 1.10,
-                  )
+              SizedBox(height: AppTokens.space4),
+              Text(
+                "Capacidad",
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 25.0, 5.0, 0.0),
-                child: Text(
-                  "5.5 kWh",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 25.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.10,
-                  )
+              SizedBox(height: AppTokens.space24),
+              Text(
+                Formatters.formatEnergy(5.5),
+                style: context.textStyles.headlineMedium?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 0.0, 5.0, 15.0),
-                child: Text(
-                  "Consumo",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 12.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.w200,
-                    letterSpacing: 1.10,
-                  )
+              SizedBox(height: AppTokens.space4),
+              Text(
+                "Consumo",
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
-              
             ],
           )
         ),
@@ -96,111 +80,95 @@ class _EnergyScreenState extends State<EnergyScreen> {
   }
   Widget _indicadoresCasa(){
     return Container(
-      margin: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
-      padding: const EdgeInsets.all(5.0),
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space8,
+      ),
+      padding: EdgeInsets.all(AppTokens.space12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        // border: metodos.borderCajas(context),
-        borderRadius: BorderRadius.circular(15.0),
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
         border: Border.all(
-          color: Theme.of(context).focusColor,
-          width: 0.25
-        )
+          color: context.colors.outline.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
+          // Weather info header
           Row(
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 0.0),
-                child: Image(
+              Padding(
+                padding: EdgeInsets.only(right: AppTokens.space8),
+                child: const Image(
                   alignment: AlignmentDirectional.center,
                   image: AssetImage("assets/img/cloudy.png"),
-                  // image:  AssetImage("assets/img/logo.png"),
                   width: 30.0,
                   height: 30.0,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 0.0),
-                child: Text(
-                  "27 °C - Tulúa",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 15.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.10,
-                  )
+              Text(
+                "27 °C - Tulúa",
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: AppTokens.fontWeightSemiBold,
                 ),
               ),
             ],
           ),
+          SizedBox(height: AppTokens.space12),
+          // Date and Switch
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10.0, 10.0, 0.0, 0.0),
-                    child: Text(
-                      "28",
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 35.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.10,
-                      )
+                  Text(
+                    "28",
+                    style: context.textStyles.displayMedium?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
-
+                  SizedBox(width: AppTokens.space4),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(2.0, 20.0, 5.0, 0.0),
+                    padding: EdgeInsets.only(bottom: AppTokens.space8),
                     child: Text(
                       "Abril",
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 15.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.10,
-                      )
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightSemiBold,
+                      ),
                     ),
                   ),
                 ],
               ),
               Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(5.0, 5.0, 15.0, 0.0),
-                    child: Text(
-                      (casaVal) ?"Almacenar" : "Exportar",
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 12.0,
-                        fontWeight: FontWeight.bold
-                      ),
+                  Text(
+                    (casaVal) ? "Almacenar" : "Exportar",
+                    style: context.textStyles.labelSmall?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
-                  Switch(
-                    // This bool value toggles the switch.
-                    value: casaVal,
-                    activeColor: Theme.of(context).canvasColor,
-                    onChanged: (bool value) {
-                      // This is called when the user toggles the switch.
-                      setState(() {
-                        casaVal = value;
-                      });
-                    },
-                  ),
+                  Transform.scale(
+                    scale: 0.7, // 0.7 = más pequeño (puedes ajustar)
+                    child: Switch(
+                      value: casaVal,
+                      activeColor: context.colors.primary,
+                      onChanged: (bool value) {
+                        setState(() {
+                          casaVal = value;
+                        });
+                      },
+                    ),
+                  )
+
                 ],
               )
             ],
           ),
+          SizedBox(height: AppTokens.space12),
           _imagen()
-
         ]
       )
     );
@@ -216,39 +184,32 @@ class _EnergyScreenState extends State<EnergyScreen> {
 
   Widget _indicadoresLine(){
     return Container(
-      margin: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
-      padding: const EdgeInsets.all(5.0),
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space8,
+      ),
+      padding: EdgeInsets.all(AppTokens.space12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        // border: metodos.borderCajas(context),
-        borderRadius: BorderRadius.circular(15.0),
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
         border: Border.all(
-          color: Theme.of(context).focusColor,
-          width: 0.25
-        )
+          color: context.colors.outline.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 0.0),
-                child: Text(
-                  "Electricidad Generada PV",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 15.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.10,
-                  )
-                ),
+          Padding(
+            padding: EdgeInsets.only(bottom: AppTokens.space8),
+            child: Text(
+              "Electricidad Generada PV",
+              style: context.textStyles.titleMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
               ),
-            ],
+            ),
           ),
           _figura1()
-
         ]
       )
     );
@@ -257,156 +218,129 @@ class _EnergyScreenState extends State<EnergyScreen> {
 
   Widget _indicadoresLine2(){
     return Container(
-      margin: const EdgeInsets.only(top: 10.0, left: 10.0, right: 10.0),
-      padding: const EdgeInsets.all(5.0),
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space8,
+      ),
+      padding: EdgeInsets.all(AppTokens.space12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        // border: metodos.borderCajas(context),
-        borderRadius: BorderRadius.circular(15.0),
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
         border: Border.all(
-          color: Theme.of(context).focusColor,
-          width: 0.25
-        )
+          color: context.colors.outline.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 15.0),
-                child: Text(
-                  "Potencia exporta e importada mensual",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 15.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.10,
-                  )
-                ),
+          // Title
+          Padding(
+            padding: EdgeInsets.only(bottom: AppTokens.space12),
+            child: Text(
+              "Potencia exporta e importada mensual",
+              style: context.textStyles.titleMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
               ),
-            ],
+            ),
           ),
-          
+
+          // Legend
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Potencia importada
               Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10.0, 5.0, 5.0, 0.0),
-                    child: Container(
-                      height: 15,
-                      width: 15,
+                  Container(
+                    height: 15,
+                    width: 15,
+                    margin: EdgeInsets.only(right: AppTokens.space8),
+                    decoration: BoxDecoration(
                       color: Color(int.parse("0xff${ColorsApp.color2}")),
-                    )
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0.0, 5.0, 5.0, 0.0),
-                    child: Text(
-                      "Potencia importada",
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 14.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.w200,
-                        letterSpacing: 1.10,
-                      )
+                      borderRadius: AppTokens.borderRadiusSmall,
                     ),
                   ),
-              ],),
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10.0, 5.0, 5.0, 0.0),
-                    child: Container(
-                      height: 15,
-                      width: 15,
-                      color: Colors.green,
-                    )
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0.0, 5.0, 5.0, 0.0),
-                    child: Text(
-                      "Potencia exporta",
-                      style: TextStyle(
-                        color: Theme.of(context).focusColor,
-                        fontSize: 14.0,
-                        fontFamily:"SEGOEUI",
-                        fontWeight: FontWeight.w200,
-                        letterSpacing: 1.10,
-                      )
+                  Text(
+                    "Potencia importada",
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
-          
-            
+              // Potencia exporta
+              Row(
+                children: [
+                  Container(
+                    height: 15,
+                    width: 15,
+                    margin: EdgeInsets.only(right: AppTokens.space8),
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                  ),
+                  Text(
+                    "Potencia exporta",
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
+          SizedBox(height: AppTokens.space8),
+          // Demanda
           Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10.0, 10.0, 5.0, 10.0),
-                child: Container(
-                  height: 15,
-                  width: 15,
+              Container(
+                height: 15,
+                width: 15,
+                margin: EdgeInsets.only(right: AppTokens.space8),
+                decoration: BoxDecoration(
                   color: Color(int.parse("0xff${ColorsApp.color4}")),
-                )
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0.0, 10.0, 5.0, 10.0),
-                child: Text(
-                  "Demanda",
-                  style: TextStyle(
-                    color: Theme.of(context).focusColor,
-                    fontSize: 14.0,
-                    fontFamily:"SEGOEUI",
-                    fontWeight: FontWeight.w200,
-                    letterSpacing: 1.10,
-                  )
+              Text(
+                "Demanda",
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          
+          SizedBox(height: AppTokens.space12),
           _figura2()
-
         ]
       )
     );
   }
 
   Widget body(){
-    return Stack(
-
-      alignment: Alignment.center,
+    return ListView(
+      padding: EdgeInsets.only(
+        top: AppTokens.space8,
+        bottom: AppTokens.space24,
+      ),
       children: <Widget>[
-
-        ListView(
-          children: <Widget>[
-
-            _indicadoresCasa(),
-
-            _indicadoresLine(),
-
-            _indicadoresLine2(),
-
-
-
-          ],
-        )
-      
+        _indicadoresCasa(),
+        _indicadoresLine(),
+        _indicadoresLine2(),
       ],
-    );        
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: metodos.appbarEnergia(context, widget.myUser!.nombre),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: metodos.appbarEnergia(
+        context,
+        widget.myUser?.nombre ?? "Usuario"
+      ),
+      backgroundColor: context.colors.background,
       body: body(),
     );
   }
@@ -421,8 +355,8 @@ class LineChartSample extends StatefulWidget {
 
 class _LineChartSampleState extends State<LineChartSample> {
   List<Color> gradientColors = [
-    Color(int.parse("0xff${ColorsApp.color3}")),
-    const Color(0xff212D3D),
+    AppTokens.primaryRed,
+    AppTokens.error,
   ];
 
   bool showAvg = false;
@@ -434,11 +368,11 @@ class _LineChartSampleState extends State<LineChartSample> {
         AspectRatio(
           aspectRatio: 1.70,
           child: Padding(
-            padding: const EdgeInsets.only(
-              right: 18,
-              left: 12,
-              top: 24,
-              bottom: 12,
+            padding: EdgeInsets.only(
+              right: AppTokens.space16,
+              left: AppTokens.space12,
+              top: AppTokens.space24,
+              bottom: AppTokens.space12,
             ),
             child: LineChart(
               showAvg ? avgData() : mainData(),
@@ -457,8 +391,10 @@ class _LineChartSampleState extends State<LineChartSample> {
             child: Text(
               'avg',
               style: TextStyle(
-                fontSize: 12,
-                color: showAvg ? Colors.white.withAlpha((0.5 * 255).toInt()) : Colors.white,
+                fontSize: AppTokens.fontSize12,
+                color: showAvg
+                  ? context.colors.primary.withValues(alpha: 0.5)
+                  : context.colors.primary,
               ),
             ),
           ),
@@ -468,41 +404,37 @@ class _LineChartSampleState extends State<LineChartSample> {
   }
 
   Widget bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 10,
+    final style = context.textStyles.labelSmall?.copyWith(
+      fontWeight: AppTokens.fontWeightBold,
+      fontSize: AppTokens.fontSize10,
     );
     Widget text;
     switch (value.toInt()) {
       case 7:
-        text = const Text('7:00 a.m', style: style);
+        text = Text('7:00 a.m', style: style);
         break;
       case 12:
-        text = const Text('12:00 m', style: style);
+        text = Text('12:00 m', style: style);
         break;
       case 17:
-        text = const Text('17:00 p.m', style: style);
+        text = Text('17:00 p.m', style: style);
         break;
 
       default:
-        text = const Text('', style: style);
+        text = Text('', style: style);
         break;
     }
 
     return SideTitleWidget(
-      // axisSide: meta.axisSide,
       meta: meta,
       child: text,
     );
   }
 
   Widget leftTitleWidgets(double value, TitleMeta meta) {
-    const style =TextStyle(
-      color: Color(0xff212D3D),
-      fontSize: 12.0,
-      fontFamily:"SEGOEUI",
-      fontWeight: FontWeight.bold,
-      letterSpacing: 1.10,
+    final style = context.textStyles.labelSmall?.copyWith(
+      fontWeight: AppTokens.fontWeightBold,
+      fontSize: AppTokens.fontSize12,
     );
     String text;
     switch (value.toInt()) {
@@ -531,13 +463,13 @@ class _LineChartSampleState extends State<LineChartSample> {
         horizontalInterval: 1,
         getDrawingVerticalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: context.colors.outline.withValues(alpha: 0.2),
             strokeWidth: 1,
           );
         },
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: context.colors.outline.withValues(alpha: 0.2),
             strokeWidth: 1,
           );
         },
@@ -568,11 +500,11 @@ class _LineChartSampleState extends State<LineChartSample> {
           ),
         ),
       ),
-      
-      
       borderData: FlBorderData(
         show: true,
-        border: Border.all(color: const Color(0xff37434d)),
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.2),
+        ),
       ),
       minX: 6,
       maxX: 20,
@@ -635,13 +567,13 @@ class _LineChartSampleState extends State<LineChartSample> {
         horizontalInterval: 1,
         getDrawingVerticalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: context.colors.outline.withValues(alpha: 0.2),
             strokeWidth: 1,
           );
         },
         getDrawingHorizontalLine: (value) {
           return FlLine(
-            color: const Color(0xff37434d),
+            color: context.colors.outline.withValues(alpha: 0.2),
             strokeWidth: 1,
           );
         },
@@ -673,7 +605,9 @@ class _LineChartSampleState extends State<LineChartSample> {
       ),
       borderData: FlBorderData(
         show: true,
-        border: Border.all(color: const Color(0xff37434d)),
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.2),
+        ),
       ),
       minX: 0,
       maxX: 11,
@@ -733,17 +667,16 @@ class _LineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LineChart(
-      sampleData2,
-      // swapAnimationDuration: const Duration(milliseconds: 500),
+      _sampleData2(context),
     );
   }
 
-  LineChartData get sampleData2 => LineChartData(
+  LineChartData _sampleData2(BuildContext context) => LineChartData(
     lineTouchData: lineTouchData2,
-    gridData: gridData,
-    titlesData: titlesData2,
-    borderData: borderData,
-    lineBarsData: lineBarsData2,
+    gridData: _gridData(context),
+    titlesData: _titlesData2(context),
+    borderData: _borderData(context),
+    lineBarsData: _lineBarsData2(context),
     minX: 0,
     maxX: 29,
     maxY: 8,
@@ -754,9 +687,9 @@ class _LineChart extends StatelessWidget {
     enabled: false,
   );
 
-  FlTitlesData get titlesData2 => FlTitlesData(
+  FlTitlesData _titlesData2(BuildContext context) => FlTitlesData(
     bottomTitles: AxisTitles(
-      sideTitles: bottomTitles,
+      sideTitles: _bottomTitles(context),
     ),
     rightTitles: AxisTitles(
       sideTitles: SideTitles(showTitles: false),
@@ -765,23 +698,20 @@ class _LineChart extends StatelessWidget {
       sideTitles: SideTitles(showTitles: false),
     ),
     leftTitles: AxisTitles(
-      sideTitles: leftTitles(),
+      sideTitles: _leftTitles(context),
     ),
   );
 
-  List<LineChartBarData> get lineBarsData2 => [
-    lineChartBarData2_1,
-    lineChartBarData2_2,
-    lineChartBarData2_3,
+  List<LineChartBarData> _lineBarsData2(BuildContext context) => [
+    _lineChartBarData2_1(context),
+    _lineChartBarData2_2(context),
+    _lineChartBarData2_3(context),
   ];
 
-  Widget leftTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(
-      color: Color(0xff212D3D),
-      fontSize: 12.0,
-      fontFamily:"SEGOEUI",
-      fontWeight: FontWeight.bold,
-      letterSpacing: 1.10,
+  Widget leftTitleWidgets(double value, TitleMeta meta, BuildContext context) {
+    final style = context.textStyles.labelSmall?.copyWith(
+      fontWeight: AppTokens.fontWeightBold,
+      fontSize: AppTokens.fontSize12,
     );
     String text;
     switch (value.toInt()) {
@@ -804,81 +734,95 @@ class _LineChart extends StatelessWidget {
     return Text(text, style: style, textAlign: TextAlign.center);
   }
 
-  SideTitles leftTitles() => SideTitles(
-    getTitlesWidget: leftTitleWidgets,
+  SideTitles _leftTitles(BuildContext context) => SideTitles(
+    getTitlesWidget: (value, meta) => leftTitleWidgets(value, meta, context),
     showTitles: true,
     interval: 1,
     reservedSize: 45,
   );
 
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
-    
-    const style = TextStyle(
-      color: Color(0xff212D3D)  ,
-      fontSize: 15.0,
-      fontFamily:"SEGOEUI",
-      fontWeight: FontWeight.bold,
-      letterSpacing: 1.10,
+  Widget bottomTitleWidgets(double value, TitleMeta meta, BuildContext context) {
+    final style = context.textStyles.labelMedium?.copyWith(
+      fontWeight: AppTokens.fontWeightBold,
+      fontSize: AppTokens.fontSize14,
     );
 
     Widget text;
 
     switch (value.toInt()) {
       case 5:
-        text = const Text('05-04', style: style);
+        text = Text('05-04', style: style);
         break;
       case 10:
-        text = const Text('10-04', style: style);
+        text = Text('10-04', style: style);
         break;
       case 15:
-        text = const Text('15-04', style: style);
+        text = Text('15-04', style: style);
         break;
       case 20:
-        text = const Text('20-04', style: style);
+        text = Text('20-04', style: style);
         break;
       case 25:
-        text = const Text('25-04', style: style);
+        text = Text('25-04', style: style);
         break;
       case 30:
-        text = const Text('30-04', style: style);
+        text = Text('30-04', style: style);
         break;
       default:
-        text = const Text('');
+        text = Text('', style: style);
         break;
     }
 
-     return SideTitleWidget(
-      // Reemplaza axisSide con meta.side
-      meta: meta, // Este es el nuevo nombre del parámetro
-      space: 10,       // Espaciado entre el texto y el gráfico
-      child: text,     // Widget hijo que se mostrará
-  );
+    return SideTitleWidget(
+      meta: meta,
+      space: 10,
+      child: text,
+    );
   }
 
-  SideTitles get bottomTitles => SideTitles(
+  SideTitles _bottomTitles(BuildContext context) => SideTitles(
     showTitles: true,
     reservedSize: 32,
     interval: 1,
-    getTitlesWidget: bottomTitleWidgets,
+    getTitlesWidget: (value, meta) => bottomTitleWidgets(value, meta, context),
   );
 
-  FlGridData get gridData => FlGridData(show: true);
+  FlGridData _gridData(BuildContext context) => FlGridData(
+    show: true,
+    drawHorizontalLine: true,
+    drawVerticalLine: true,
+    getDrawingHorizontalLine: (value) {
+      return FlLine(
+        color: context.colors.outline.withValues(alpha: 0.2),
+        strokeWidth: 1,
+      );
+    },
+    getDrawingVerticalLine: (value) {
+      return FlLine(
+        color: context.colors.outline.withValues(alpha: 0.2),
+        strokeWidth: 1,
+      );
+    },
+  );
 
-  FlBorderData get borderData => FlBorderData(
+  FlBorderData _borderData(BuildContext context) => FlBorderData(
     show: true,
     border: Border(
-      bottom: BorderSide(color: Color(int.parse("0xff${ColorsApp.color1}")).withAlpha((0.2*255).toInt()), width: 4),
+      bottom: BorderSide(
+        color: AppTokens.primaryRed.withValues(alpha: 0.2),
+        width: 4,
+      ),
       left: const BorderSide(color: Colors.transparent),
       right: const BorderSide(color: Colors.transparent),
       top: const BorderSide(color: Colors.transparent),
     ),
   );
 
-  LineChartBarData get lineChartBarData2_1 => LineChartBarData(
+  LineChartBarData _lineChartBarData2_1(BuildContext context) => LineChartBarData(
         isCurved: true,
         curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color3}")).withAlpha((0.5 * 255).toInt()),
-        barWidth: 2,
+        color: Color(int.parse("0xff${ColorsApp.color3}")).withValues(alpha: 0.7),
+        barWidth: 3,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),
         spots: const [
@@ -899,15 +843,15 @@ class _LineChart extends StatelessWidget {
         ],
       );
 
-  LineChartBarData get lineChartBarData2_2 => LineChartBarData(
+  LineChartBarData _lineChartBarData2_2(BuildContext context) => LineChartBarData(
         isCurved: true,
-        color: Color(int.parse("0xff${ColorsApp.color4}")).withAlpha((0.5 * 255).toInt()),
-        barWidth: 2,
+        color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.7),
+        barWidth: 3,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),
         belowBarData: BarAreaData(
           show: true,
-          color: Color(int.parse("0xff${ColorsApp.color4}")).withAlpha((0.2 * 255).toInt()),
+          color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.2),
         ),
         spots: const [
           FlSpot(1, 0.5),
@@ -927,11 +871,11 @@ class _LineChart extends StatelessWidget {
         ],
       );
 
-  LineChartBarData get lineChartBarData2_3 => LineChartBarData(
+  LineChartBarData _lineChartBarData2_3(BuildContext context) => LineChartBarData(
         isCurved: true,
         curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color2}")).withAlpha((0.5 * 255).toInt()),
-        barWidth: 2,
+        color: Color(int.parse("0xff${ColorsApp.color2}")).withValues(alpha: 0.7),
+        barWidth: 3,
         isStrokeCapRound: true,
         dotData: FlDotData(show: true),
         belowBarData: BarAreaData(show: false),

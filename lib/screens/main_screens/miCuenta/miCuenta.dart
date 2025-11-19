@@ -1,7 +1,9 @@
 // ignore_for_file: file_names
+import 'package:flutter/material.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/screens/main_screens/miCuenta/cambiarClave.dart';
 import 'package:be_energy/utils/metodos.dart';
-import 'package:flutter/material.dart';
 import 'package:be_energy/routes.dart';
 import '../../../models/my_user.dart';
 
@@ -20,20 +22,22 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
 
   IconButton _leading(BuildContext context, double width) {
     return IconButton(
-      //icono de cerrar sesion
       icon: Icon(
-        Icons.login_rounded,
-        color: Theme.of(context).scaffoldBackgroundColor,
-        size: 25,
+        Icons.logout_rounded,
+        color: Colors.white,
+        size: 22,
       ),
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
-      ),
-
       tooltip: "Cerrar Sesión",
       onPressed: () async {
-        metodos.alertsDialog(context, "¿Deseas cerrar tu sesión ahora?", width, "Cancelar", 2, "Si", 3);
+        metodos.alertsDialog(
+          context,
+          "¿Deseas cerrar tu sesión ahora?",
+          width,
+          "Cancelar",
+          2,
+          "Si",
+          3
+        );
       }
     );
   }
@@ -43,7 +47,10 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 50, 0, 0),
+          padding: EdgeInsets.only(
+            top: AppTokens.space48,
+            right: AppTokens.space16, // Evita overflow
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -51,13 +58,13 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
               //Image
               Card(
                 clipBehavior: Clip.antiAliasWithSaveLayer,
-                color: Theme.of(context).scaffoldBackgroundColor,
+                color: context.colors.surface,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                  padding: EdgeInsets.all(AppTokens.space4),
                   child: Container(
                     width: 60,
                     height: 60,
@@ -67,185 +74,175 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                     ),
                     child: Image.asset(
                       "assets/img/avatar.jpg",
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
               ),
-              
-              Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0x40000000),
-                          borderRadius:
-                              BorderRadius.circular(8),
-                        ),
-                        child: _leading(context, Metodos.width(context))
-                      ),
-                    ),
-                  ],
+
+              _leading(context, context.width),
+            ],
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(
+            top: AppTokens.space8,
+            right: AppTokens.space16, // Evita overflow
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.myUser.nombre ?? "Usuario",
+                  style: context.textStyles.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                    letterSpacing: 0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+          padding: EdgeInsets.only(
+            top: AppTokens.space8,
+            right: AppTokens.space16, // Evita overflow
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
-              Text(
-                "Cristian Hoyos V",
-                style: TextStyle(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1.5,
-                )
+              Expanded(
+                child: Text(
+                  widget.myUser.correo ?? "correo@ejemplo.com",
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: AppTokens.fontWeightMedium,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            const Padding(
-              padding:
-                  EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
-              child: Text(
-                'Ing. mecatrónico - ',
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  color: Color(0xB3FFFFFF),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(4, 8, 0, 0),
-              child: Text(
-                "cristiannhoyoss@gmail.com",
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );
   }
 
-  List<Widget> _info(){
-    return [
-      Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Text(
-              "Mi Cuenta",
-              style: Metodos.subtitulosInformativos(context)
-            ),
-          ],
+  Widget _sectionTitle(){
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space16,
+      ),
+      child: Text(
+        "Mi Cuenta",
+        style: context.textStyles.titleLarge?.copyWith(
+          fontWeight: AppTokens.fontWeightSemiBold,
         ),
       ),
-    ];
+    );
   }
   
 
-  Widget _btnOption(String textTitulo, int action){
-    return  InkWell(
-      splashColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      child: Material(
-        color: Colors.transparent,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+  Widget _optionButton(String title, IconData icon, int action){
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space8,
+      ),
+      child: InkWell(
+        onTap: () {
+          switch (action) {
+            case 1:
+              context.push(EditarPerfilScreen(myUser: widget.myUser));
+            break;
+            case 2:
+              context.push(CambiarClavePerfilScreen(myUser: widget.myUser));
+            break;
+            case 3:
+              context.push(CentroNotificacionesPerfilScreen(myUser: widget.myUser));
+            break;
+            case 4:
+              context.push(TutorialScreen(myUser: widget.myUser));
+            break;
+            case 5:
+              context.push(AprendeScreen(myUser: widget.myUser));
+            break;
+            case 6:
+              context.push(TutorialScreen(myUser: widget.myUser));
+            break;
+            default:
+            break;
+          }
+        },
+        borderRadius: AppTokens.borderRadiusMedium,
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Metodos.borderClasic(context)
+          padding: EdgeInsets.symmetric(
+            horizontal: AppTokens.space16,
+            vertical: AppTokens.space16,
           ),
-          child: Padding(
-            padding:const EdgeInsetsDirectional.fromSTEB(16, 0, 4, 0),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  textTitulo,
-                  style: Metodos.subtitulosInformativos(context),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_right_rounded,
-                    color: Theme.of(context).canvasColor,
-                    size: 25,
-                  ),
-                  onPressed: () {
-                    switch (action) {
-                      case 1:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => EditarPerfilScreen(myUser: widget.myUser,)));
-                      break;
-                      case 2:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CambiarClavePerfilScreen(myUser: widget.myUser,)));
-                      break;
-                      case 3:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CentroNotificacionesPerfilScreen(myUser: widget.myUser,)));
-                      break;
-                      case 4:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => TutorialScreen(myUser: widget.myUser,)));
-                      break;
-                      case 5:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => AprendeScreen(myUser: widget.myUser,)));
-                      break;
-                      case 6:
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => TutorialScreen(myUser: widget.myUser,)));
-                      break;
-                      default:
-                      break;
-                    }
-                  },
-                ),
-              ],
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: AppTokens.borderRadiusMedium,
+            border: Border.all(
+              color: context.colors.outline.withValues(alpha: 0.1),
+              width: 1,
             ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(AppTokens.space8),
+                      decoration: BoxDecoration(
+                        color: context.colors.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: AppTokens.borderRadiusSmall,
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 20,
+                        color: context.colors.primary,
+                      ),
+                    ),
+                    SizedBox(width: AppTokens.space12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: context.textStyles.bodyLarge?.copyWith(
+                          fontWeight: AppTokens.fontWeightMedium,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.colors.primary,
+                size: 24,
+              ),
+            ],
           ),
         ),
       ),
-    );    
-  }
-
-  Widget _optiones(String textTitulo, int action){
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _btnOption(textTitulo, action),
-       ],
-    );  
+    );
   }
   
   Widget _cartaPrincipal(){
     return Container(
       width: MediaQuery.of(context).size.width,
-      height: 200,
+      height: 220,
       decoration: BoxDecoration(
         boxShadow: const [
           BoxShadow(
@@ -262,60 +259,33 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
         child: _contenPrincipalCard()
       ),
     );
-            
+
   }
   
   Widget _bodyIdeas(){
-    return  SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            _cartaPrincipal(),
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: _info()
-            ),
-            _optiones("Editar Perfil", 1),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Cambiar Clave", 2),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Configuración De Las Notificaciones", 3),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Tutorial", 4),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Aprende sobre DERs", 5),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _optiones("Política De Privacidad", 6),
-            )
-
-            
-          ],
-        ),
-      );
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          _cartaPrincipal(),
+          SizedBox(height: AppTokens.space16),
+          _sectionTitle(),
+          _optionButton("Editar Perfil", Icons.person_outline, 1),
+          _optionButton("Cambiar Clave", Icons.lock_outline, 2),
+          _optionButton("Notificaciones", Icons.notifications_outlined, 3),
+          _optionButton("Tutorial", Icons.help_outline, 4),
+          _optionButton("Aprende sobre DERs", Icons.school_outlined, 5),
+          _optionButton("Política De Privacidad", Icons.privacy_tip_outlined, 6),
+          SizedBox(height: AppTokens.space24),
+        ],
+      ),
+    );
   }
   @override
   Widget build(BuildContext context) {
-    // return FondoScreen(
-    //   myUser: widget.myUser,
-    //   heightAppBar: 50,
-    //   radiusAppBar: 90,
-    //   leading: _leading(context, Metodos.width(context)),
-    //   // actions: _actions(snapshotApp.data, snapshotUser.data),
-    //   body: _bodyIdeas()
-    // );
-
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body:_bodyIdeas()
+      backgroundColor: context.colors.background,
+      body: _bodyIdeas()
     );
   }
 }

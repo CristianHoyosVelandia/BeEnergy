@@ -18,7 +18,8 @@ class AppTheme {
     onPrimaryContainer: Color(0xFF410002),
 
     // Colores secundarios
-    secondary: AppTokens.primaryPurple,
+    secondary: AppTokens.primaryRed,
+    // secondary: AppTokens.primaryPurple,
     onSecondary: AppTokens.white,
     secondaryContainer: Color(0xFFE8DEF8),
     onSecondaryContainer: Color(0xFF1D192B),

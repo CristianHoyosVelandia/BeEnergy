@@ -70,7 +70,7 @@ class _NavPagesState extends State<NavPages> {
   MaterialButton btnNavBar(int currentIndexTap, BuildContext context, String tituloBtn, IconData icon){
     return MaterialButton(
       minWidth: 15,
-      onPressed: () {  
+      onPressed: () {
         setState(() {
           currentIndex=currentIndexTap;
         });
@@ -81,11 +81,16 @@ class _NavPagesState extends State<NavPages> {
           Icon(
             icon,
             color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
+            size: 24,
           ),
+          const SizedBox(height: 4),
           AutoSizeText(
             tituloBtn,
-            maxFontSize: 12,
-            minFontSize: 8,
+            maxFontSize: 11,
+            minFontSize: 7,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
             ),
@@ -158,54 +163,57 @@ class _NavPagesState extends State<NavPages> {
           notchMargin: 15,
           elevation: 20.0,
         
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                
-                SizedBox(
-                  width: 2*Metodos.width(context)/5,
-                  child: Row(
-          
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                                        
-                      Expanded(
-                        child: btnNavBar(0, context, 'Home', Icons.dashboard)
-                      ), 
-                      
-                      Expanded(
-                        child: btnNavBar(1, context, 'Energia', Icons.energy_savings_leaf)
-                      ),                  
-                    
-                    ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: SizedBox(
+              height: 56,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+
+                  Expanded(
+                    flex: 2,
+                    child: Row(
+
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+
+                        Expanded(
+                          child: btnNavBar(0, context, 'Home', Icons.dashboard)
+                        ),
+
+                        Expanded(
+                          child: btnNavBar(1, context, 'Energía', Icons.energy_savings_leaf)
+                        ),
+
+                      ],
+                    ),
                   ),
-                ),
-                
-                Container(
-                  width: Metodos.width(context)/5,
-                ),
-          
-                SizedBox(
-                  width: 2*Metodos.width(context)/5,
-                  
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-          
-                      Expanded(
-                        child: btnNavBar(3, context, 'Alertas', Icons.notification_add), 
-                      ),
-                      Expanded(
-                        child: btnNavBar(4, context, 'Perfil', Icons.home),
-                      )
-                    ],
+
+                  Expanded(
+                    flex: 1,
+                    child: Container(),
                   ),
-                )
-                
-              
-              ]
+
+                  Expanded(
+                    flex: 2,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+
+                        Expanded(
+                          child: btnNavBar(3, context, 'Alertas', Icons.notification_add),
+                        ),
+                        Expanded(
+                          child: btnNavBar(4, context, 'Perfil', Icons.person_outline),
+                        )
+                      ],
+                    ),
+                  )
+
+
+                ]
+              ),
             ),
           ),
         ),
