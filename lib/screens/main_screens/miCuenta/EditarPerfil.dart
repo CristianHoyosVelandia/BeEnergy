@@ -2,6 +2,8 @@
 import 'dart:async';
 
 import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/my_user.dart';
@@ -32,21 +34,20 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 50, 0, 0),
+          padding: EdgeInsets.only(top: AppTokens.space48),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //Image
               Card(
                 clipBehavior: Clip.antiAliasWithSaveLayer,
-                color: Theme.of(context).scaffoldBackgroundColor,
+                color: context.colors.surface,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(90),
                 ),
                 child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                  padding: EdgeInsets.all(AppTokens.space4),
                   child: Container(
                     width: 160,
                     height: 160,
@@ -56,6 +57,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                     ),
                     child: Image.asset(
                       "assets/img/avatar.jpg",
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -64,7 +66,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
+          padding: EdgeInsets.only(top: AppTokens.space16),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -78,7 +80,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
 
   Widget _btnOptionMain(){
-    return  InkWell(
+    return InkWell(
       splashColor: Colors.transparent,
       focusColor: Colors.transparent,
       hoverColor: Colors.transparent,
@@ -87,92 +89,93 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         // ignore: avoid_print
         print("Presiono en cambiar foto")
       },
-      child: Material(
-        color: Colors.transparent,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Container(
-          height: 40,
-          width: 180,
-          decoration: BoxDecoration(
-            color: Theme.of(context).focusColor,
-            borderRadius: BorderRadius.circular(8),
-            border: Metodos.borderClasicFondoNegro(context)
+      borderRadius: AppTokens.borderRadiusSmall,
+      child: Container(
+        height: 40,
+        width: 180,
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: AppTokens.borderRadiusSmall,
+          border: Border.all(
+            color: context.colors.outline.withValues(alpha: 0.2),
+            width: 1,
           ),
-          child: Padding(
-            padding:const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Cambiar Foto",
-                  style: Metodos.textStyle(context, Theme.of(context).scaffoldBackgroundColor, 15, FontWeight.w200, 1.5),
-                ),
-              ],
+        ),
+        child: Center(
+          child: Text(
+            "Cambiar Foto",
+            style: context.textStyles.titleMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightMedium,
             ),
           ),
         ),
       ),
-    );    
+    );
   }
 
   
   Widget _btnOption(String label, String hintText, TextEditingController controller){
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 0),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space20,
+        vertical: AppTokens.space12,
+      ),
       child: TextFormField(
         controller: controller,
         obscureText: false,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: Metodos.subtitulosInformativosFondoNegro(context),
+          labelStyle: context.textStyles.bodyLarge?.copyWith(
+            fontWeight: AppTokens.fontWeightMedium,
+          ),
           hintText: hintText,
-          hintStyle: Metodos.textofromEditingFondoNegro(context),
+          hintStyle: context.textStyles.bodyMedium?.copyWith(
+            color: context.colors.onSurface.withValues(alpha: 0.6),
+          ),
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
+              color: context.colors.outline.withValues(alpha: 0.3),
+              width: 1,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppTokens.borderRadiusSmall,
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
+              color: context.colors.primary,
+              width: 2,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppTokens.borderRadiusSmall,
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
               color: Colors.red,
-              width: 0.25,
+              width: 1,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppTokens.borderRadiusSmall,
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 2,
             ),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppTokens.borderRadiusSmall,
           ),
           filled: true,
-          fillColor: Theme.of(context).focusColor,
-          contentPadding: const EdgeInsetsDirectional.fromSTEB(20, 10, 20, 10),
+          fillColor: context.colors.surface,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppTokens.space20,
+            vertical: AppTokens.space12,
+          ),
         ),
-        style: Metodos.textofromEditingFondoNegro(context),
+        style: context.textStyles.bodyLarge,
         validator: (value) {
           if (value!.length < 4) {
-            return 'Ingrese una clave mayor a 3 caracetes';
+            return 'Ingrese una clave mayor a 3 caracteres';
           }
           return null;
         },
       ),
     );
-
   }
 
   Widget _optiones(String label, String hintText, TextEditingController controller){
@@ -181,97 +184,71 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Expanded(
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(5, 5, 5, 0),
-            child: _btnOption(label, hintText, controller),
-          ),
-        ),// _btnOption(textTitulo, action),
-       ],
-    );  
+          child: _btnOption(label, hintText, controller),
+        ),
+      ],
+    );
   }
   
   Widget _btnGuardarCambios() {
-   return InkWell(
+    return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
-      
       onTap: () async {
-
         await Metodos.flushbarPositivo(context, 'Cambios realizados correctamente');
-
-        Timer(const Duration(seconds: 2), () => Navigator.pop(context));
+        Timer(const Duration(seconds: 2), () => context.pop());
       },
-
       child: Container(
-        margin: const EdgeInsets.only(right: 65, left: 65, top: 15),
+        margin: EdgeInsets.symmetric(
+          horizontal: 65,
+          vertical: AppTokens.space16,
+        ),
         height: 50,
         decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
+          color: context.colors.primary,
           borderRadius: BorderRadius.circular(25),
         ),
-        
         child: Center(
           child: Text(
             'Guardar Cambios',
-            style: Metodos.btnTextStyleFondo(context, Colors.white)
+            style: context.textStyles.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
           ),
         ),
       ),
-    );     
-  
+    );
   }
   
   Widget _cartaPrincipal(){
     return SizedBox(
-      width: MediaQuery.of(context).size.width,
+      width: context.width,
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
-        child: _contenPrincipalCard()
+        padding: EdgeInsets.only(left: AppTokens.space20),
+        child: _contenPrincipalCard(),
       ),
     );
-            
   }
   
   Widget _body(){
-    return  SingleChildScrollView(
-        child: Column(
-
-          children: [
-            _cartaPrincipal(),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _optiones("Nombre", "Ingrese por favor su nombre", _nombre),
-            ),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _optiones("Correo", "Ingrese por favor su correo", _email),
-            ),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _optiones("Edad", "Ingrese por favor su edad", _edad),
-            ),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _optiones("Titulo", "Ingrese por favor su titulo", _titulo),
-            ),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _btnGuardarCambios(),
-            ),
-            
-          ],
-        ),
-      );
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _cartaPrincipal(),
+          _optiones("Nombre", "Ingrese por favor su nombre", _nombre),
+          _optiones("Correo", "Ingrese por favor su correo", _email),
+          _optiones("Edad", "Ingrese por favor su edad", _edad),
+          _optiones("Titulo", "Ingrese por favor su titulo", _titulo),
+          _btnGuardarCambios(),
+        ],
+      ),
+    );
   }
   
   PreferredSizeWidget _appbarEditarPerfil() {
     return AppBar(
-      backgroundColor: Theme.of(context).focusColor,
+      backgroundColor: context.colors.surface,
       automaticallyImplyLeading: false,
       leading: InkWell(
         splashColor: Colors.transparent,
@@ -279,17 +256,19 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         hoverColor: Colors.transparent,
         highlightColor: Colors.transparent,
         onTap: () async {
-          Navigator.pop(context);
+          context.pop();
         },
         child: Icon(
           Icons.chevron_left_rounded,
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: context.colors.onSurface,
           size: 32,
         ),
       ),
       title: Text(
         "Editar Perfil",
-        style: Metodos.btnTextStyle(context),
+        style: context.textStyles.titleLarge?.copyWith(
+          fontWeight: AppTokens.fontWeightSemiBold,
+        ),
       ),
       centerTitle: false,
       elevation: 0,
@@ -297,17 +276,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
   @override
   Widget build(BuildContext context) {
-    
-    _email.text  = widget.myUser.correo!;
-    _nombre.text = widget.myUser.nombre!;
+    _email.text  = widget.myUser.correo ?? "";
+    _nombre.text = widget.myUser.nombre ?? "";
     _titulo.text = "Ing. Mecatrónico";
     _edad.text   = "27";
 
-
     return Scaffold(
       appBar: _appbarEditarPerfil(),
-      backgroundColor: Theme.of(context).focusColor,
-      body:_body()
+      backgroundColor: context.colors.surface,
+      body: _body(),
     );
   }
 }

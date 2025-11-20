@@ -1,6 +1,8 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:be_energy/models/callmodels.dart';
 import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../routes.dart';
@@ -73,13 +75,16 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
 
   Widget _image() {
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+      padding: EdgeInsets.only(
+        top: AppTokens.space16,
+        bottom: AppTokens.space8,
+      ),
       child: Image(
         alignment: AlignmentDirectional.center,
-        image:  const AssetImage("assets/img/5.png"),
-        width: 3/4 * Metodos.width(context),
+        image: const AssetImage("assets/img/5.png"),
+        width: context.width * 0.75,
         height: 150,
-      )
+      ),
     );
   }
 
@@ -88,35 +93,27 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 10, 0, 0),
+          padding: EdgeInsets.only(top: AppTokens.space12),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              //Image
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                        
                   Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        _leadingBack(context, Metodos.width(context)),
-                      ],
-                    ),
+                    padding: EdgeInsets.only(right: AppTokens.space16),
+                    child: _leadingBack(context, context.width),
                   ),
-                
                   Card(
                     clipBehavior: Clip.antiAliasWithSaveLayer,
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                    color: context.colors.surface,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(40),
                     ),
                     child: Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                      padding: EdgeInsets.all(AppTokens.space4),
                       child: Container(
                         width: 60,
                         height: 60,
@@ -126,33 +123,23 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
                         ),
                         child: Image.asset(
                           "assets/img/avatar.jpg",
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),
-                  ),    
-                
+                  ),
                 ],
               ),
-              
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0x40000000),
-                          borderRadius:
-                              BorderRadius.circular(8),
-                        ),
-                        child: _leading(context, Metodos.width(context))
-                      ),
-                    ),
-                  ],
+                padding: EdgeInsets.only(right: AppTokens.space16),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0x40000000),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
+                  child: _leading(context, context.width),
                 ),
               ),
             ],
@@ -164,58 +151,49 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
 
   IconButton _leading(BuildContext context, double width) {
     return IconButton(
-      //icono de cerrar sesion
       icon: Icon(
         Icons.search,
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: context.colors.surface,
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(context.colors.primary),
+        iconColor: WidgetStatePropertyAll(context.colors.surface),
       ),
-
       tooltip: "Buscar",
       onPressed: () async {
         setState(() {
-          if(valBuscar==true) {
-            valBuscar = false;
-          }else{
-            valBuscar = true;
-          }
+          valBuscar = !valBuscar;
         });
-      }
+      },
     );
   }
     
   IconButton _leadingBack(BuildContext context, double width) {
     return IconButton(
-      //icono de cerrar sesion
       icon: Icon(
         Icons.arrow_back_ios_new,
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: context.colors.surface,
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(context.colors.primary),
+        iconColor: WidgetStatePropertyAll(context.colors.surface),
       ),
-
       tooltip: "Volver",
       onPressed: () async {
-
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const Beenergy()),
-          (Route<dynamic> route) => false
-        );  
-      }
+          (Route<dynamic> route) => false,
+        );
+      },
     );
   }
     
   Widget _cartaPrincipal(){
     return Container(
-      width: MediaQuery.of(context).size.width,
+      width: context.width,
       height: 90,
       decoration: BoxDecoration(
         boxShadow: const [
@@ -228,24 +206,25 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
         gradient: Metodos.gradientClasic(context),
         borderRadius: BorderRadius.circular(0),
       ),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
-        child: _contenPrincipalCard()
-      ),
+      child: _contenPrincipalCard(),
     );
-            
   }
   
   Widget _info(){
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 15, 20, 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space20,
+        vertical: AppTokens.space12,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
           Flexible(
             child: Text(
               "Sus intercambios de energía son:",
-              style: Metodos.subtitulosSimple(context)
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
+              ),
             ),
           ),
         ],
@@ -254,36 +233,37 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
   }
 
   Widget _btnCrear() {
-   return InkWell(
+    return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
-      
       onTap: () async {
-
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const Beenergy()),
-          (Route<dynamic> route) => false
+          (Route<dynamic> route) => false,
         );
       },
-
       child: Container(
-        margin: const EdgeInsets.only(right: 65, left: 65, top: 15),
+        margin: EdgeInsets.symmetric(
+          horizontal: 65,
+          vertical: AppTokens.space16,
+        ),
         height: 50,
         decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
+          color: context.colors.primary,
           borderRadius: BorderRadius.circular(25),
         ),
-        
         child: Center(
           child: Text(
             'Finalizar',
-            style: Metodos.btnTextStyleFondo(context, Colors.white)
+            style: context.textStyles.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
           ),
         ),
       ),
-    );     
-  
+    );
   }
   
   String _iconCard(int numero) {
@@ -304,151 +284,137 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
   }
   Widget _card(var data){
     Intercambio dataIntercmabio = Intercambio(
-      numTransaccion: data['numTransaccion'], 
-      entrada: data['entrada'], 
-      nombre: data['nombre'], 
-      dinero: data['dinero'], 
-      energia: data['energia'], 
-      fecha: data['fecha'], 
-      fuente: data['fuente'], 
-      fuenteIcon: data['fuenteIcon'], 
-      horarioSuminsitro: data['horarioSuminsitro'], 
+      numTransaccion: data['numTransaccion'],
+      entrada: data['entrada'],
+      nombre: data['nombre'],
+      dinero: data['dinero'],
+      energia: data['energia'],
+      fecha: data['fecha'],
+      fuente: data['fuente'],
+      fuenteIcon: data['fuenteIcon'],
+      horarioSuminsitro: data['horarioSuminsitro'],
       estado: data['estado']
     );
+
+    final bool isIncome = data['entrada'] == true;
+    final Color borderColor = isIncome ? context.colors.primary : Colors.red;
+
     return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
       onTap: () {
-        Navigator.push(context,MaterialPageRoute(builder: (context) => ErecordScreen(dataScreen: dataIntercmabio,)));
+        context.push(ErecordScreen(dataScreen: dataIntercmabio));
       },
       child: Container(
         decoration: BoxDecoration(
+          color: context.colors.surface,
           border: Border.all(
-            color: (data['entrada'] == true )?Theme.of(context).canvasColor: Colors.red,
-            width: 1
+            color: borderColor,
+            width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(15.0)
+          borderRadius: AppTokens.borderRadiusMedium,
         ),
         child: Row(
           children: [
             Expanded(
               child: Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
-                  )
-                ),
-                Expanded(
-                  child: Column(
-                  children: [
-        
-                  Icon(
-                    (data['entrada'] == false )? Icons.trending_down_outlined: Icons.trending_up_outlined,
-                    size: 30,
-                    color: (data['entrada'] == false )? Colors.red: Theme.of(context).canvasColor,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppTokens.space8),
+                      child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
+                    ),
                   ),
-    
-                  const SizedBox(height: 5.0),
-    
-                  AutoSizeText(
-                    data['estado'],
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: Metodos.subtitulosInformativos(context)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Icon(
+                          isIncome ? Icons.trending_up_outlined : Icons.trending_down_outlined,
+                          size: 30,
+                          color: borderColor,
+                        ),
+                        SizedBox(height: AppTokens.space8),
+                        AutoSizeText(
+                          data['estado'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            fontWeight: AppTokens.fontWeightMedium,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
-        
-                ),
-              ],
-              )
-            ),
-            
             Expanded(
               child: Column(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      data['nombre'].toString().split(' ').first,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).focusColor
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        data['nombre'].toString().split(' ').first,
+                        textAlign: TextAlign.center,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
                       ),
                     ),
-                  )
-                ),
-                
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      
-                      AutoSizeText(
-                        data['dinero'],
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          color: Theme.of(context).focusColor,
-                          fontSize: 12.0,
-                          fontFamily:"SEGOEUI",
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.10,
-                        )
-                      ),
-                                    
-                      const SizedBox(height: 5.0),
-    
-                      AutoSizeText(
-                        data['energia'],
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          color: Theme.of(context).focusColor,
-                          fontSize: 12.0,
-                          fontFamily:"SEGOEUI",
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.10,
-                        )
-                      ),
-                    
-    
-                    ],
                   ),
-    
-                ),
-              ],
-              )
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AutoSizeText(
+                          data['dinero'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space8),
+                        AutoSizeText(
+                          data['energia'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            
           ],
         ),
       ),
     );
   }
   Widget _gridViewCards() {
-    return  Expanded(
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        margin: const EdgeInsets.only(top: 20),
+        padding: EdgeInsets.symmetric(horizontal: AppTokens.space12),
+        margin: EdgeInsets.only(top: AppTokens.space20),
         child: GridView.builder(
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            childAspectRatio: 5/4,
-            crossAxisSpacing: 10, // espaciado horizontal
-            mainAxisSpacing: 10, // espaciado vertical
+            childAspectRatio: 5 / 4,
+            crossAxisSpacing: AppTokens.space12,
+            mainAxisSpacing: AppTokens.space12,
             mainAxisExtent: 150,
-            maxCrossAxisExtent: 3*Metodos.width(context) / 4,
+            maxCrossAxisExtent: context.width * 0.75,
           ),
           itemCount: dataIntercambios.length,
-          itemBuilder: (context, index){
+          itemBuilder: (context, index) {
             return _card(dataIntercambios[index]);
-          }
+          },
         ),
       ),
     );

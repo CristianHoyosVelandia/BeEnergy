@@ -156,62 +156,63 @@ class ApiException implements Exception {
 /// Excepción para errores 400 - Bad Request
 class BadRequestException extends ApiException {
   BadRequestException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
+
 
 /// Excepción para errores 401 - Unauthorized
 class UnauthorizedException extends ApiException {
   UnauthorizedException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Excepción para errores 403 - Forbidden
 class ForbiddenException extends ApiException {
   ForbiddenException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Excepción para errores 404 - Not Found
 class NotFoundException extends ApiException {
   NotFoundException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Excepción para errores 422 - Unprocessable Entity
 class UnprocessableEntityException extends ApiException {
   UnprocessableEntityException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Excepción para errores 500 - Internal Server Error
 class InternalServerException extends ApiException {
   InternalServerException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Excepción para errores 503 - Service Unavailable
 class ServiceUnavailableException extends ApiException {
   ServiceUnavailableException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

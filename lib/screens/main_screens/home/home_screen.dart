@@ -517,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
         context,
         widget.myUser?.nombre ?? "Usuario"
       ),
-      backgroundColor: context.colors.background,
+      backgroundColor: context.colors.surface,
       body: body(),
     );
   }

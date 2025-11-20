@@ -8,6 +8,8 @@ import '../../../models/callmodels.dart';
 import '../../../routes.dart';
 import '../../../utils/metodos.dart';
 import '../../../widgets/general_widgets.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 
 class BolsaScreen extends StatefulWidget {
   const BolsaScreen({super.key});
@@ -185,128 +187,114 @@ class _BolsaScreenState extends State<BolsaScreen> {
 
   Widget _card(var data){
     Intercambio dataIntercmabio = Intercambio(
-      numTransaccion: data['numTransaccion'], 
-      entrada: data['entrada'], 
-      nombre: data['nombre'], 
-      dinero: data['dinero'], 
-      energia: data['energia'], 
-      fecha: data['fecha'], 
-      fuente: data['fuente'], 
-      fuenteIcon: data['fuenteIcon'], 
-      horarioSuminsitro: data['horarioSuminsitro'], 
+      numTransaccion: data['numTransaccion'],
+      entrada: data['entrada'],
+      nombre: data['nombre'],
+      dinero: data['dinero'],
+      energia: data['energia'],
+      fecha: data['fecha'],
+      fuente: data['fuente'],
+      fuenteIcon: data['fuenteIcon'],
+      horarioSuminsitro: data['horarioSuminsitro'],
       estado: data['estado']
     );
+
+    final bool isIncome = data['entrada'] == true;
+    final Color borderColor = isIncome ? context.colors.primary : Colors.red;
+
     return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
       onTap: () {
-        Navigator.push(context,MaterialPageRoute(builder: (context) => ConfirmchangeScreen(dataScreen: dataIntercmabio,)));
+        context.push(ConfirmchangeScreen(dataScreen: dataIntercmabio));
       },
       child: Container(
         decoration: BoxDecoration(
+          color: context.colors.surface,
           border: Border.all(
-            color: (data['entrada'] == true )?Theme.of(context).canvasColor: Colors.red,
-            width: 1
+            color: borderColor,
+            width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(15.0)
+          borderRadius: AppTokens.borderRadiusMedium,
         ),
         child: Row(
           children: [
             Expanded(
               child: Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(5.0),
-                    child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
-                  )
-                ),
-                Expanded(
-                  child: Column(
-                  children: [
-        
-                  Icon(
-                    (data['entrada'] == false )? Icons.trending_down_outlined: Icons.trending_up_outlined,
-                    size: 30,
-                    color: (data['entrada'] == false )? Colors.red: Theme.of(context).canvasColor,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppTokens.space8),
+                      child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
+                    ),
                   ),
-    
-                  const SizedBox(height: 5.0),
-    
-                  AutoSizeText(
-                    data['horarioSuminsitro'],
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: Metodos.subtitulosInformativosFondoNegro(context)
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Icon(
+                          isIncome ? Icons.trending_up_outlined : Icons.trending_down_outlined,
+                          size: 30,
+                          color: borderColor,
+                        ),
+                        SizedBox(height: AppTokens.space8),
+                        AutoSizeText(
+                          data['horarioSuminsitro'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            fontWeight: AppTokens.fontWeightMedium,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                ],
+              ),
             ),
-        
-                ),
-              ],
-              )
-            ),
-            
             Expanded(
               child: Column(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      data['nombre'].toString().split(' ').first,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15.0,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).scaffoldBackgroundColor
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        data['nombre'].toString().split(' ').first,
+                        textAlign: TextAlign.center,
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
                       ),
                     ),
-                  )
-                ),
-                
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      
-                      AutoSizeText(
-                        data['dinero'],
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          fontSize: 12.0,
-                          fontFamily:"SEGOEUI",
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.10,
-                        )
-                      ),
-                                    
-                      const SizedBox(height: 5.0),
-    
-                      AutoSizeText(
-                        data['energia'],
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        style: TextStyle(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          fontSize: 12.0,
-                          fontFamily:"SEGOEUI",
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.10,
-                        )
-                      ),
-                    
-    
-                    ],
                   ),
-    
-                ),
-              ],
-              )
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AutoSizeText(
+                          data['dinero'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space8),
+                        AutoSizeText(
+                          data['energia'],
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            
           ],
         ),
       ),
@@ -315,23 +303,23 @@ class _BolsaScreenState extends State<BolsaScreen> {
   
 
   Widget _gridViewCards(var dataInter) {
-    return  Expanded(
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        margin: const EdgeInsets.only(top: 20),
+        padding: EdgeInsets.symmetric(horizontal: AppTokens.space12),
+        margin: EdgeInsets.only(top: AppTokens.space20),
         child: GridView.builder(
           shrinkWrap: true,
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            childAspectRatio: 5/4,
-            crossAxisSpacing: 10, // espaciado horizontal
-            mainAxisSpacing: 10, // espaciado vertical
+            childAspectRatio: 5 / 4,
+            crossAxisSpacing: AppTokens.space12,
+            mainAxisSpacing: AppTokens.space12,
             mainAxisExtent: 150,
-            maxCrossAxisExtent: 3*Metodos.width(context) / 4,
+            maxCrossAxisExtent: context.width * 0.75,
           ),
           itemCount: dataInter.length,
-          itemBuilder: (context, index){
+          itemBuilder: (context, index) {
             return _card(dataInter[index]);
-          }
+          },
         ),
       ),
     );
@@ -386,40 +374,37 @@ class _BolsaScreenState extends State<BolsaScreen> {
 
   IconButton _leading(BuildContext context, double width) {
     return IconButton(
-      //icono de cerrar sesion
       icon: Icon(
         Icons.map,
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: context.colors.surface,
         size: 25,
       ),
       style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(Theme.of(context).primaryColor),
-        iconColor: WidgetStatePropertyAll(Theme.of(context).scaffoldBackgroundColor),
+        backgroundColor: WidgetStatePropertyAll(context.colors.primary),
+        iconColor: WidgetStatePropertyAll(context.colors.surface),
       ),
-
       tooltip: "Ver en Mapa",
       onPressed: () async {
-        if(_posicionActual.latitude == 0) {
-              Metodos().alertsDialogBotonUnico(
-                context, 
-                'Para poder utilizar el servicio de mapas es necesario habilitar la ubicación de dispositivo.',
-                300, 100, 'Aceptar', 0
-              );
-              _permission();
-            } else {
-              _actualizarPosicion();
-              Navigator.push(context, MaterialPageRoute(builder: (context) => Mapas(
-                empresas: totalEmpresas,
-                todasEmpresas: totalEmpresas,
-                filtroDistancia: filtroComerciosCercanos,
-                distancia: distanciaComercios,
-                buscador: buscador,
-                posicionInicial: _posicionActual,
-                filtroAgrupado: filtroComerciosAgrupados,
-              )));
-            }
-        // metodos.alertsDialog(context, "¿Deseas ver en mapa los peers en tu ciudad?", width, "Cancelar", 2, "Si", 5);
-      }
+        if (_posicionActual.latitude == 0) {
+          Metodos().alertsDialogBotonUnico(
+            context,
+            'Para poder utilizar el servicio de mapas es necesario habilitar la ubicación de dispositivo.',
+            300, 100, 'Aceptar', 0
+          );
+          _permission();
+        } else {
+          _actualizarPosicion();
+          context.push(Mapas(
+            empresas: totalEmpresas,
+            todasEmpresas: totalEmpresas,
+            filtroDistancia: filtroComerciosCercanos,
+            distancia: distanciaComercios,
+            buscador: buscador,
+            posicionInicial: _posicionActual,
+            filtroAgrupado: filtroComerciosAgrupados,
+          ));
+        }
+      },
     );
   }
   
@@ -428,21 +413,20 @@ class _BolsaScreenState extends State<BolsaScreen> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 50, 0, 0),
+          padding: EdgeInsets.only(top: AppTokens.space48),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              //Image
               Card(
                 clipBehavior: Clip.antiAliasWithSaveLayer,
-                color: Theme.of(context).scaffoldBackgroundColor,
+                color: context.colors.surface,
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(2, 2, 2, 2),
+                  padding: EdgeInsets.all(AppTokens.space4),
                   child: Container(
                     width: 60,
                     height: 60,
@@ -452,79 +436,63 @@ class _BolsaScreenState extends State<BolsaScreen> {
                     ),
                     child: Image.asset(
                       "assets/img/avatar.jpg",
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
               ),
-              
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 0, 0),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: const Color(0x40000000),
-                          borderRadius:
-                              BorderRadius.circular(8),
-                        ),
-                        child: _leading(context, Metodos.width(context))
-                      ),
-                    ),
-                  ],
+                padding: EdgeInsets.only(right: AppTokens.space16),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0x40000000),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
+                  child: _leading(context, context.width),
                 ),
               ),
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
+          padding: EdgeInsets.only(top: AppTokens.space8),
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: [
               Text(
                 "Cristian Hoyos V",
-                style: TextStyle(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
+                style: context.textStyles.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: AppTokens.fontWeightSemiBold,
                   letterSpacing: 1.5,
-                )
+                ),
               ),
             ],
           ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            const Padding(
-              padding:
-                  EdgeInsetsDirectional.fromSTEB(0, 8, 0, 0),
-              child: Text(
+        Padding(
+          padding: EdgeInsets.only(top: AppTokens.space8),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Text(
                 'Ing. mecatrónico - ',
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  color: Color(0xB3FFFFFF),
-                  fontWeight: FontWeight.w500,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: const Color(0xB3FFFFFF),
+                  fontWeight: AppTokens.fontWeightMedium,
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(4, 8, 0, 0),
-              child: Text(
+              Text(
                 "cristiannhoyoss@gmail.com",
-                style: TextStyle(
-                  fontFamily: 'Lexend',
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  fontWeight: FontWeight.w500,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: AppTokens.fontWeightMedium,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -532,7 +500,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
     
   Widget _cartaPrincipal(){
     return Container(
-      width: MediaQuery.of(context).size.width,
+      width: context.width,
       height: 200,
       decoration: BoxDecoration(
         boxShadow: const [
@@ -546,16 +514,15 @@ class _BolsaScreenState extends State<BolsaScreen> {
         borderRadius: BorderRadius.circular(0),
       ),
       child: Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 0, 0),
-        child: _contenPrincipalCard()
+        padding: EdgeInsets.only(left: AppTokens.space20),
+        child: _contenPrincipalCard(),
       ),
     );
-            
   }
   
   Widget _ofertasSelected(){
     return Padding(
-      padding: const EdgeInsets.all(10.0),
+      padding: EdgeInsets.all(AppTokens.space12),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -568,35 +535,31 @@ class _BolsaScreenState extends State<BolsaScreen> {
                   ofertas = true;
                 });
               },
+              borderRadius: AppTokens.borderRadiusMedium,
               child: Container(
-                padding: const EdgeInsets.symmetric( horizontal: 15, vertical: 10),
-                margin: const EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
-                  color: (ofertas==true)?Theme.of(context).canvasColor:Colors.grey,
-                  borderRadius: BorderRadius.circular(15.0),
-                  border: Metodos.borderClasic(context)
-                  // border: Border.all(
-                  //   width: 0.25,
-                  //   color: Theme.of(context).focusColor
-                  // )
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space16,
+                  vertical: AppTokens.space12,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-                      child: Text(
-                        "Ofertas Energia",
-                        style: Metodos.subtitulosInformativosFondoNegro(context),
-                      ),
+                margin: EdgeInsets.all(AppTokens.space8),
+                decoration: BoxDecoration(
+                  color: ofertas ? context.colors.primary : Colors.grey,
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Metodos.borderClasic(context),
+                ),
+                child: Center(
+                  child: Text(
+                    "Ofertas Energia",
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: AppTokens.fontWeightSemiBold,
                     ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            )
+            ),
           ),
-
           Expanded(
             flex: 1,
             child: InkWell(
@@ -605,35 +568,31 @@ class _BolsaScreenState extends State<BolsaScreen> {
                   ofertas = false;
                 });
               },
+              borderRadius: AppTokens.borderRadiusMedium,
               child: Container(
-                padding: const EdgeInsets.symmetric( horizontal: 15, vertical: 10),
-                margin: const EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
-                  color: (ofertas==false)?Theme.of(context).canvasColor:Colors.grey,
-                  borderRadius: BorderRadius.circular(15.0),
-                  border: Metodos.borderClasic(context)
-                  // border: Border.all(
-                  //   width: 0.25,
-                  //   color: Theme.of(context).focusColor
-                  // )
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space16,
+                  vertical: AppTokens.space12,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-                      child: Text(
-                        "Ofertas Dinero",
-                        style: Metodos.subtitulosInformativosFondoNegro(context),
-                      ),
+                margin: EdgeInsets.all(AppTokens.space8),
+                decoration: BoxDecoration(
+                  color: !ofertas ? context.colors.primary : Colors.grey,
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Metodos.borderClasic(context),
+                ),
+                child: Center(
+                  child: Text(
+                    "Ofertas Dinero",
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: AppTokens.fontWeightSemiBold,
                     ),
-                  ],
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            )
-          )
-        
+            ),
+          ),
         ],
       ),
     );

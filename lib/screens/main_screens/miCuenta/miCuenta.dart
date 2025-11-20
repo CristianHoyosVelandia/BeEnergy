@@ -284,7 +284,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: context.colors.surface,
       body: _bodyIdeas()
     );
   }

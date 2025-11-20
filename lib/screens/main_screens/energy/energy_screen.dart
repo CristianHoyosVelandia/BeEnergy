@@ -340,7 +340,7 @@ class _EnergyScreenState extends State<EnergyScreen> {
         context,
         widget.myUser?.nombre ?? "Usuario"
       ),
-      backgroundColor: context.colors.background,
+      backgroundColor: context.colors.surface,
       body: body(),
     );
   }

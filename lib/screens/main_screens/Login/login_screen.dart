@@ -1,4 +1,6 @@
 import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
@@ -48,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget loginText(){
     return Container(
       width: Metodos.width(context),
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
       child:  Row(
         children: [
           const Expanded(
@@ -62,78 +64,132 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              "Log-In",
-              style: Metodos.textStyle(
-                context,
-                Metodos.colorTitulos(context),
-                30,
-                FontWeight.bold,
-                1.5
-              ),
-            ),
-          ),
-          const Expanded(
-            flex: 3,
-            child: SizedBox.shrink(),
-          ),
-        ],
-        
-      ),
-        
-        
-    );
-  }
-
-  Widget _cajasText(String text){
-
-    return Container(
-      width:  Metodos.width(context),
-      margin: const EdgeInsets.only(left: 60, top: 10),
-      child:  Text(
-        text,
-        style: Metodos.textStyle(
-          context,
-          Metodos.colorInverso(context),
-          16,
-          FontWeight.bold,
-          1.5
-        ),
-      ),
-    );
-  }
-
-  Widget _noRecuerdomiClave(){
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      height: 30,
-      child: Row(
-        children: [
-          const Expanded(
-            flex: 2,
-            child: SizedBox.shrink(),
-          ),
-          Expanded(
-            flex: 3,
-            child: InkWell(
-              onTap: () async {
-                //el navigator me permite dirigirme a la ruta para realizar el ingreso a mi cuenta
-                Navigator.push(context,MaterialPageRoute(builder: (context) => const NoRecuerdomiclaveScreen()));
-              },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Text(
-                '¿Olvidaste la clave?',
+                "Ingresa a tu cuenta",
                 style: Metodos.textStyle(
                   context,
-                  Metodos.colorInverso(context),
-                  15,
-                  FontWeight.w300,
+                  Metodos.colorTitulos(context),
+                  25,
+                  FontWeight.bold,
                   1.5
                 ),
               ),
             ),
           ),
         ],
+        
+      ),
+        
+        
+    );
+  }
+
+  Widget _modernInput({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    bool obscureText = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space32,
+        vertical: AppTokens.space8,
+      ),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscureText,
+        onChanged: _validador(),
+        style: context.textStyles.bodyLarge?.copyWith(
+          color: Colors.grey[800],
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle: context.textStyles.bodyMedium?.copyWith(
+            color: Colors.grey[600],
+            fontWeight: AppTokens.fontWeightMedium,
+          ),
+          hintStyle: context.textStyles.bodyMedium?.copyWith(
+            color: Colors.grey[400],
+          ),
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.95),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: AppTokens.space20,
+            vertical: AppTokens.space16,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+            borderSide: BorderSide(
+              color: context.colors.outline.withValues(alpha: 0.3),
+              width: 1.5,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+            borderSide: BorderSide(
+              color: context.colors.primary,
+              width: 2.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 1.5,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+            borderSide: const BorderSide(
+              color: Colors.red,
+              width: 2.5,
+            ),
+          ),
+          prefixIcon: Icon(
+            obscureText ? Icons.lock_outline : Icons.email_outlined,
+            color: Colors.red,
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
+  Widget _noRecuerdomiClave(){
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space32,
+        vertical: AppTokens.space4,
+      ),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: InkWell(
+          onTap: () async {
+            context.push(const NoRecuerdomiclaveScreen());
+          },
+          borderRadius: AppTokens.borderRadiusSmall,
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppTokens.space12,
+              vertical: AppTokens.space4,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: AppTokens.borderRadiusSmall,
+            ),
+            child: Text(
+              '¿Olvidaste la contraseña?',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: Colors.red,
+                fontWeight: AppTokens.fontWeightMedium,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -161,99 +217,94 @@ class _LoginScreenState extends State<LoginScreen> {
   }
   
 
-  Widget _ingresarAmiCuenta(context){
-    return InkWell(
-      highlightColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      
-      onTap: () async {
-        
-        _validador();
+  Widget _ingresarAmiCuenta(BuildContext context){
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space32,
+        vertical: AppTokens.space16,
+      ),
+      child: ElevatedButton(
+        onPressed: () async {
+          _validador();
 
-        if(val) {
-          DatabaseHelper dbHelper = DatabaseHelper();
-          final au= await dbHelper.getUsers();
-          List usuariosList =  (au.usuarios != null) ? au.usuarios!  : [];
-          for (var i = 0; i < usuariosList.length; i++) {
-            if(_email.value.text == usuariosList[i].correo){
-
-              if(_clave.value.text== usuariosList[i].clave){
-                iniciarSesion(usuariosList[i]);
-                await Metodos.flushbarPositivo(context, 'Ingresando a App');
-                Navigator.of(context).pushAndRemoveUntil( 
-                  MaterialPageRoute(
-                    builder: (context) => NavPages(myUser: usuariosList[i],)
-                  ),
-                  (Route<dynamic> route) => false
-                );
-                     
+          if(val) {
+            DatabaseHelper dbHelper = DatabaseHelper();
+            final au = await dbHelper.getUsers();
+            List usuariosList = (au.usuarios != null) ? au.usuarios! : [];
+            for (var i = 0; i < usuariosList.length; i++) {
+              if(_email.value.text == usuariosList[i].correo){
+                if(_clave.value.text == usuariosList[i].clave){
+                  iniciarSesion(usuariosList[i]);
+                  await Metodos.flushbarPositivo(context, 'Ingresando a App');
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => NavPages(myUser: usuariosList[i],)
+                    ),
+                    (Route<dynamic> route) => false
+                  );
+                } else {
+                  Metodos.flushbarNegativo(context, 'Contraseña incorrecta, intente nuevamente');
+                }
+              } else {
+                Metodos.flushbarNegativo(context, 'Usuario no encontrado, por favor regístrese.');
               }
-
-              else{
-                Metodos.flushbarNegativo(context, 'Clave Incorrecta, intente nuevamente');
-              }
-            } else{
-              Metodos.flushbarNegativo(context, 'Usuario no encontrado en la base de datos, por favor registrese.');
             }
           }
-          // print(usuariosList.length);
-        }
-      },
-
-      child: Container(
-        margin: const EdgeInsets.only(right: 65, left: 65, top: 15),
-        height: 50,
-        decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
-          borderRadius: BorderRadius.circular(25),
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          elevation: 4,
         ),
-        
-        child: Center(
-          child: Text(
-            'Ingresar a mi cuenta',
-            style: Metodos.btnTextStyle(context, Colors.white)
+        child: Text(
+          'Iniciar Sesión',
+          style: context.textStyles.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: AppTokens.fontWeightBold,
+            letterSpacing: 0.5,
           ),
         ),
       ),
-    );     
+    );
   }
 
   Widget _noTienesCuenta(){
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-
-        Container(
-          alignment: Alignment.center,
-          margin: const EdgeInsets.only(top: 25, bottom: 20),
-          child: Text(
-            "¿No tienes una cuenta ?",
-            /*Esta validacion se hara en todos los textos blancos, en el caso de que 
-            salga una marca blanca con blanco de fondo*/
-            style: Metodos.textStyle(context, Theme.of(context).focusColor, 15)
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppTokens.space24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            "¿No tienes cuenta?",
+            style: context.textStyles.bodyLarge?.copyWith(
+              color: Colors.grey[600],
+            ),
           ),
-        ),
-
-
-        Container(
-          alignment: Alignment.center,
-          margin: const EdgeInsets.only(top: 25, left: 10, bottom: 20),
-            child: InkWell(
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              child: Text(
-                "Registrate",
-                style: Metodos.textStyle(context, Theme.of(context).primaryColor, 22, FontWeight.bold)
+          SizedBox(width: AppTokens.space8),
+          InkWell(
+            highlightColor: Colors.transparent,
+            splashColor: Colors.transparent,
+            onTap: () {
+              context.push(const RegisterScreen());
+            },
+            child: Text(
+              "Regístrate",
+              style: context.textStyles.titleMedium?.copyWith(
+                color: Colors.red,
+                fontWeight: AppTokens.fontWeightBold,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white,
+                decorationThickness: 2,
               ),
-              onTap: () {
-                Navigator.push(context,MaterialPageRoute(builder: (context) => const RegisterScreen()));
-              },
-            )
-        )
-
-        
-      ],
-      ); 
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget body(){
@@ -271,46 +322,32 @@ class _LoginScreenState extends State<LoginScreen> {
             imagenLogin(),
 
             loginText(),
-            
-            _cajasText('Email'),
-            
-            // // 
-            Container(
-              margin: const EdgeInsets.only(left: 60, right: 60, top: 10),
-              child: InputTextFieldWidget(
-                context: context,
-                labelText: 'Ingresa tu correo aqui',
-                controller: _email,
-                readOnly: false,
-                onChange: _validador(),
-                validador: (value) {
-                  if (!Metodos.validateEmail(value!)) {
-                    return 'Ingrese un email válido ';
-                  }
-                  return null;
-                },
-              ),
+
+            SizedBox(height: AppTokens.space16),
+
+            _modernInput(
+              label: 'Email',
+              hint: 'Ingresa tu correo electrónico',
+              controller: _email,
+              validator: (value) {
+                if (!Metodos.validateEmail(value!)) {
+                  return 'Ingrese un email válido';
+                }
+                return null;
+              },
             ),
 
-            _cajasText('Clave'),
-            
-            // 
-            Container(
-              margin: const EdgeInsets.only(left: 60, right: 60, top: 10),
-              child: InputTextFieldWidget(
-                context: context,
-                labelText: 'Ingresa tu clave',
-                controller: _clave,
-                readOnly: false,
-                obscureText: true,
-                onChange: _validador(),
-                validador: (value) {
-                  if (value!.length < 4) {
-                    return 'Ingrese una clave mayor a 3 caracetes';
-                  }
-                  return null;
-                },
-              ),
+            _modernInput(
+              label: 'Contraseña',
+              hint: 'Ingresa tu contraseña',
+              controller: _clave,
+              obscureText: true,
+              validator: (value) {
+                if (value!.length < 4) {
+                  return 'Ingrese una contraseña mayor a 3 caracteres';
+                }
+                return null;
+              },
             ),
             
             _noRecuerdomiClave(),
