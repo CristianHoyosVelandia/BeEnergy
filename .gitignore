@@ -51,5 +51,5 @@ app.*.map.json
 # Font files (download manually - see download_fonts.md)
 fonts/*.ttf
 fonts/*.otf
-
+.claude
 CLAUDE.md
