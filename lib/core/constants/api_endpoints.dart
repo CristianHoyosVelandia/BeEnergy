@@ -1,27 +1,33 @@
 /// Constantes de endpoints del API
 /// Centraliza todas las rutas de los endpoints para facilitar su mantenimiento
+/// Basado en Volt Platform Services (OpenAPI 3.1, v1.0.0)
 class ApiEndpoints {
   // Constructor privado para prevenir instanciación
   ApiEndpoints._();
 
   // ==================== AUTH ENDPOINTS ====================
-  /// Endpoint para login de usuario
-  static const String login = '/auth/login';
+  /// Endpoint para verificar conexión (ping)
+  static const String ping = '/auth/ping';
 
-  /// Endpoint para registro de usuario
-  static const String register = '/auth/register';
+  /// Endpoint para login de usuario
+  static const String login = '/auth/log-in';
+
+  /// Endpoint para registro de usuario (sign up)
+  static const String signUp = '/auth/sign-up';
 
   /// Endpoint para logout
   static const String logout = '/auth/logout';
 
-  /// Endpoint para refrescar token
-  static const String refreshToken = '/auth/refresh';
+  /// Endpoint para verificar token
+  static const String verifyToken = '/auth/verify-token';
 
-  /// Endpoint para recuperar contraseña
+  /// Endpoint para recuperar contraseña (forgot password)
   static const String forgotPassword = '/auth/forgot-password';
 
   /// Endpoint para resetear contraseña
   static const String resetPassword = '/auth/reset-password';
+
+
 
   // ==================== USER ENDPOINTS ====================
   /// Endpoint para obtener perfil de usuario
