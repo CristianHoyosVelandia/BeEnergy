@@ -3,9 +3,11 @@
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
+import '../../../routes.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,18 +26,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   //Objetos de clase
   DatabaseHelper dbHelper = DatabaseHelper();
+  final AuthService _authService = AuthService();
   MyUser usuariolocal =  MyUser(
     idUser    : 0,
     nombre    : '',
     telefono  : '',
-    correo    : '',   
-    clave     : '',  
-    energia   : '',    
-    dinero    : '',   
-    idCiudad  : 0,  
+    correo    : '',
+    clave     : '',
+    energia   : '',
+    dinero    : '',
+    idCiudad  : 0,
   );
 
   bool val = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -289,37 +293,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 vertical: AppTokens.space16,
               ),
               child: ElevatedButton(
-                onPressed: () async {
+                onPressed: _isLoading ? null : () async {
                   _validador();
 
                   if(val) {
-                    var au = await dbHelper.getUsers();
-                    List usuariosList = (au.usuarios != null) ? au.usuarios! : [];
-                    existeUsuario = false;
+                    // Guardar BuildContext antes del async gap
+                    final scaffoldContext = context;
 
-                    for (var i = 0; i < usuariosList.length; i++) {
-                      if(_email.value.text == usuariosList[i].correo){
-                        existeUsuario = true;
-                        break;
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    try {
+                      // Llamada al servicio de autenticación para registrar usuario
+                      final response = await _authService.signUp(
+                        email: _email.text.trim(),
+                        password: _pass.text,
+                        name: _nombre.text.trim(),
+                      );
+
+                      setState(() {
+                        _isLoading = false;
+                      });
+
+                      if (response['success']) {
+                        // Registro exitoso con el API
+                        final userData = response['data'];
+                        final token = response['token'];
+
+                        // Crear usuario local con los datos del API
+                        MyUser usuario = MyUser(
+                          idUser: userData['id'] ?? 0,
+                          nombre: userData['name'] ?? _nombre.text,
+                          telefono: userData['phone'] ?? '',
+                          correo: userData['email'] ?? _email.text,
+                          clave: _pass.text,
+                          energia: userData['energy'] ?? '90',
+                          dinero: userData['balance'] ?? '100000',
+                          idCiudad: userData['city_id'] ?? 0,
+                        );
+
+                        // Guardar en base de datos local
+                        dbHelper.addUsertbUsuarios(usuario);
+
+                        if (mounted) {
+                          await Metodos.flushbarPositivoLargo(
+                            scaffoldContext,
+                            response['message'] ?? 'Usuario creado exitosamente'
+                          );
+
+                          // Navegar al login o a la pantalla principal
+                          if (mounted) {
+                            Navigator.of(scaffoldContext).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => NavPages(myUser: usuario)
+                              ),
+                              (Route<dynamic> route) => false
+                            );
+                          }
+                        }
+                      } else {
+                        // Error en el registro
+                        if (mounted) {
+                          Metodos.flushbarNegativo(
+                            scaffoldContext,
+                            response['message'] ?? 'Error al crear la cuenta'
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                      if (mounted) {
+                        Metodos.flushbarNegativo(scaffoldContext, 'Error de conexión. Verifica tu internet.');
                       }
                     }
-
-                    if(existeUsuario == true) {
-                      await Metodos.flushbarNegativo(context, 'Ya existe una cuenta con este correo');
-                    } else {
-                      MyUser usuariolocal = MyUser(
-                        idUser    : usuariosList.length,
-                        nombre    : _nombre.value.text,
-                        telefono  : '',
-                        correo    : _email.value.text,
-                        clave     : _pass.value.text,
-                        energia   : '90',
-                        dinero    : '100000',
-                        idCiudad  : 0
-                      );
-                      dbHelper.addUsertbUsuarios(usuariolocal);
-                      await Metodos.flushbarPositivoLargo(context, 'Usuario creado exitosamente');
-                    }
+                  } else {
+                    Metodos.flushbarNegativo(context, 'Por favor, completa todos los campos correctamente');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -331,14 +382,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   elevation: 4,
                 ),
-                child: Text(
-                  'Crear Cuenta',
-                  style: context.textStyles.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: AppTokens.fontWeightBold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                child: _isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Crear Cuenta',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: AppTokens.fontWeightBold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
               ),
             ), 
 

@@ -3,8 +3,8 @@
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
-
 import '../../../models/callmodels.dart';
 
 class NoRecuerdomiclaveScreen extends StatefulWidget {
@@ -16,6 +16,8 @@ class NoRecuerdomiclaveScreen extends StatefulWidget {
 
 class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
   final TextEditingController _email = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
 
   Widget _modernInput({
     required String label,
@@ -205,8 +207,62 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                 vertical: AppTokens.space16,
               ),
               child: ElevatedButton(
-                onPressed: () async {
-                  // Lógica para enviar email de recuperación
+                onPressed: _isLoading ? null : () async {
+                  // Validar email
+                  if (!Metodos.validateEmail(_email.text)) {
+                    Metodos.flushbarNegativo(context, 'Por favor ingresa un email válido');
+                    return;
+                  }
+
+                  // Guardar BuildContext antes del async gap
+                  final scaffoldContext = context;
+
+                  setState(() {
+                    _isLoading = true;
+                  });
+
+                  try {
+                    // Llamada al servicio para recuperar contraseña
+                    final response = await _authService.forgotPassword(
+                      email: _email.text.trim(),
+                    );
+
+                    setState(() {
+                      _isLoading = false;
+                    });
+
+                    if (response['success']) {
+                      if (mounted) {
+                        await Metodos.flushbarPositivoLargo(
+                          scaffoldContext,
+                          response['message'] ?? 'Correo de recuperación enviado. Revisa tu bandeja de entrada.'
+                        );
+
+                        // Volver al login después de 2 segundos
+                        if (mounted) {
+                          Future.delayed(const Duration(seconds: 2), () {
+                            if (mounted) {
+                              Navigator.pop(scaffoldContext);
+                            }
+                          });
+                        }
+                      }
+                    } else {
+                      if (mounted) {
+                        Metodos.flushbarNegativo(
+                          scaffoldContext,
+                          response['message'] ?? 'No se pudo enviar el correo'
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                    if (mounted) {
+                      Metodos.flushbarNegativo(scaffoldContext, 'Error de conexión. Verifica tu internet.');
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
@@ -217,14 +273,23 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                   ),
                   elevation: 4,
                 ),
-                child: Text(
-                  'Enviar',
-                  style: context.textStyles.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: AppTokens.fontWeightBold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                child: _isLoading
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Enviar',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: AppTokens.fontWeightBold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
               ),
             ),
 

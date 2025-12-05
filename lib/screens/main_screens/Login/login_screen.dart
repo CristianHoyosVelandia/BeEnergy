@@ -1,6 +1,7 @@
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
@@ -16,19 +17,20 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
 
   Metodos metodos = Metodos();
+  final AuthService _authService = AuthService();
 
   //TextEditingController
   final TextEditingController _email = TextEditingController();
   final TextEditingController _clave = TextEditingController();
-  
+
   //atributos de clase
   bool val= false;
+  bool _isLoading = false;
 
   Function(String)? _validador() {
    
     return (validator) {
       setState(() {
-        // print("Validate email inverso: ${!Metodos.validateEmail(_email.value.text)}");
         if ( Metodos.validateEmail(_email.value.text) && _clave.value.text.length >= 4 ) {
           val = true;
         } else {
@@ -224,31 +226,79 @@ class _LoginScreenState extends State<LoginScreen> {
         vertical: AppTokens.space16,
       ),
       child: ElevatedButton(
-        onPressed: () async {
+        onPressed: _isLoading ? null : () async {
           _validador();
 
           if(val) {
-            DatabaseHelper dbHelper = DatabaseHelper();
-            final au = await dbHelper.getUsers();
-            List usuariosList = (au.usuarios != null) ? au.usuarios! : [];
-            for (var i = 0; i < usuariosList.length; i++) {
-              if(_email.value.text == usuariosList[i].correo){
-                if(_clave.value.text == usuariosList[i].clave){
-                  iniciarSesion(usuariosList[i]);
-                  await Metodos.flushbarPositivo(context, 'Ingresando a App');
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => NavPages(myUser: usuariosList[i],)
-                    ),
-                    (Route<dynamic> route) => false
-                  );
-                } else {
-                  Metodos.flushbarNegativo(context, 'Contraseña incorrecta, intente nuevamente');
+            // Guardar BuildContext antes del async gap
+            final scaffoldContext = context;
+
+            setState(() {
+              _isLoading = true;
+            });
+            try {
+              // Llamada al servicio de autenticación
+              final response = await _authService.login(
+                email: _email.text.trim(),
+                password: _clave.text,
+              );
+              
+              setState(() { _isLoading = false; });
+
+              if (response['success']) {
+                // Login exitoso con el API
+                final userData = response['data'];
+                final token = response['token'];
+
+                // Crear usuario local con los datos del API
+                MyUser usuario = MyUser(
+                  idUser: userData['user_id'] ?? 0,
+                  nombre: userData['name'] ?? userData['email'] ?? 'Cristian Hoyos',
+                  telefono: userData['phone'] ?? '3176703596',
+                  correo: userData['email'] ?? _email.text,
+                  clave: _clave.text,
+                  energia: userData['energy'] ?? '0',
+                  dinero: userData['balance'] ?? '0',
+                  idCiudad: userData['city_id'] ?? 0,
+                );
+
+                // Guardar en base de datos local
+                iniciarSesion(usuario);
+
+                // Guardar token si es necesario
+                if (token != null) {
+                  // El token ya está guardado en el ApiClient por el AuthService
+                }
+
+                if (mounted) {
+                  await Metodos.flushbarPositivo(scaffoldContext, response['message'] ?? 'Ingresando a App');
+
+                  // Navegar a la pantalla principal
+                  if (mounted) {
+                    Navigator.of(scaffoldContext).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => NavPages(myUser: usuario)
+                      ),
+                      (Route<dynamic> route) => false
+                    );
+                  }
                 }
               } else {
-                Metodos.flushbarNegativo(context, 'Usuario no encontrado, por favor regístrese.');
+                // Error en el login
+                if (mounted) {
+                  Metodos.flushbarNegativo(scaffoldContext, response['message'] ?? 'Error al iniciar sesión');
+                }
               }
+            } catch (e) {
+                setState(() {
+                  _isLoading = false;
+                });
+                if (mounted) {
+                  Metodos.flushbarNegativo(scaffoldContext, 'Error de conexión. Verifica tu internet.');
+                }
             }
+          } else {
+            Metodos.flushbarNegativo(context, 'Por favor, completa todos los campos correctamente');
           }
         },
         style: ElevatedButton.styleFrom(
@@ -260,14 +310,23 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           elevation: 4,
         ),
-        child: Text(
-          'Iniciar Sesión',
-          style: context.textStyles.titleMedium?.copyWith(
-            color: Colors.white,
-            fontWeight: AppTokens.fontWeightBold,
-            letterSpacing: 0.5,
-          ),
-        ),
+        child: _isLoading
+          ? SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : Text(
+              'Iniciar Sesión',
+              style: context.textStyles.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: AppTokens.fontWeightBold,
+                letterSpacing: 0.5,
+              ),
+            ),
       ),
     );
   }
