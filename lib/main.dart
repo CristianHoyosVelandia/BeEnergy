@@ -47,6 +47,15 @@ class MyApp extends StatelessWidget {
         'register'        : (context) => const RegisterScreen(),
         'trading'         : (context) => const TradingScreen(),
         'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
+
+        // Community Routes (nuevas pantallas):
+        'communityManagement' : (context) => const CommunityManagementScreen(),
+        'energyRecords'       : (context) => const EnergyRecordsScreen(),
+        'pdeAllocation'       : (context) => const PDEAllocationScreen(),
+        'p2pMarket'           : (context) => const P2PMarketScreen(),
+        'energyCredits'       : (context) => const EnergyCreditsScreen(),
+        'monthlyBilling'      : (context) => const MonthlyBillingScreen(),
+        'reports'             : (context) => const ReportsScreen(),
       },
     );
   }

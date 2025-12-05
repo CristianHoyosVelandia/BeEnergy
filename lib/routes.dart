@@ -24,9 +24,20 @@ export 'package:be_energy/screens/main_screens/notificaciones/notificaciones_scr
 export 'package:be_energy/screens/main_screens/Login/login_screen.dart';
 export 'package:be_energy/screens/main_screens/home/home_screen.dart';
 export 'package:be_energy/screens/main_screens/Trading/envia_energy_screen.dart';
+
+// Community Screens (MVP Tesis - Noviembre 2025)
+export 'package:be_energy/screens/main_screens/community/community_management_screen.dart';
+export 'package:be_energy/screens/main_screens/community/user_detail_screen.dart';
+export 'package:be_energy/screens/main_screens/community/energy_records_screen.dart';
+export 'package:be_energy/screens/main_screens/community/pde_allocation_screen.dart';
+export 'package:be_energy/screens/main_screens/community/p2p_market_screen.dart';
+export 'package:be_energy/screens/main_screens/community/energy_credits_screen.dart';
+export 'package:be_energy/screens/main_screens/community/monthly_billing_screen.dart';
+export 'package:be_energy/screens/main_screens/community/reports_screen.dart';
+
 //navigation
 export 'package:be_energy/views/navigation.dart';
-//themes 
+//themes
 export 'package:be_energy/themes/app_themes.dart';
 
 // Navigator.push(context,MaterialPageRoute(builder: (context) => const ConfirmchangeScreen()));
