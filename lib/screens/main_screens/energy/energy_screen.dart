@@ -4,6 +4,7 @@ import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/constants.dart';
+import '../../../data/fake_data.dart';
 import '../../../models/my_user.dart';
 import '../../../utils/metodos.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -17,9 +18,20 @@ class EnergyScreen extends StatefulWidget {
 }
 
 class _EnergyScreenState extends State<EnergyScreen> {
-  
+
   Metodos metodos = Metodos();
   bool casaVal = true;
+
+  // Obtener datos del prosumidor (usuario 24 - Andrea Martínez)
+  late final userRecord = FakeData.energyRecords.firstWhere(
+    (record) => record.userId == (widget.myUser?.idUser ?? 24),
+    orElse: () => FakeData.energyRecords[11], // Default: usuario 24
+  );
+
+  late final memberData = FakeData.members.firstWhere(
+    (member) => member.userId == (widget.myUser?.idUser ?? 24),
+    orElse: () => FakeData.members[11], // Default: usuario 24
+  );
 
 
   Widget _imagen(){
@@ -35,7 +47,7 @@ class _EnergyScreenState extends State<EnergyScreen> {
           child: const Image(
             alignment: AlignmentDirectional.center,
             image: AssetImage("assets/img/ecoHouse.jpg"),
-            width: 225.0,
+            width: 205.0,
           ),
         ),
         Padding(
@@ -46,7 +58,7 @@ class _EnergyScreenState extends State<EnergyScreen> {
           child: Column(
             children: [
               Text(
-                Formatters.formatPower(10),
+                Formatters.formatPower(memberData.installedCapacity),
                 style: context.textStyles.headlineMedium?.copyWith(
                   fontWeight: AppTokens.fontWeightBold,
                 ),
@@ -60,14 +72,14 @@ class _EnergyScreenState extends State<EnergyScreen> {
               ),
               SizedBox(height: AppTokens.space24),
               Text(
-                Formatters.formatEnergy(5.5),
+                Formatters.formatEnergy(userRecord.energyConsumed),
                 style: context.textStyles.headlineMedium?.copyWith(
                   fontWeight: AppTokens.fontWeightBold,
                 ),
               ),
               SizedBox(height: AppTokens.space4),
               Text(
-                "Consumo",
+                "Consumo Mensual",
                 style: context.textStyles.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),
@@ -121,26 +133,31 @@ class _EnergyScreenState extends State<EnergyScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "28",
-                    style: context.textStyles.displayMedium?.copyWith(
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                  SizedBox(width: AppTokens.space4),
-                  Padding(
-                    padding: EdgeInsets.only(bottom: AppTokens.space8),
-                    child: Text(
-                      "Abril",
-                      style: context.textStyles.titleMedium?.copyWith(
-                        fontWeight: AppTokens.fontWeightSemiBold,
+              Flexible(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "5",
+                      style: context.textStyles.displayMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(width: AppTokens.space4),
+                    Flexible(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space8),
+                        child: Text(
+                          "Dic 2025",
+                          style: context.textStyles.titleMedium?.copyWith(
+                            fontWeight: AppTokens.fontWeightSemiBold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Column(
                 children: [
@@ -455,6 +472,12 @@ class _LineChartSampleState extends State<LineChartSample> {
   }
 
   LineChartData mainData() {
+    // Datos horarios reales de generación PV (diciembre 2025)
+    final hourlyData = FakeData.hourlyGeneration;
+    final spots = hourlyData.map((data) =>
+      FlSpot(data.hour.toDouble(), data.generation)
+    ).toList();
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
@@ -482,7 +505,7 @@ class _LineChartSampleState extends State<LineChartSample> {
         topTitles: AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
-        
+
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
@@ -512,29 +535,7 @@ class _LineChartSampleState extends State<LineChartSample> {
       maxY: 5,
       lineBarsData: [
         LineChartBarData(
-          spots: const [
-
-            FlSpot(6, 0),
-            FlSpot(7, 0.25),
-            FlSpot(8, 0.75),
-
-            FlSpot(9, 1.6),
-            FlSpot(10, 2.21),
-            FlSpot(11, 3),
-
-            FlSpot(12, 3.3),
-            FlSpot(13, 3.2),
-            FlSpot(14, 3.1),
-
-            FlSpot(15, 2.6),
-            FlSpot(16, 2),
-            FlSpot(17, 1.26),
-
-            FlSpot(18, 0.5),
-            FlSpot(19, 0.25),
-            FlSpot(20, 0),
-
-          ],
+          spots: spots,
           isCurved: true,
           gradient: LinearGradient(
             colors: gradientColors,
@@ -679,7 +680,7 @@ class _LineChart extends StatelessWidget {
     lineBarsData: _lineBarsData2(context),
     minX: 0,
     maxX: 29,
-    maxY: 8,
+    maxY: 2,
     minY: 0,
   );
 
@@ -751,22 +752,22 @@ class _LineChart extends StatelessWidget {
 
     switch (value.toInt()) {
       case 5:
-        text = Text('05-04', style: style);
+        text = Text('05-12', style: style);
         break;
       case 10:
-        text = Text('10-04', style: style);
+        text = Text('10-12', style: style);
         break;
       case 15:
-        text = Text('15-04', style: style);
+        text = Text('15-12', style: style);
         break;
       case 20:
-        text = Text('20-04', style: style);
+        text = Text('20-12', style: style);
         break;
       case 25:
-        text = Text('25-04', style: style);
+        text = Text('25-12', style: style);
         break;
       case 30:
-        text = Text('30-04', style: style);
+        text = Text('30-12', style: style);
         break;
       default:
         text = Text('', style: style);
@@ -818,84 +819,69 @@ class _LineChart extends StatelessWidget {
     ),
   );
 
-  LineChartBarData _lineChartBarData2_1(BuildContext context) => LineChartBarData(
-        isCurved: true,
-        curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color3}")).withValues(alpha: 0.7),
-        barWidth: 3,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: true),
-        spots: const [
-          FlSpot(1, 6),
-          FlSpot(3, 1.5),
-          FlSpot(5, 1.4),
-          FlSpot(7, 3.4),
-          FlSpot(9, 2),
-          FlSpot(11, 2.2),
-          FlSpot(13, 1.8),
-          FlSpot(15, 1),
-          FlSpot(17, 1.5),
-          FlSpot(19, 1.4),
-          FlSpot(21, 3.4),
-          FlSpot(23, 2),
-          FlSpot(25, 2.2),
-          FlSpot(27, 1.8),
-        ],
-      );
+  LineChartBarData _lineChartBarData2_1(BuildContext context) {
+    // Datos reales de potencia exportada (diciembre 2025)
+    final dailyData = FakeData.dailyEnergyData;
+    final spots = dailyData.asMap().entries.map((entry) {
+      final day = entry.key + 1;
+      final data = entry.value;
+      return FlSpot(day.toDouble(), data.exported / 100); // Escalar para visualización
+    }).toList();
 
-  LineChartBarData _lineChartBarData2_2(BuildContext context) => LineChartBarData(
-        isCurved: true,
-        color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.7),
-        barWidth: 3,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: true),
-        belowBarData: BarAreaData(
-          show: true,
-          color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.2),
-        ),
-        spots: const [
-          FlSpot(1, 0.5),
-          FlSpot(3, 2.5),
-          FlSpot(5, 2.4),
-          FlSpot(7, 2.4),
-          FlSpot(9, 3),
-          FlSpot(11, 4.2),
-          FlSpot(13, 4.8),
-          FlSpot(15, 5.5),
-          FlSpot(17, 4.5),
-          FlSpot(19, 4.0),
-          FlSpot(21, 3.4),
-          FlSpot(23, 3.0),
-          FlSpot(25, 3.4),
-          FlSpot(27, 3.8),
-        ],
-      );
+    return LineChartBarData(
+      isCurved: true,
+      curveSmoothness: 0,
+      color: Color(int.parse("0xff${ColorsApp.color3}")).withValues(alpha: 0.7),
+      barWidth: 3,
+      isStrokeCapRound: true,
+      dotData: FlDotData(show: true),
+      spots: spots,
+    );
+  }
 
-  LineChartBarData _lineChartBarData2_3(BuildContext context) => LineChartBarData(
-        isCurved: true,
-        curveSmoothness: 0,
-        color: Color(int.parse("0xff${ColorsApp.color2}")).withValues(alpha: 0.7),
-        barWidth: 3,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: true),
-        belowBarData: BarAreaData(show: false),
-        spots: const [
-          FlSpot(1, 1.8),
-          FlSpot(3, 1.9),
-          FlSpot(5, 1.0),
-          FlSpot(7, 1.3),
-          FlSpot(9, 1.5),
-          FlSpot(11, 1.7),
-          FlSpot(13, 1.8),
-          FlSpot(15, 1.5),
-          FlSpot(17, 0.5),
-          FlSpot(19, 0.6),
-          FlSpot(21, 1.4),
-          FlSpot(23, 1.5),
-          FlSpot(25, 1.0),
-          FlSpot(27, 1.2),
-        ],
-      );
+  LineChartBarData _lineChartBarData2_2(BuildContext context) {
+    // Datos reales de demanda (diciembre 2025)
+    final dailyData = FakeData.dailyEnergyData;
+    final spots = dailyData.asMap().entries.map((entry) {
+      final day = entry.key + 1;
+      final data = entry.value;
+      return FlSpot(day.toDouble(), data.demand / 100); // Escalar para visualización
+    }).toList();
+
+    return LineChartBarData(
+      isCurved: true,
+      color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.7),
+      barWidth: 3,
+      isStrokeCapRound: true,
+      dotData: FlDotData(show: true),
+      belowBarData: BarAreaData(
+        show: true,
+        color: Color(int.parse("0xff${ColorsApp.color4}")).withValues(alpha: 0.2),
+      ),
+      spots: spots,
+    );
+  }
+
+  LineChartBarData _lineChartBarData2_3(BuildContext context) {
+    // Datos reales de potencia importada (diciembre 2025)
+    final dailyData = FakeData.dailyEnergyData;
+    final spots = dailyData.asMap().entries.map((entry) {
+      final day = entry.key + 1;
+      final data = entry.value;
+      return FlSpot(day.toDouble(), data.imported / 100); // Escalar para visualización
+    }).toList();
+
+    return LineChartBarData(
+      isCurved: true,
+      curveSmoothness: 0,
+      color: Color(int.parse("0xff${ColorsApp.color2}")).withValues(alpha: 0.7),
+      barWidth: 3,
+      isStrokeCapRound: true,
+      dotData: FlDotData(show: true),
+      belowBarData: BarAreaData(show: false),
+      spots: spots,
+    );
+  }
 }
 
 class LineChartSample1 extends StatefulWidget {
