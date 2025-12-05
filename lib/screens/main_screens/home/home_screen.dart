@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../models/callmodels.dart';
+import '../../../data/fake_data.dart';
+import '../community/community_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
@@ -20,42 +22,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Metodos metodos = Metodos();
 
-  final data = [
-    {
-      'numTransaccion': 1,
-      'entrada': true,
-      'nombre': 'Estiven Hoyos',
-      'dinero':  ' \$ 500.00',
-      'energia':  '25 kWh',
-      'fecha':  '25-Feb',
-      'fuente':  'Solar'
-    },
-    {
-      'numTransaccion': 2,
-      'entrada': true,
-      'nombre': 'Angel Hoyos',
-      'dinero':  ' \$ 240.00',
-      'energia':  '5 kWh',
-      'fecha':  '27-Feb',
-      'fuente':  'Solar'
-    },
-    {
-      'numTransaccion': 3,
-      'entrada': false,
-      'nombre': 'Clara Velandia',
-      'dinero':  ' \$ 150.00',
-      'energia':  '8 kWh',
-      'fecha':  '28-Feb',
-      'fuente':  'Solar'
-    }
-  ];
+  // Transacciones P2P de noviembre 2025 (basadas en datos de la tesis)
+  List<Map<String, dynamic>> get data {
+    final contracts = FakeData.p2pContracts.take(5).toList();
+    return contracts.asMap().entries.map((entry) {
+      final index = entry.key;
+      final contract = entry.value;
+      // Determinar si es entrada (venta) o salida (compra) basado en el userId
+      final isIncome = contract.sellerId == (widget.myUser?.idUser ?? 24);
+      final nombre = isIncome ? contract.buyerName : contract.sellerName;
+
+      // Formatear fecha manualmente sin locale (evita error de inicialización)
+      final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      final fecha = '${contract.createdAt.day}-${months[contract.createdAt.month - 1]}';
+
+      return {
+        'numTransaccion': index + 1,
+        'entrada': isIncome,
+        'nombre': nombre,
+        'dinero': Formatters.formatCurrency(contract.totalValue),
+        'energia': Formatters.formatEnergy(contract.energyCommitted),
+        'fecha': fecha,
+        'fuente': 'P2P'
+      };
+    }).toList();
+  }
 
   List<GGData> _getChartData() {
+    // Datos agregados de la comunidad UAO - Noviembre 2025
+    final stats = FakeData.communityStats;
     final List<GGData> chartData = [
-      GGData('Directa Solar', 100),
-      GGData('Red', 150),
-      GGData('Bateria', 125),
-      GGData('Intercambios', 25),
+      GGData('Directa Solar', stats.totalEnergyGenerated.toInt()), // 1410 kWh
+      GGData('Red', stats.totalEnergyImported.toInt()),            // 2270 kWh (import from grid)
+      GGData('Intercambios P2P', 650),                             // 650 kWh P2P contracts
     ];
     return chartData;
   }
@@ -95,20 +94,29 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _trData() {
+    // Datos reales de noviembre 2025 basados en la comunidad
+    final stats = FakeData.communityStats;
+    final importEnergy = stats.totalEnergyImported;
+    final exportEnergy = stats.totalEnergyExported;
+
+    // Cálculo aproximado de costos (usando tarifa regulada promedio ~450 COP/kWh)
+    final regulatedCosts = FakeData.regulatedCosts;
+    final costPerKwh = regulatedCosts.totalCostPerKwh;
+
     return Column(
       children: [
         _energyCard(
           title: "Importe",
-          energy: -20,
-          amount: 5720,
+          energy: importEnergy,
+          amount: importEnergy * costPerKwh,
           icon: Icons.trending_down_rounded,
           color: AppTokens.error,
         ),
         SizedBox(height: AppTokens.space8),
         _energyCard(
           title: "Exporte",
-          energy: 50,
-          amount: 14300,
+          energy: exportEnergy,
+          amount: exportEnergy * costPerKwh,
           icon: Icons.trending_up_rounded,
           color: AppTokens.primaryRed,
         ),
@@ -197,14 +205,14 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Tus movimientos mensuales",
+            "Comunidad UAO",
             style: context.textStyles.titleLarge?.copyWith(
-              fontWeight: AppTokens.fontWeightSemiBold,
+              fontWeight: AppTokens.fontWeightBold,
             ),
           ),
           SizedBox(height: AppTokens.space4),
           Text(
-            "kWh",
+            "Noviembre 2025 • ${FakeData.communityStats.totalMembers} miembros",
             style: context.textStyles.bodyMedium?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -307,27 +315,82 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _actividades() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      child: Row(
+      child: Column(
         children: [
-          _btnActividadIcon(
-            "Transferir",
-            context,
-            1,
-            Icons.swap_horiz_rounded,
+          Row(
+            children: [
+              _btnActividadIcon(
+                "Transferir",
+                context,
+                1,
+                Icons.swap_horiz_rounded,
+              ),
+              SizedBox(width: AppTokens.space12),
+              _btnActividadIcon(
+                "Bolsa",
+                context,
+                2,
+                Icons.account_balance_outlined,
+              ),
+              SizedBox(width: AppTokens.space12),
+              _btnActividadIcon(
+                "Aprende",
+                context,
+                1,
+                Icons.bookmark_outline_rounded,
+              ),
+            ],
           ),
-          SizedBox(width: AppTokens.space12),
-          _btnActividadIcon(
-            "Bolsa",
-            context,
-            2,
-            Icons.account_balance_outlined,
-          ),
-          SizedBox(width: AppTokens.space12),
-          _btnActividadIcon(
-            "Aprende",
-            context,
-            1,
-            Icons.bookmark_outline_rounded,
+          SizedBox(height: AppTokens.space12),
+          // Botón de Gestión de la Comunidad (nueva funcionalidad)
+          InkWell(
+            onTap: () {
+              context.push(const CommunityManagementScreen());
+            },
+            borderRadius: AppTokens.borderRadiusMedium,
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: AppTokens.space16,
+                horizontal: AppTokens.space16,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTokens.primaryRed,
+                    AppTokens.primaryRed.withValues(alpha: 0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: AppTokens.borderRadiusMedium,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.groups_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  SizedBox(width: AppTokens.space12),
+                  Text(
+                    "Gestión de la Comunidad",
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

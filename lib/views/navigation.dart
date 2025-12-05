@@ -1,9 +1,7 @@
 
 // ignore_for_file: prefer_const_constructors
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:be_energy/routes.dart';
-import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import '../models/callmodels.dart';
 import 'package:flutter_svg/flutter_svg.dart';
