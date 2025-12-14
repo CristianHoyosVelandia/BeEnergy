@@ -8,7 +8,6 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../models/callmodels.dart';
 import '../../../data/fake_data.dart';
-import '../community/community_management_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;

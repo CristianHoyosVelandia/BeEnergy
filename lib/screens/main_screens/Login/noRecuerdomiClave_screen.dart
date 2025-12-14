@@ -5,7 +5,6 @@ import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
-import '../../../models/callmodels.dart';
 
 class NoRecuerdomiclaveScreen extends StatefulWidget {
   const NoRecuerdomiclaveScreen({super.key});
@@ -214,9 +213,6 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                     return;
                   }
 
-                  // Guardar BuildContext antes del async gap
-                  final scaffoldContext = context;
-
                   setState(() {
                     _isLoading = true;
                   });
@@ -227,41 +223,39 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                       email: _email.text.trim(),
                     );
 
+                    if (!mounted) return;
+
                     setState(() {
                       _isLoading = false;
                     });
 
                     if (response['success']) {
-                      if (mounted) {
-                        await Metodos.flushbarPositivoLargo(
-                          scaffoldContext,
-                          response['message'] ?? 'Correo de recuperación enviado. Revisa tu bandeja de entrada.'
-                        );
+                      await Metodos.flushbarPositivoLargo(
+                        context,
+                        response['message'] ?? 'Correo de recuperación enviado. Revisa tu bandeja de entrada.'
+                      );
 
-                        // Volver al login después de 2 segundos
+                      // Volver al login después de 2 segundos
+                      if (!mounted) return;
+                      Future.delayed(const Duration(seconds: 2), () {
                         if (mounted) {
-                          Future.delayed(const Duration(seconds: 2), () {
-                            if (mounted) {
-                              Navigator.pop(scaffoldContext);
-                            }
-                          });
+                          Navigator.pop(context);
                         }
-                      }
+                      });
                     } else {
-                      if (mounted) {
-                        Metodos.flushbarNegativo(
-                          scaffoldContext,
-                          response['message'] ?? 'No se pudo enviar el correo'
-                        );
-                      }
+                      Metodos.flushbarNegativo(
+                        context,
+                        response['message'] ?? 'No se pudo enviar el correo'
+                      );
                     }
                   } catch (e) {
+                    if (!mounted) return;
+
                     setState(() {
                       _isLoading = false;
                     });
-                    if (mounted) {
-                      Metodos.flushbarNegativo(scaffoldContext, 'Error de conexión. Verifica tu internet.');
-                    }
+
+                    Metodos.flushbarNegativo(context, 'Error de conexión. Verifica tu internet.');
                   }
                 },
                 style: ElevatedButton.styleFrom(

@@ -319,7 +319,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       if (response['success']) {
                         // Registro exitoso con el API
                         final userData = response['data'];
-                        final token = response['token'];
+                        // final token = response['token'];
 
                         // Crear usuario local con los datos del API
                         MyUser usuario = MyUser(

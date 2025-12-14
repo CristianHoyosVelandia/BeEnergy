@@ -171,7 +171,7 @@ class _EnergyScreenState extends State<EnergyScreen> {
                     scale: 0.7, // 0.7 = más pequeño (puedes ajustar)
                     child: Switch(
                       value: casaVal,
-                      activeColor: context.colors.primary,
+                      activeThumbColor: context.colors.primary,
                       onChanged: (bool value) {
                         setState(() {
                           casaVal = value;

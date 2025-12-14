@@ -230,9 +230,6 @@ class _LoginScreenState extends State<LoginScreen> {
           _validador();
 
           if(val) {
-            // Guardar BuildContext antes del async gap
-            final scaffoldContext = context;
-
             setState(() {
               _isLoading = true;
             });
@@ -242,7 +239,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 email: _email.text.trim(),
                 password: _clave.text,
               );
-              
+
+              if (!mounted) return;
+
               setState(() { _isLoading = false; });
 
               if (response['success']) {
@@ -270,32 +269,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   // El token ya está guardado en el ApiClient por el AuthService
                 }
 
-                if (mounted) {
-                  await Metodos.flushbarPositivo(scaffoldContext, response['message'] ?? 'Ingresando a App');
+                // ignore: use_build_context_synchronously
+                Metodos.flushbarPositivo(context, response['message'] ?? 'Ingresando a App');
 
-                  // Navegar a la pantalla principal
-                  if (mounted) {
-                    Navigator.of(scaffoldContext).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => NavPages(myUser: usuario)
-                      ),
-                      (Route<dynamic> route) => false
-                    );
-                  }
-                }
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => NavPages(myUser: usuario)
+                  ),
+                  (Route<dynamic> route) => false
+                );
               } else {
                 // Error en el login
-                if (mounted) {
-                  Metodos.flushbarNegativo(scaffoldContext, response['message'] ?? 'Error al iniciar sesión');
-                }
+                // ignore: use_build_context_synchronously
+                Metodos.flushbarNegativo(context, response['message'] ?? 'Error al iniciar sesión');
               }
             } catch (e) {
+                if (!mounted) return;
+
                 setState(() {
                   _isLoading = false;
                 });
-                if (mounted) {
-                  Metodos.flushbarNegativo(scaffoldContext, 'Error de conexión. Verifica tu internet.');
-                }
+
+                // ignore: use_build_context_synchronously
+                Metodos.flushbarNegativo(context, 'Error de conexión. Verifica tu internet.');
             }
           } else {
             Metodos.flushbarNegativo(context, 'Por favor, completa todos los campos correctamente');
