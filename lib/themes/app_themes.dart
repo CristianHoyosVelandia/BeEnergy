@@ -13,8 +13,10 @@ class MyThemes {
     primaryColor  :   Color(int.parse("0xff${ColorsApp.color1}")),
     cardColor     :   Color(int.parse("0xff${ColorsApp.color2}")),
     canvasColor   :   Color(int.parse("0xff${ColorsApp.color3}")),
-    indicatorColor:   Color(int.parse("0xff${ColorsApp.color4}")),
-    focusColor    :  const Color(0xff212D3D)  
+    focusColor    :  const Color(0xff212D3D),
+    tabBarTheme: TabBarThemeData(
+      indicatorColor: Color(int.parse("0xff${ColorsApp.color4}")),
+    ),
     // focusColor: Colors.grey.shade900,
     // iconTheme: IconThemeData(color: , opacity: )
   );

@@ -512,7 +512,7 @@ class Metodos {
                       maxLines: 2,
                       style: Metodos.textStyle(
                         context,
-                        Theme.of(context).indicatorColor,
+                        Theme.of(context).tabBarTheme.indicatorColor ?? Theme.of(context).primaryColor,
                         14,
                         FontWeight.bold,
                         1
@@ -542,7 +542,7 @@ class Metodos {
                   color: Theme.of(context).canvasColor,
                   border: Border.all(
                     width: 2.0,
-                    color: Theme.of(context).indicatorColor
+                    color: Theme.of(context).tabBarTheme.indicatorColor ?? Theme.of(context).primaryColor
                   ),
                   borderRadius: BorderRadius.circular(25.0),
                 ),
@@ -552,7 +552,7 @@ class Metodos {
                     Icons.swap_horiz_rounded,
                     size: 30.0,
                   ),
-                  color: Theme.of(context).indicatorColor,
+                  color: Theme.of(context).tabBarTheme.indicatorColor ?? Theme.of(context).primaryColor,
                   tooltip: "Transferido Hoy",
                   onPressed: () async {
                     Navigator.push(context,MaterialPageRoute(builder: (context) => const BolsaScreen()));
@@ -568,7 +568,7 @@ class Metodos {
                       "50 kWh - \$ 14.300",
                       style: TextStyle(
                         fontSize: 12.0,
-                        color: Theme.of(context).indicatorColor,
+                        color: Theme.of(context).tabBarTheme.indicatorColor ?? Theme.of(context).primaryColor,
                         fontWeight: FontWeight.bold
                       ),
                     )
@@ -1105,7 +1105,7 @@ class _FondoScreenState extends State<FondoScreen> {
           ),
           // title: Placeholder(),
           toolbarHeight: 50,
-          leading: widget.leading ?? (widget.backButton ? BackButton(onPressed: widget.backButtonPressed, color: Theme.of(context).indicatorColor ): Container()),
+          leading: widget.leading ?? (widget.backButton ? BackButton(onPressed: widget.backButtonPressed, color: Theme.of(context).tabBarTheme.indicatorColor ?? Theme.of(context).primaryColor ): Container()),
           actions: widget.actions,
         ),
         body:  Stack(
