@@ -128,7 +128,7 @@ class _CentroNotificacionesPerfilScreenState extends State<CentroNotificacionesP
             ),
           ),
           tileColor: Theme.of(context).focusColor,
-          activeColor: Theme.of(context).canvasColor,
+          activeThumbColor: Theme.of(context).canvasColor,
           activeTrackColor: Theme.of(context).scaffoldBackgroundColor,
           dense: false,
           controlAffinity: ListTileControlAffinity.trailing,

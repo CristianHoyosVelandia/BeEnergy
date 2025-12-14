@@ -253,7 +253,6 @@ class AppTheme {
       primaryColor: AppTokens.primaryRed,
       cardColor: AppTokens.primaryPurple,
       canvasColor: AppTokens.primaryRed,
-      indicatorColor: AppTokens.primaryYellow,
       focusColor: AppTokens.black,
 
       // Scaffold
@@ -270,8 +269,13 @@ class AppTheme {
         toolbarHeight: 60,
       ),
 
+      // TabBar
+      tabBarTheme: TabBarThemeData(
+        indicatorColor: AppTokens.primaryYellow,
+      ),
+
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: AppTokens.elevation2,
         shape: RoundedRectangleBorder(
           borderRadius: AppTokens.borderRadiusMedium,
@@ -408,7 +412,7 @@ class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         elevation: AppTokens.elevation24,
         shape: RoundedRectangleBorder(
           borderRadius: AppTokens.borderRadiusXLarge,
@@ -473,7 +477,7 @@ class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: AppTokens.elevation2,
         color: AppTokens.grey800,
         shape: RoundedRectangleBorder(

@@ -1,6 +1,6 @@
-/// Exportación centralizada de todas las pantallas de la Comunidad Energética
-/// Implementadas para el MVP de la tesis de Cristian Hoyos y Esteban Viveros
-/// Noviembre 2025 - Comunidad UAO (15 miembros)
+// Exportación centralizada de todas las pantallas de la Comunidad Energética
+// Implementadas para el MVP de la tesis de Cristian Hoyos y Esteban Viveros
+// Noviembre 2025 - Comunidad UAO (15 miembros)
 
 export 'community_management_screen.dart';
 export 'user_detail_screen.dart';
