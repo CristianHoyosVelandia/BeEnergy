@@ -1,16 +1,16 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:location/location.dart';
-import '../../../bloc/user_bloc.dart';
-import '../../../models/callmodels.dart';
-import '../../../routes.dart';
-import '../../../utils/metodos.dart';
-import '../../../widgets/general_widgets.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/utils/metodos.dart';
+import '../../../data/fake_data_phase2.dart';
+import '../../../models/p2p_offer.dart';
+import '../../../models/p2p_models.dart';
+import '../prosumer/prosumer_create_offer_screen.dart';
 
+/// Pantalla de Marketplace P2P para Prosumidor
+/// Vista del prosumidor (Cristian Hoyos) para gestionar sus ofertas P2P
+/// Muestra disponibilidad Tipo 2, PVE, ofertas activas y contratos
 class BolsaScreen extends StatefulWidget {
   const BolsaScreen({super.key});
 
@@ -19,638 +19,895 @@ class BolsaScreen extends StatefulWidget {
 }
 
 class _BolsaScreenState extends State<BolsaScreen> {
-  Metodos metodos = Metodos();
-  LatLng _posicionActual = LatLng(0,0);
-  late Future<EmpresasResponse> myEmpresas;
-  late List<Empresa> totalEmpresas;
-  bool filtroComerciosCercanos = false;
-  bool filtroComerciosAgrupados = false;
-  double distanciaComercios = 0.5;
-  String buscador = '';
-  bool ofertas = true;
+  // Usuario prosumidor (Cristian Hoyos según datos del backend)
+  final _prosumer = FakeDataPhase2.mariaGarcia; // Usaremos los datos de María pero con el nombre de Cristian
+  final _energyRecord = FakeDataPhase2.mariaDec2025;
+  final _pdeAllocation = FakeDataPhase2.pdeDec2025;
+  final _ve = FakeDataPhase2.veDecember2025;
 
-  
-  final dataIntercambiosEnergia = [
-    {
-      'numTransaccion': 1,
-      'entrada': true,
-      'nombre': 'Estiven Hoyos',
-      'dinero':  '\$ 150.00',
-      'energia':  '250 kW',
-      'fecha':  '02-Mayo',
-      'fuente':  'Solar-Eólica',
-      'fuenteIcon': 5,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'En curso'
-    },
-    {
-      'numTransaccion': 3,
-      'entrada': false,
-      'nombre': 'Clara Velandia',
-      'dinero':  '\$ 450.00',
-      'energia':  '7 kW',
-      'fecha':  '28-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-
-      'estado': 'Finalizada'
-
-    },
-    
-    {
-      'numTransaccion': 1,
-      'entrada': true,
-      'nombre': 'Daniel Hoyos',
-      'dinero':  '\$ 650.00',
-      'energia':  '300 kW',
-      'fecha':  '25-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'Finalizada'
-    },
-    {
-      'numTransaccion': 2,
-      'entrada': true,
-      'nombre': 'Camilo Hoyos',
-      'dinero':  '\$ 240.00',
-      'energia':  '15 kW',
-      'fecha':  '27-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'Finalizada'
-    },
-    
-    {
-      'numTransaccion': 3,
-      'entrada': false,
-      'nombre': 'Maria Velandia',
-      'dinero':  '\$ 150.00',
-      'energia':  '8 kW',
-      'fecha':  '28-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-
-      'estado': 'Finalizada'
-
-    },
-    {
-      'numTransaccion': 3,
-      'entrada': false,
-      'nombre': 'Mercedes Velandia',
-      'dinero':  '\$ 150.00',
-      'energia':  '8 kW',
-      'fecha':  '28-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-
-      'estado': 'Finalizada'
-
-    }
-  ];
-
-  
-  final dataIntercambiosDinero = [
-    {
-      'numTransaccion': 1,
-      'entrada': true,
-      'nombre': 'Estiven Hoyos',
-      'dinero':  '\$ 250.00',
-      'energia':  '25 kW',
-      'fecha':  '02-Mayo',
-      'fuente':  'Solar-Eólica',
-      'fuenteIcon': 5,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'En curso'
-    },
-    {
-      'numTransaccion': 1,
-      'entrada': true,
-      'nombre': 'Estiven Hoyos',
-      'dinero':  '\$ 500.00',
-      'energia':  '25 kW',
-      'fecha':  '25-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'Finalizada'
-    },
-    {
-      'numTransaccion': 2,
-      'entrada': true,
-      'nombre': 'Angel Hoyos',
-      'dinero':  '\$ 240.00',
-      'energia':  '5 kW',
-      'fecha':  '27-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-      'estado': 'Finalizada'
-    },
-    {
-      'numTransaccion': 3,
-      'entrada': false,
-      'nombre': 'Clara Velandia',
-      'dinero':  '\$ 150.00',
-      'energia':  '8 kW',
-      'fecha':  '28-Febrero',
-      'fuente':  'Solar',
-      'fuenteIcon': 1,
-      'horarioSuminsitro':"Diurno Bloque 2 CLPE No 03-2021",
-
-      'estado': 'Finalizada'
-
-    }
-  ];
-
-  String _iconCard(int numero) {
-    var au = 'assets/icons/CleanWater.svg';
-    
-    switch (numero) {
-      case 1:
-        au = BeenergyIcons.solarPanel;
-      break;
-      case 5:
-        au = BeenergyIcons.ecoHouse;
-      break;
-      default:
-      au = au;
-    }
-
-    return au;
+  /// Obtiene ofertas activas del prosumidor
+  List<P2POffer> get _myOffers {
+    return FakeDataPhase2.allOffers
+        .where((offer) => offer.sellerId == _prosumer.userId)
+        .toList();
   }
-  
 
-  Widget _card(var data){
-    Intercambio dataIntercmabio = Intercambio(
-      numTransaccion: data['numTransaccion'],
-      entrada: data['entrada'],
-      nombre: data['nombre'],
-      dinero: data['dinero'],
-      energia: data['energia'],
-      fecha: data['fecha'],
-      fuente: data['fuente'],
-      fuenteIcon: data['fuenteIcon'],
-      horarioSuminsitro: data['horarioSuminsitro'],
-      estado: data['estado']
-    );
-
-    final bool isIncome = data['entrada'] == true;
-    final Color borderColor = isIncome ? context.colors.primary : Colors.red;
-
-    return InkWell(
-      highlightColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      onTap: () {
-        context.push(ConfirmchangeScreen(dataScreen: dataIntercmabio));
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          border: Border.all(
-            color: borderColor,
-            width: 1.5,
-          ),
-          borderRadius: AppTokens.borderRadiusMedium,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppTokens.space8),
-                      child: SvgPicture.asset(_iconCard(data['fuenteIcon'])),
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Icon(
-                          isIncome ? Icons.trending_up_outlined : Icons.trending_down_outlined,
-                          size: 30,
-                          color: borderColor,
-                        ),
-                        SizedBox(height: AppTokens.space8),
-                        AutoSizeText(
-                          data['horarioSuminsitro'],
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: context.textStyles.bodySmall?.copyWith(
-                            fontWeight: AppTokens.fontWeightMedium,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        data['nombre'].toString().split(' ').first,
-                        textAlign: TextAlign.center,
-                        style: context.textStyles.titleMedium?.copyWith(
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AutoSizeText(
-                          data['dinero'],
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: context.textStyles.bodyMedium?.copyWith(
-                            fontWeight: AppTokens.fontWeightBold,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space8),
-                        AutoSizeText(
-                          data['energia'],
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          style: context.textStyles.bodyMedium?.copyWith(
-                            fontWeight: AppTokens.fontWeightBold,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  /// Obtiene contratos donde el prosumidor es vendedor
+  List<P2PContract> get _myContracts {
+    return FakeDataPhase2.allContracts
+        .where((contract) => contract.sellerId == _prosumer.userId)
+        .toList();
   }
-  
 
-  Widget _gridViewCards(var dataInter) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: AppTokens.space12),
-        margin: EdgeInsets.only(top: AppTokens.space20),
-        child: GridView.builder(
-          shrinkWrap: true,
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            childAspectRatio: 5 / 4,
-            crossAxisSpacing: AppTokens.space12,
-            mainAxisSpacing: AppTokens.space12,
-            mainAxisExtent: 150,
-            maxCrossAxisExtent: context.width * 0.75,
-          ),
-          itemCount: dataInter.length,
-          itemBuilder: (context, index) {
-            return _card(dataInter[index]);
-          },
-        ),
-      ),
-    );
+  /// Calcula disponibilidad P2P (Tipo 2 - PDE cedido)
+  double get _availableForP2P {
+    final type2 = _energyRecord.surplusType2;
+    final pdeCeded = _pdeAllocation.allocatedEnergy;
+    return type2 - pdeCeded;
   }
-  
-  Future<EmpresasResponse> _getEmpresas() async {
-    UserBloc userBloc = UserBloc();
-    return await userBloc.empresas();
+
+  /// Calcula energía ya ofertada
+  double get _energyOffered {
+    return _myOffers.fold(0.0, (sum, offer) => sum + offer.energyAvailable);
   }
-  
-  _permission() async {
-    Location location = Location();
 
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-    LocationData locationData;
-
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        return;
-      }
-    }
-
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    locationData = await location.getLocation();
-    _posicionActual = LatLng(locationData.latitude!, locationData.longitude!);
-  }
-  
-  _actualizarPosicion() async {
-    Location location = Location();
-    LocationData locationData;
-
-    locationData = await location.getLocation();
-    _posicionActual = LatLng(locationData.latitude!, locationData.longitude!);
+  /// Calcula ingresos del mes por ventas P2P
+  double get _monthlyIncome {
+    return _myContracts.fold(0.0, (sum, contract) => sum + contract.totalValue);
   }
 
   @override
-  void initState() {
-    super.initState();
-    _permission();
-    myEmpresas =_getEmpresas();
-  }
-
-  IconButton _leading(BuildContext context, double width) {
-    return IconButton(
-      icon: Icon(
-        Icons.map,
-        color: context.colors.surface,
-        size: 25,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Intercambios P2P'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: Metodos.gradientClasic(context),
+            boxShadow: const [
+              BoxShadow(
+                blurRadius: 6,
+                color: Color(0x4B1A1F24),
+                offset: Offset(0, 2),
+              )
+            ],
+          ),
+        ),
       ),
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(context.colors.primary),
-        iconColor: WidgetStatePropertyAll(context.colors.surface),
+      backgroundColor: context.colors.surfaceContainerLowest,
+      body: ListView(
+        padding: EdgeInsets.only(bottom: AppTokens.space24),
+        children: [
+          SizedBox(height: AppTokens.space16),
+          _buildProsumerHeader(),
+          SizedBox(height: AppTokens.space16),
+          _buildPVEInfoCard(),
+          SizedBox(height: AppTokens.space16),
+          _buildAvailabilityCard(),
+          SizedBox(height: AppTokens.space24),
+          _buildMyOffersSection(),
+          SizedBox(height: AppTokens.space24),
+          _buildMyContractsSection(),
+        ],
       ),
-      tooltip: "Ver en Mapa",
-      onPressed: () async {
-        if (_posicionActual.latitude == 0) {
-          Metodos().alertsDialogBotonUnico(
-            context,
-            'Para poder utilizar el servicio de mapas es necesario habilitar la ubicación de dispositivo.',
-            300, 100, 'Aceptar', 0
-          );
-          _permission();
-        } else {
-          _actualizarPosicion();
-          context.push(Mapas(
-            empresas: totalEmpresas,
-            todasEmpresas: totalEmpresas,
-            filtroDistancia: filtroComerciosCercanos,
-            distancia: distanciaComercios,
-            buscador: buscador,
-            posicionInicial: _posicionActual,
-            filtroAgrupado: filtroComerciosAgrupados,
-          ));
-        }
-      },
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppTokens.space16),
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.primaryRed.withValues(alpha: 0.4),
+              blurRadius: 12,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProsumerCreateOfferScreen(),
+              ),
+            );
+          },
+          backgroundColor: AppTokens.primaryRed,
+          foregroundColor: Colors.white,
+          elevation: 8,
+          icon: const Icon(Icons.add_circle_outline, size: 24),
+          label: Text(
+            'Crear Oferta',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
     );
   }
-  
-  Widget _contenPrincipalCard(){
-    return Column(
-      mainAxisSize: MainAxisSize.max,
+
+  /// Header del prosumidor con avatar y datos
+  Widget _buildProsumerHeader() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTokens.energyGreen,
+            AppTokens.energyGreen.withValues(alpha: 0.8),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppTokens.borderRadiusLarge,
+        boxShadow: [
+          BoxShadow(
+            color: AppTokens.energyGreen.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/img/avatar.jpg',
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Center(
+                  child: Text(
+                    'CH',
+                    style: context.textStyles.headlineMedium?.copyWith(
+                      color: AppTokens.energyGreen,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: AppTokens.space16),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cristian Hoyos V.',
+                  style: context.textStyles.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space4),
+                Row(
+                  children: [
+                    Icon(Icons.verified, size: 16, color: Colors.white),
+                    SizedBox(width: AppTokens.space4),
+                    Text(
+                      'NIU-UAO-024-2025',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppTokens.space4),
+                Row(
+                  children: [
+                    Icon(Icons.solar_power, size: 16, color: Colors.white),
+                    SizedBox(width: AppTokens.space4),
+                    Text(
+                      'Prosumidor • ${_prosumer.installedCapacity.toStringAsFixed(0)} kW',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tarjeta de información del PVE (Precio Valor de Energía)
+  Widget _buildPVEInfoCard() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: AppTokens.info.withValues(alpha: 0.1),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(color: AppTokens.info, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline, color: AppTokens.info, size: 24),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Text(
+                  'Precio Valor de Energía (PVE)',
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: AppTokens.info,
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+          Divider(height: 1, color: AppTokens.info.withValues(alpha: 0.2)),
+          SizedBox(height: AppTokens.space16),
+
+          // VE Base
+          _buildPVERow(
+            'VE Base (CREG 101 072)',
+            '${_ve.totalVE.toStringAsFixed(0)} COP/kWh',
+            Icons.bolt,
+            AppTokens.info,
+          ),
+          SizedBox(height: AppTokens.space12),
+
+          // Rango permitido
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.1),
+              borderRadius: AppTokens.borderRadiusSmall,
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle, size: 18, color: Colors.green),
+                    SizedBox(width: AppTokens.space8),
+                    Text(
+                      'Rango Permitido P2P (±10%)',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: Colors.green,
+                        fontWeight: AppTokens.fontWeightSemiBold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppTokens.space8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          'Mínimo',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '${_ve.minAllowedPrice.toStringAsFixed(0)} COP',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: Colors.green,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(Icons.arrow_forward, color: context.colors.onSurfaceVariant),
+                    Column(
+                      children: [
+                        Text(
+                          'Máximo',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '${_ve.maxAllowedPrice.toStringAsFixed(0)} COP',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: Colors.green,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: AppTokens.space12),
+
+          // Recomendación
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: AppTokens.primaryPurple.withValues(alpha: 0.1),
+              borderRadius: AppTokens.borderRadiusSmall,
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lightbulb_outline, size: 18, color: AppTokens.primaryPurple),
+                SizedBox(width: AppTokens.space8),
+                Expanded(
+                  child: Text(
+                    'Fija tu precio de venta entre este rango para cumplir CREG 101 072',
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppTokens.primaryPurple,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPVERow(String label, String value, IconData icon, Color color) {
+    return Row(
       children: [
-        Padding(
-          padding: EdgeInsets.only(top: AppTokens.space48),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Card(
-                clipBehavior: Clip.antiAliasWithSaveLayer,
-                color: context.colors.surface,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(40),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(AppTokens.space4),
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
-                    child: Image.asset(
-                      "assets/img/avatar.jpg",
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: AppTokens.space16),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0x40000000),
-                    borderRadius: AppTokens.borderRadiusSmall,
-                  ),
-                  child: _leading(context, context.width),
-                ),
-              ),
-            ],
+        Icon(icon, size: 20, color: color),
+        SizedBox(width: AppTokens.space12),
+        Expanded(
+          child: Text(
+            label,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
           ),
         ),
-        Padding(
-          padding: EdgeInsets.only(top: AppTokens.space8),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Text(
-                "Cristian Hoyos V",
-                style: context.textStyles.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightSemiBold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.only(top: AppTokens.space8),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Text(
-                'Ing. mecatrónico - ',
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: const Color(0xB3FFFFFF),
-                  fontWeight: AppTokens.fontWeightMedium,
-                ),
-              ),
-              Text(
-                "cristiannhoyoss@gmail.com",
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightMedium,
-                ),
-              ),
-            ],
+        Text(
+          value,
+          style: context.textStyles.titleMedium?.copyWith(
+            color: color,
+            fontWeight: AppTokens.fontWeightBold,
           ),
         ),
       ],
     );
   }
-    
-  Widget _cartaPrincipal(){
+
+  /// Tarjeta de disponibilidad P2P
+  Widget _buildAvailabilityCard() {
+    final available = _availableForP2P;
+    final offered = _energyOffered;
+    final remaining = available - offered;
+
     return Container(
-      width: context.width,
-      height: 200,
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
       decoration: BoxDecoration(
-        boxShadow: const [
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
           BoxShadow(
-            blurRadius: 6,
-            color: Color(0x4B1A1F24),
-            offset: Offset(0, 2),
-          )
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
-        gradient: Metodos.gradientClasic(context),
-        borderRadius: BorderRadius.circular(0),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(left: AppTokens.space20),
-        child: _contenPrincipalCard(),
-      ),
-    );
-  }
-  
-  Widget _ofertasSelected(){
-    return Padding(
-      padding: EdgeInsets.all(AppTokens.space12),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: () async {
-                setState(() {
-                  ofertas = true;
-                });
-              },
-              borderRadius: AppTokens.borderRadiusMedium,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTokens.space16,
-                  vertical: AppTokens.space12,
-                ),
-                margin: EdgeInsets.all(AppTokens.space8),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
                 decoration: BoxDecoration(
-                  color: ofertas ? context.colors.primary : Colors.grey,
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Metodos.borderClasic(context),
+                  color: AppTokens.energyGreen.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusSmall,
                 ),
-                child: Center(
-                  child: Text(
-                    "Ofertas Energia",
-                    style: context.textStyles.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: AppTokens.fontWeightSemiBold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
+                child: Icon(
+                  Icons.battery_charging_full,
+                  color: AppTokens.energyGreen,
+                  size: 28,
                 ),
               ),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mi Disponibilidad P2P',
+                      style: context.textStyles.titleLarge?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      'Diciembre 2025',
+                      style: context.textStyles.bodyMedium?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space20),
+          Divider(height: 1),
+          SizedBox(height: AppTokens.space20),
+
+          // Tipo 2 Total
+          _buildAvailabilityMetric(
+            'Tipo 2 Total',
+            _energyRecord.surplusType2,
+            'Excedente vendible',
+            AppTokens.energyGreen,
+            Icons.sunny,
+          ),
+          SizedBox(height: AppTokens.space12),
+
+          // PDE Cedido
+          _buildAvailabilityMetric(
+            'PDE Cedido',
+            _pdeAllocation.allocatedEnergy,
+            'Solidaridad energética (10%)',
+            AppTokens.primaryPurple,
+            Icons.volunteer_activism,
+          ),
+          SizedBox(height: AppTokens.space12),
+
+          // Disponible
+          Container(
+            padding: EdgeInsets.all(AppTokens.space16),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.1),
+              borderRadius: AppTokens.borderRadiusMedium,
+              border: Border.all(color: Colors.green, width: 2),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: 32),
+                SizedBox(width: AppTokens.space16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Disponible para P2P',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: Colors.green,
+                          fontWeight: AppTokens.fontWeightSemiBold,
+                        ),
+                      ),
+                      SizedBox(height: AppTokens.space4),
+                      Text(
+                        Formatters.formatEnergy(available),
+                        style: context.textStyles.headlineMedium?.copyWith(
+                          color: Colors.green,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: InkWell(
-              onTap: () async {
-                setState(() {
-                  ofertas = false;
-                });
-              },
-              borderRadius: AppTokens.borderRadiusMedium,
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTokens.space16,
-                  vertical: AppTokens.space12,
+
+          if (offered > 0) ...[
+            SizedBox(height: AppTokens.space12),
+            Row(
+              children: [
+                Icon(Icons.campaign, size: 16, color: context.colors.onSurfaceVariant),
+                SizedBox(width: AppTokens.space8),
+                Text(
+                  'Ya ofertado: ${Formatters.formatEnergy(offered)}',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
                 ),
-                margin: EdgeInsets.all(AppTokens.space8),
-                decoration: BoxDecoration(
-                  color: !ofertas ? context.colors.primary : Colors.grey,
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Metodos.borderClasic(context),
+              ],
+            ),
+            Row(
+              children: [
+                Icon(Icons.trending_up, size: 16, color: AppTokens.energyGreen),
+                SizedBox(width: AppTokens.space8),
+                Text(
+                  'Restante: ${Formatters.formatEnergy(remaining)}',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: AppTokens.energyGreen,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
                 ),
-                child: Center(
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvailabilityMetric(
+    String label,
+    double value,
+    String subtitle,
+    Color color,
+    IconData icon,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(AppTokens.space8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: AppTokens.borderRadiusSmall,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        SizedBox(width: AppTokens.space12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: AppTokens.space4),
+              Text(
+                subtitle,
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text(
+          Formatters.formatEnergy(value),
+          style: context.textStyles.titleLarge?.copyWith(
+            color: color,
+            fontWeight: AppTokens.fontWeightBold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Sección de mis ofertas activas
+  Widget _buildMyOffersSection() {
+    final offers = _myOffers;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Mis Ofertas Activas',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+              if (offers.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppTokens.space12,
+                    vertical: AppTokens.space4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTokens.energyGreen.withValues(alpha: 0.2),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
                   child: Text(
-                    "Ofertas Dinero",
+                    '${offers.length}',
                     style: context.textStyles.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: AppTokens.fontWeightSemiBold,
+                      color: AppTokens.energyGreen,
+                      fontWeight: AppTokens.fontWeightBold,
                     ),
-                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+
+          if (offers.isEmpty)
+            _buildEmptyState(
+              'No tienes ofertas activas',
+              'Crea tu primera oferta para vender energía P2P',
+              Icons.campaign_outlined,
+            )
+          else
+            ...offers.map((offer) => _buildOfferCard(offer)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferCard(P2POffer offer) {
+    return Container(
+      margin: EdgeInsets.only(bottom: AppTokens.space12),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: _getOfferStatusColor(offer.status).withValues(alpha: 0.5),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Oferta #${offer.id}',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space8,
+                  vertical: AppTokens.space4,
+                ),
+                decoration: BoxDecoration(
+                  color: _getOfferStatusColor(offer.status).withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
+                child: Text(
+                  offer.status.displayName,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: _getOfferStatusColor(offer.status),
+                    fontWeight: AppTokens.fontWeightBold,
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space12),
+          Divider(height: 1),
+          SizedBox(height: AppTokens.space12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildOfferMetric('Energía', Formatters.formatEnergy(offer.energyAvailable)),
+              ),
+              Expanded(
+                child: _buildOfferMetric('Precio', '\$${offer.pricePerKwh.toStringAsFixed(0)}'),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildOfferMetric('Restante', Formatters.formatEnergy(offer.energyRemaining)),
+              ),
+              Expanded(
+                child: _buildOfferMetric('Total', Formatters.formatCurrency(offer.totalValue)),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-  List<Widget> body() {
-    return [
-      _cartaPrincipal(),
-      _ofertasSelected(),
-      (ofertas==true)?_gridViewCards(dataIntercambiosDinero):_gridViewCards(dataIntercambiosEnergia),
 
-    ];
+  Widget _buildOfferMetric(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+        ),
+        SizedBox(height: AppTokens.space4),
+        Text(
+          value,
+          style: context.textStyles.bodyLarge?.copyWith(
+            fontWeight: AppTokens.fontWeightBold,
+          ),
+        ),
+      ],
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
-      child: Scaffold(
-      // appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
-      // backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          SingleChildScrollView(
-            // ignore: prefer_const_constructors
-            child: GradientBackInsideApp(
-              color: Theme.of(context).focusColor,
-              height: 85,
-              opacity: 0.75,
+  Color _getOfferStatusColor(OfferStatus status) {
+    switch (status) {
+      case OfferStatus.available:
+        return Colors.green;
+      case OfferStatus.partial:
+        return Colors.orange;
+      case OfferStatus.sold:
+        return AppTokens.primaryPurple;
+      case OfferStatus.expired:
+      case OfferStatus.cancelled:
+        return Colors.grey;
+    }
+  }
+
+  /// Sección de mis contratos del mes
+  Widget _buildMyContractsSection() {
+    final contracts = _myContracts;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Ventas del Mes',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+              if (contracts.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Ingresos',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      Formatters.formatCurrency(_monthlyIncome),
+                      style: context.textStyles.titleMedium?.copyWith(
+                        color: Colors.green,
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+
+          if (contracts.isEmpty)
+            _buildEmptyState(
+              'Sin ventas este mes',
+              'Tus contratos P2P aparecerán aquí',
+              Icons.receipt_long_outlined,
             )
-          ),
-
-          FutureBuilder<EmpresasResponse>(
-          future: myEmpresas,
-          // ignore: missing_return
-          builder: (BuildContext context,AsyncSnapshot snapshotEmpresas) {
-            switch (snapshotEmpresas.connectionState) {
-              case ConnectionState.none:
-                return const MyProgressIndicator();
-              case ConnectionState.waiting:
-                return const MyProgressIndicator();
-              case ConnectionState.active:
-                return const MyProgressIndicator();
-              case ConnectionState.done:
-                if (snapshotEmpresas.hasData) {
-                  totalEmpresas = snapshotEmpresas.data.empresas!;
-                  totalEmpresas.sort((a, b) => a.nombre.trim().compareTo(b.nombre.trim()));
-                  return ListView(
-                    children: body()
-                  );
-                }
-                return const MyProgressIndicator();
-              }
-            }
-          ),
-        ]
+          else
+            ...contracts.map((contract) => _buildContractCard(contract)),
+        ],
       ),
+    );
+  }
 
-      ));
+  Widget _buildContractCard(P2PContract contract) {
+    return Container(
+      margin: EdgeInsets.only(bottom: AppTokens.space12),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: Colors.green.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.handshake, color: Colors.green, size: 24),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Vendido a: ${contract.buyerName}',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                    Text(
+                      'Contrato #${contract.id}',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                Formatters.formatCurrency(contract.totalValue),
+                style: context.textStyles.titleLarge?.copyWith(
+                  color: Colors.green,
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space12),
+          Row(
+            children: [
+              Icon(Icons.bolt, size: 16, color: context.colors.onSurfaceVariant),
+              SizedBox(width: AppTokens.space4),
+              Text(
+                '${Formatters.formatEnergy(contract.energyCommitted)} @ \$${contract.agreedPrice.toStringAsFixed(0)}/kWh',
+                style: context.textStyles.bodyMedium,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String title, String subtitle, IconData icon) {
+    return Container(
+      padding: EdgeInsets.all(AppTokens.space32),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: context.colors.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
+            SizedBox(height: AppTokens.space16),
+            Text(
+              title,
+              style: context.textStyles.titleMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppTokens.space8),
+            Text(
+              subtitle,
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

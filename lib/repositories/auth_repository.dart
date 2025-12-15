@@ -112,7 +112,7 @@ class AuthRepository {
 
       return ApiResponse.fromJson(
         response.data,
-        (_) => null,
+        (_) {},
       );
     } on ApiException catch (e) {
       print('Error en logout: ${e.message}');
