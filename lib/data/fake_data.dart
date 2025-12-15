@@ -246,7 +246,7 @@ class FakeData {
     SellerRanking(userId: 26, userName: 'Patricia Castro', totalEnergySold: 80, totalRevenue: 40000, contractsCompleted: 1),
   ];
 
-  // Estadísticas de la comunidad
+  // Estadísticas de la comunidad (Vista Administrador)
   static CommunityStats get communityStats {
     final totalGenerated = energyRecords.fold<double>(0, (sum, record) => sum + record.energyGenerated);
     final totalConsumed = energyRecords.fold<double>(0, (sum, record) => sum + record.energyConsumed);
@@ -263,6 +263,30 @@ class FakeData {
       totalEnergyConsumed: totalConsumed,
       totalEnergyExported: totalExported,
       activeContracts: p2pContracts.where((c) => c.isActive).length,
+    );
+  }
+
+  /// Estadísticas individuales de Cristian Hoyos para Noviembre 2025 (Vista Usuario)
+  /// Datos de un solo prosumidor (peer individual)
+  static CommunityStats get cristianIndividualStatsNov2025 {
+    // Encontrar el registro de Cristian (userId: 24) en Noviembre
+    final cristianRecord = energyRecords.firstWhere(
+      (record) => record.userId == 24,
+      orElse: () => energyRecords.first, // Usar el primero si no existe
+    );
+
+    return CommunityStats(
+      totalMembers: 1, // Solo Cristian
+      totalProsumers: 1, // Cristian es prosumidor
+      totalConsumers: 0,
+      totalInstalledCapacity: 288, // kW de capacidad instalada de Cristian
+      totalEnergyGenerated: cristianRecord.energyGenerated,
+      totalEnergyImported: cristianRecord.energyImported,
+      totalEnergyConsumed: cristianRecord.energyConsumed,
+      totalEnergyExported: cristianRecord.energyExported,
+      activeContracts: p2pContracts.where((c) =>
+        c.sellerId == 24 || c.buyerId == 24
+      ).length, // Solo contratos de Cristian
     );
   }
 

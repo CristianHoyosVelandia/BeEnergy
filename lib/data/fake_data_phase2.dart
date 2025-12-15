@@ -402,6 +402,46 @@ class FakeDataPhase2 {
   );
 
   // ============================================================================
+  // ESTADÍSTICAS DE COMUNIDAD - DICIEMBRE 2025
+  // ============================================================================
+
+  /// Estadísticas agregadas de la comunidad para Diciembre 2025 (Vista Administrador)
+  static CommunityStats get communityStats {
+    final totalGenerated = allEnergyRecords.fold<double>(0, (sum, record) => sum + record.energyGenerated);
+    final totalConsumed = allEnergyRecords.fold<double>(0, (sum, record) => sum + record.energyConsumed);
+    final totalExported = allEnergyRecords.fold<double>(0, (sum, record) => sum + record.energyExported);
+    final totalImported = allEnergyRecords.fold<double>(0, (sum, record) => sum + record.energyImported);
+
+    return CommunityStats(
+      totalMembers: 3, // María, Ana, Admin
+      totalProsumers: 1, // Solo María
+      totalConsumers: 2, // Ana y Admin
+      totalInstalledCapacity: 288, // Solo capacidad de María
+      totalEnergyGenerated: totalGenerated,
+      totalEnergyImported: totalImported,
+      totalEnergyConsumed: totalConsumed,
+      totalEnergyExported: totalExported,
+      activeContracts: allContracts.where((c) => c.isActive).length,
+    );
+  }
+
+  /// Estadísticas individuales de Cristian Hoyos para Diciembre 2025 (Vista Usuario)
+  /// Datos menores porque es solo un peer (basados en datos de María/Cristian como prosumidor)
+  static CommunityStats get cristianIndividualStatsDec2025 {
+    return CommunityStats(
+      totalMembers: 1, // Solo Cristian
+      totalProsumers: 1, // Cristian es prosumidor
+      totalConsumers: 0,
+      totalInstalledCapacity: 288, // kW
+      totalEnergyGenerated: 320, // kWh generados
+      totalEnergyImported: 0, // kWh importados
+      totalEnergyConsumed: 180, // kWh consumidos
+      totalEnergyExported: 0, // kWh exportados (aún no exporta)
+      activeContracts: 1, // Solo los contratos de Cristian
+    );
+  }
+
+  // ============================================================================
   // LISTAS CONSOLIDADAS
   // ============================================================================
 
