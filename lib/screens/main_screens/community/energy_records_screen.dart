@@ -401,6 +401,51 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
               record.energyGenerated,
             ),
           ],
+          // ⭐ NUEVO: Clasificación de Excedentes CREG 101 072
+          if (member.isProsumer && record.totalSurplus > 0) ...[
+            SizedBox(height: AppTokens.space16),
+            Divider(height: 1, color: context.colors.outline.withValues(alpha: 0.1)),
+            SizedBox(height: AppTokens.space16),
+            // Header de clasificación
+            Row(
+              children: [
+                Icon(Icons.verified_outlined, size: 16, color: AppTokens.info),
+                SizedBox(width: AppTokens.space8),
+                Text(
+                  'Clasificación CREG 101 072',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: AppTokens.info,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
+                ),
+                const Spacer(),
+                _buildClassificationChip(record.classification),
+              ],
+            ),
+            SizedBox(height: AppTokens.space12),
+            // Tipo 1 y Tipo 2
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSurplusMetric(
+                    'Tipo 1',
+                    'Autoconsumo',
+                    record.surplusType1,
+                    AppTokens.primaryPurple,
+                  ),
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: _buildSurplusMetric(
+                    'Tipo 2',
+                    'PDE/P2P',
+                    record.surplusType2,
+                    AppTokens.energyGreen,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -482,6 +527,126 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Construye chip de clasificación de excedentes
+  Widget _buildClassificationChip(SurplusClassificationType classification) {
+    String label;
+    Color color;
+    IconData icon;
+
+    switch (classification) {
+      case SurplusClassificationType.mixed:
+        label = 'Mixto';
+        color = AppTokens.info;
+        icon = Icons.swap_horiz;
+        break;
+      case SurplusClassificationType.type1Only:
+        label = 'Solo Tipo 1';
+        color = AppTokens.primaryPurple;
+        icon = Icons.person;
+        break;
+      case SurplusClassificationType.type2Only:
+        label = 'Solo Tipo 2';
+        color = AppTokens.energyGreen;
+        icon = Icons.groups;
+        break;
+      case SurplusClassificationType.none:
+        label = 'Sin excedentes';
+        color = context.colors.onSurfaceVariant;
+        icon = Icons.remove_circle_outline;
+        break;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space8,
+        vertical: AppTokens.space4,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: AppTokens.borderRadiusSmall,
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          SizedBox(width: AppTokens.space4),
+          Text(
+            label,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: color,
+              fontWeight: AppTokens.fontWeightSemiBold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Construye métrica de excedente (Tipo 1 o Tipo 2)
+  Widget _buildSurplusMetric(
+    String type,
+    String subtitle,
+    double value,
+    Color color,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(AppTokens.space12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: AppTokens.borderRadiusSmall,
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppTokens.space4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
+                child: Icon(
+                  type == 'Tipo 1' ? Icons.person : Icons.people,
+                  color: color,
+                  size: 16,
+                ),
+              ),
+              SizedBox(width: AppTokens.space8),
+              Text(
+                type,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: color,
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space8),
+          Text(
+            subtitle,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: AppTokens.space4),
+          Text(
+            Formatters.formatEnergy(value),
+            style: context.textStyles.titleMedium?.copyWith(
+              color: color,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
