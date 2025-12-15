@@ -9,7 +9,6 @@ import '../../../routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -18,29 +17,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Metodos metodos = Metodos();
   final AuthService _authService = AuthService();
-
   //TextEditingController
   final TextEditingController _email = TextEditingController();
   final TextEditingController _clave = TextEditingController();
-
   //atributos de clase
   bool val= false;
   bool _isLoading = false;
+  bool showpassword = false;
 
   Function(String)? _validador() {
-   
     return (validator) {
       setState(() {
-        if ( Metodos.validateEmail(_email.value.text) && _clave.value.text.length >= 4 ) {
-          val = true;
-        } else {
-          val = false;
-        }
+        final isValidate = Metodos.validateEmail(_email.value.text) && _clave.value.text.length >= 4;
+        if ( isValidate ) { val = true; }
+        else  { val = false; }
       });
     };
   }
   
-  Widget imagenLogin(){
+  Widget imagenLogin(BuildContext context){
     return Image(
       alignment: AlignmentDirectional.center,
       image:  const AssetImage("assets/img/Login.png"),
@@ -49,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget loginText(){
+  Widget loginText(BuildContext context){
     return Container(
       width: Metodos.width(context),
       margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
@@ -81,19 +76,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ],
-        
       ),
-        
-        
     );
   }
 
   Widget _modernInput({
+    required BuildContext context,
     required String label,
     required String hint,
     required TextEditingController controller,
     required String? Function(String?) validator,
     bool obscureText = false,
+    bool isPassword = false,
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -102,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: TextFormField(
         controller: controller,
-        obscureText: obscureText,
+        obscureText: isPassword ? !showpassword : obscureText,
         onChanged: _validador(),
         style: context.textStyles.bodyLarge?.copyWith(
           color: Colors.grey[800],
@@ -155,13 +149,27 @@ class _LoginScreenState extends State<LoginScreen> {
             obscureText ? Icons.lock_outline : Icons.email_outlined,
             color: Colors.red,
           ),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    showpassword ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.red,
+                  ),
+                  onPressed: () {
+                    if (!mounted) return;
+                    setState(() {
+                      showpassword = !showpassword;
+                    });
+                  },
+                )
+              : null,
         ),
         validator: validator,
       ),
     );
   }
 
-  Widget _noRecuerdomiClave(){
+  Widget _noRecuerdomiClave(BuildContext context){
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: AppTokens.space32,
@@ -170,7 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Align(
         alignment: Alignment.centerRight,
         child: InkWell(
-          onTap: () async {
+          onTap: () {
+            if (!mounted) return;
             context.push(const NoRecuerdomiclaveScreen());
           },
           borderRadius: AppTokens.borderRadiusSmall,
@@ -227,12 +236,12 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : () async {
-          _validador();
+          // Capturar el context antes del await
+          final localContext = context;
 
+          _validador();
           if(val) {
-            setState(() {
-              _isLoading = true;
-            });
+            setState(() { _isLoading = true;});
             try {
               // Llamada al servicio de autenticación
               final response = await _authService.login(
@@ -241,7 +250,6 @@ class _LoginScreenState extends State<LoginScreen> {
               );
 
               if (!mounted) return;
-
               setState(() { _isLoading = false; });
 
               if (response['success']) {
@@ -269,11 +277,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   // El token ya está guardado en el ApiClient por el AuthService
                 }
 
+                if (!mounted) return;
                 // ignore: use_build_context_synchronously
-                Metodos.flushbarPositivo(context, response['message'] ?? 'Ingresando a App');
+                Metodos.flushbarPositivo(localContext, response['message'] ?? 'Ingresando a App');
 
+                if (!mounted) return;
                 // ignore: use_build_context_synchronously
-                Navigator.of(context).pushAndRemoveUntil(
+                Navigator.of(localContext).pushAndRemoveUntil(
                   MaterialPageRoute(
                     builder: (context) => NavPages(myUser: usuario)
                   ),
@@ -281,21 +291,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               } else {
                 // Error en el login
+                if (!mounted) return;
                 // ignore: use_build_context_synchronously
-                Metodos.flushbarNegativo(context, response['message'] ?? 'Error al iniciar sesión');
+                Metodos.flushbarNegativo(localContext, response['message'] ?? 'Error al iniciar sesión');
               }
             } catch (e) {
                 if (!mounted) return;
-
-                setState(() {
-                  _isLoading = false;
-                });
-
+                setState(() { _isLoading = false; });
+                if (!mounted) return;
                 // ignore: use_build_context_synchronously
-                Metodos.flushbarNegativo(context, 'Error de conexión. Verifica tu internet.');
+                Metodos.flushbarNegativo(localContext, 'Error de conexión. Verifica tu internet.');
             }
           } else {
-            Metodos.flushbarNegativo(context, 'Por favor, completa todos los campos correctamente');
+            Metodos.flushbarNegativo(localContext, 'Por favor, completa todos los campos correctamente');
           }
         },
         style: ElevatedButton.styleFrom(
@@ -328,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _noTienesCuenta(){
+  Widget _noTienesCuenta(BuildContext context){
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppTokens.space24),
       child: Row(
@@ -345,6 +353,7 @@ class _LoginScreenState extends State<LoginScreen> {
             highlightColor: Colors.transparent,
             splashColor: Colors.transparent,
             onTap: () {
+              if (!mounted) return;
               context.push(const RegisterScreen());
             },
             child: Text(
@@ -363,25 +372,26 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget body(){
+  Widget body(BuildContext context){
     return Stack(
       alignment: Alignment.center,
       children: <Widget>[
-        
+
         const SingleChildScrollView(
           child: GradientBack()
         ),
 
         ListView(
           children: <Widget>[
-            
-            imagenLogin(),
 
-            loginText(),
+            imagenLogin(context),
+
+            loginText(context),
 
             SizedBox(height: AppTokens.space16),
 
             _modernInput(
+              context: context,
               label: 'Email',
               hint: 'Ingresa tu correo electrónico',
               controller: _email,
@@ -394,10 +404,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
 
             _modernInput(
+              context: context,
               label: 'Contraseña',
               hint: 'Ingresa tu contraseña',
               controller: _clave,
               obscureText: true,
+              isPassword: true,
               validator: (value) {
                 if (value!.length < 4) {
                   return 'Ingrese una contraseña mayor a 3 caracteres';
@@ -405,12 +417,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 return null;
               },
             ),
-            
-            _noRecuerdomiClave(),
+
+            _noRecuerdomiClave(context),
 
             _ingresarAmiCuenta(context),
-            
-            _noTienesCuenta()
+
+            _noTienesCuenta(context)
 
           ],
         )
@@ -421,12 +433,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   //metodo que pinta la pantalla principal del controlador de Kupi, en la misma se pregunta si el usuario
   //quiere loguearse o por defecto registrarse dentro de la app.
-   Widget myScaffold() {
-    return Metodos.mediaQuery(context, body());
+   Widget myScaffold(BuildContext context) {
+    return Metodos.mediaQuery(context, body(context));
   }
 
   @override
   Widget build(BuildContext context) {
-    return myScaffold();
+    return myScaffold(context);
   }
 }

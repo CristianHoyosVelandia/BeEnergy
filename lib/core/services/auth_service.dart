@@ -33,11 +33,9 @@ class AuthService {
   /// - message: String
   /// - data: Map con información del usuario y token
   /// - token: String (JWT token)
-  Future<Map<String, dynamic>> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<Map<String, dynamic>> login({ required String email, required String password }) async {
     try {
+
       final response = await _apiClient.post(
         ApiEndpoints.login,
         data: {
@@ -45,6 +43,7 @@ class AuthService {
           'password': password,
         },
       );
+      print("El response es-->${response.data}");
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
 
