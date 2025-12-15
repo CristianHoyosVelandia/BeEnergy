@@ -45,6 +45,13 @@ class CommunityMember {
   final double pdeShare; // Porcentaje de participación en PDE (0.0 - 1.0)
   final bool isActive;
 
+  // ⭐ NUEVO: Identificación regulatoria CREG 101 072
+  final String niu; // Número Identificación Única (NIU-{COMUNIDAD}-{ID}-{AÑO})
+  final String documentType; // 'CC', 'NIT', 'CE', 'TI'
+  final String documentNumber; // Número de documento
+  final MemberCategory category; // Categoría del miembro
+  final DateTime registrationDate; // Fecha de registro
+
   CommunityMember({
     required this.id,
     required this.communityId,
@@ -55,12 +62,22 @@ class CommunityMember {
     required this.installedCapacity,
     required this.pdeShare,
     this.isActive = true,
-  });
+    this.niu = '',
+    this.documentType = 'CC',
+    this.documentNumber = '',
+    this.category = MemberCategory.consumer,
+    DateTime? registrationDate,
+  }) : registrationDate = registrationDate ?? DateTime.now();
 
   String get fullName => '$userName $userLastName';
 
   bool get isConsumer => role == 'consumer';
   bool get isProsumer => role == 'prosumer';
+
+  /// Valida formato NIU: NIU-{COMUNIDAD}-{ID}-{AÑO}
+  bool get hasValidNIU {
+    return RegExp(r'^NIU-[A-Z0-9]+-\d{3}-\d{4}$').hasMatch(niu);
+  }
 
   factory CommunityMember.fromJson(Map<String, dynamic> json) {
     return CommunityMember(
@@ -73,6 +90,18 @@ class CommunityMember {
       installedCapacity: (json['installed_capacity'] as num).toDouble(),
       pdeShare: (json['pde_share'] as num).toDouble(),
       isActive: json['is_active'] as bool? ?? true,
+      niu: json['niu'] as String? ?? '',
+      documentType: json['document_type'] as String? ?? 'CC',
+      documentNumber: json['document_number'] as String? ?? '',
+      category: json['category'] != null
+          ? MemberCategory.values.firstWhere(
+              (e) => e.name == json['category'],
+              orElse: () => MemberCategory.consumer,
+            )
+          : MemberCategory.consumer,
+      registrationDate: json['registration_date'] != null
+          ? DateTime.parse(json['registration_date'] as String)
+          : null,
     );
   }
 
@@ -87,8 +116,25 @@ class CommunityMember {
       'installed_capacity': installedCapacity,
       'pde_share': pdeShare,
       'is_active': isActive,
+      'niu': niu,
+      'document_type': documentType,
+      'document_number': documentNumber,
+      'category': category.name,
+      'registration_date': registrationDate.toIso8601String(),
     };
   }
+}
+
+/// Categoría de miembro según su relación con generación/consumo
+enum MemberCategory {
+  /// Solo genera energía (raro en práctica)
+  producer,
+
+  /// Solo consume energía (sin generación)
+  consumer,
+
+  /// Genera y consume energía
+  prosumer,
 }
 
 /// Estadísticas generales de la comunidad

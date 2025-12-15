@@ -13,6 +13,12 @@ class P2PContract {
   final String status; // 'active', 'completed', 'cancelled'
   final DateTime createdAt;
 
+  // ⭐ NUEVO: Campos regulatorios CREG 101 072
+  final String period; // 'YYYY-MM' - Período del contrato
+  final double calculatedVE; // VE del período (COP/kWh)
+  final bool priceWithinVERange; // Precio cumple VE ±10%
+  final DateTime? completedAt; // Fecha de completado
+
   P2PContract({
     required this.id,
     required this.sellerId,
@@ -24,6 +30,10 @@ class P2PContract {
     required this.agreedPrice,
     required this.status,
     required this.createdAt,
+    this.period = '',
+    this.calculatedVE = 450.0,
+    this.priceWithinVERange = true,
+    this.completedAt,
   });
 
   double get totalValue => energyCommitted * agreedPrice;
@@ -31,6 +41,13 @@ class P2PContract {
   bool get isActive => status == 'active';
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
+
+  /// Valida que el precio esté en rango VE ±10%
+  bool validateVECompliance() {
+    final minPrice = calculatedVE * 0.9;
+    final maxPrice = calculatedVE * 1.1;
+    return agreedPrice >= minPrice && agreedPrice <= maxPrice;
+  }
 
   factory P2PContract.fromJson(Map<String, dynamic> json) {
     return P2PContract(
@@ -44,6 +61,12 @@ class P2PContract {
       agreedPrice: (json['agreed_price'] as num).toDouble(),
       status: json['status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      period: json['period'] as String? ?? '',
+      calculatedVE: (json['calculated_ve'] as num?)?.toDouble() ?? 450.0,
+      priceWithinVERange: json['price_within_ve_range'] as bool? ?? true,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
+          : null,
     );
   }
 
@@ -59,6 +82,10 @@ class P2PContract {
       'agreed_price': agreedPrice,
       'status': status,
       'created_at': createdAt.toIso8601String(),
+      'period': period,
+      'calculated_ve': calculatedVE,
+      'price_within_ve_range': priceWithinVERange,
+      'completed_at': completedAt?.toIso8601String(),
     };
   }
 }
