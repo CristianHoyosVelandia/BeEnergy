@@ -188,7 +188,7 @@ class _AprendeScreenState extends State<AprendeScreen> with SingleTickerProvider
           iconColor: AppTokens.info,
           content: [
             Text(
-              'La Resolución CREG 101 072 de 2025 es el marco regulatorio colombiano que establece las reglas para el funcionamiento de comunidades energéticas con generación distribuida y esquemas de intercambio peer-to-peer (P2P) de energía eléctrica.',
+              'La Resolución CREG 101 072 de 2025 es el marco regulatorio colombiano que establece las reglas para el funcionamiento de comunidades energéticas con generación distribuida de energía eléctrica.',
               style: context.textStyles.bodyMedium,
               textAlign: TextAlign.justify,
             ),
@@ -210,10 +210,10 @@ class _AprendeScreenState extends State<AprendeScreen> with SingleTickerProvider
               'Autogeneración Renovable',
               'Fomentar la autogeneración con fuentes renovables',
             ),
-            _buildInfoRow(
-              'Intercambios P2P',
-              'Permitir intercambios entre prosumidores y consumidores',
-            ),
+            // _buildInfoRow(
+            //   'Intercambios P2P',
+            //   'Permitir intercambios entre prosumidores y consumidores',
+            // ),
             _buildInfoRow(
               'Solidaridad Energética (PDE)',
               'Establecer un programa de solidaridad energética',

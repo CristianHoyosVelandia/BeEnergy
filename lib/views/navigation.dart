@@ -35,8 +35,7 @@ class _NavPagesState extends State<NavPages> {
       HomeScreen(myUser: widget.myUser,),
       EnergyScreen(myUser: widget.myUser),
       TradingScreen(),
-      // NotificacionesScreen(),
-      IntercambiosEnergyScreen(),
+      NotificacionesScreen(),
       MicuentaScreen(myUser: widget.myUser,),
     ];
   }
