@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Crear usuario local con los datos del API
                 MyUser usuario = MyUser(
                   idUser: userData['user_id'] ?? 0,
-                  nombre: userData['name'] ?? userData['email'] ?? 'Cristian Hoyos',
+                  nombre: userData['name'] ?? 'Cristian Hoyos' ?? userData['email'],
                   telefono: userData['phone'] ?? '3176703596',
                   correo: userData['email'] ?? _email.text,
                   clave: _clave.text,
