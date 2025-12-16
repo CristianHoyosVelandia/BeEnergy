@@ -10,9 +10,7 @@ import '../../../models/my_user.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
   final MyUser myUser;
-
   const EditarPerfilScreen({super.key, required this.myUser});
-
   @override
   State<EditarPerfilScreen> createState() => _EditarPerfilScreenState();
 }
@@ -28,6 +26,38 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
 
   bool val= false;
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0.0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x4B1A1F24),
+              offset: Offset(0, 2),
+            )
+          ],
+          gradient: Metodos.gradientClasic(context),
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: const Text(
+        'Editar Perfil',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      centerTitle: true,
+    );
+  }
 
   Widget _contenPrincipalCard(){
     return Column(
@@ -106,6 +136,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             "Cambiar Foto",
             style: context.textStyles.titleMedium?.copyWith(
               fontWeight: AppTokens.fontWeightMedium,
+              color: AppTokens.primaryRed
             ),
           ),
         ),
@@ -245,35 +276,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       ),
     );
   }
-  
-  PreferredSizeWidget _appbarEditarPerfil() {
-    return AppBar(
-      backgroundColor: context.colors.surface,
-      automaticallyImplyLeading: false,
-      leading: InkWell(
-        splashColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        onTap: () async {
-          context.pop();
-        },
-        child: Icon(
-          Icons.chevron_left_rounded,
-          color: context.colors.onSurface,
-          size: 32,
-        ),
-      ),
-      title: Text(
-        "Editar Perfil",
-        style: context.textStyles.titleLarge?.copyWith(
-          fontWeight: AppTokens.fontWeightSemiBold,
-        ),
-      ),
-      centerTitle: false,
-      elevation: 0,
-    );
-  }
+
   @override
   Widget build(BuildContext context) {
     _email.text  = widget.myUser.correo ?? "";
@@ -282,7 +285,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _edad.text   = "27";
 
     return Scaffold(
-      appBar: _appbarEditarPerfil(),
+      appBar: _buildAppBar(),
       backgroundColor: context.colors.surface,
       body: _body(),
     );

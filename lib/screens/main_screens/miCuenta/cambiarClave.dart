@@ -10,9 +10,7 @@ import '../../../models/my_user.dart';
 
 class CambiarClavePerfilScreen extends StatefulWidget {
   final MyUser myUser;
-
   const CambiarClavePerfilScreen({super.key, required this.myUser});
-
   @override
   State<CambiarClavePerfilScreen> createState() => _CambiarClavePerfilScreenState();
 }
