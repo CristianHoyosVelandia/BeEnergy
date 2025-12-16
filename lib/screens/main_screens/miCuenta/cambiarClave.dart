@@ -1,6 +1,8 @@
 // ignore_for_file: file_names
 import 'dart:async';
 
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
@@ -15,206 +17,289 @@ class CambiarClavePerfilScreen extends StatefulWidget {
   State<CambiarClavePerfilScreen> createState() => _CambiarClavePerfilScreenState();
 }
 
-
 class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
   Metodos metodos = Metodos();
-  
+
   final TextEditingController _email = TextEditingController();
-  
-  
-  Widget _btnOption(String label, String hintText, TextEditingController controller){
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 20, 20, 0),
-      child: TextFormField(
-        controller: controller,
-        obscureText: false,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: Metodos.subtitulosInformativosFondoNegro(context),
-          hintText: hintText,
-          hintStyle: Metodos.textofromEditingFondoNegro(context),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: Colors.red,
-              width: 0.25,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              width: 0.25,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          filled: true,
-          fillColor: Theme.of(context).focusColor,
-          contentPadding: const EdgeInsetsDirectional.fromSTEB(20, 10, 20, 10),
-        ),
-        style: Metodos.textofromEditingFondoNegro(context),
-        validator: (value) {
-          if (value!.length < 4) {
-            return 'Ingrese una clave mayor a 3 caracetes';
-          }
-          return null;
-        },
-      ),
-    );
+  final _formKey = GlobalKey<FormState>();
 
-  }
-
-  Widget _optiones(String label, String hintText, TextEditingController controller){
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(5, 5, 5, 0),
-            child: _btnOption(label, hintText, controller),
-          ),
-        ),// _btnOption(textTitulo, action),
-       ],
-    );  
-  }
-  
-
-  Widget _texto(){
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Container(
-            margin: const EdgeInsetsDirectional.fromSTEB(25, 25, 25, 10),
-            padding: const EdgeInsetsDirectional.fromSTEB(15, 25, 15, 0),
-            child: Text(
-              "Ingrese el correo electrónico asociado con su cuenta y le enviaremos un enlace para restablecer su contraseña",
-              textAlign: TextAlign.justify,
-              style: TextStyle(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w200,
-                letterSpacing: 1.5,
-                height: 1.5,
-                
-              )
-            ),
-          ),
-        ),// _btnOption(textTitulo, action),
-       
-       ],
-    );  
-  }
-  
-  Widget _btnGuardarCambios() {
-   return InkWell(
-      highlightColor: Colors.transparent,
-      splashColor: Colors.transparent,
-      
-      onTap: () async {
-
-        await Metodos.flushbarPositivo(context, 'Correo enviado exitosamente');
-
-        Timer(const Duration(seconds: 2), () => Navigator.pop(context));
-
-        
-      },
-
-      child: Container(
-        margin: const EdgeInsets.only(right: 65, left: 65, top: 15),
-        height: 50,
-        decoration: BoxDecoration(
-          color: Theme.of(context).canvasColor,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        
-        child: Center(
-          child: Text(
-            'Enviar',
-            style: Metodos.btnTextStyleFondo(context, Colors.white)
-          ),
-        ),
-      ),
-    );     
-  
-  }
-  
-  Widget _body(){
-    return  SingleChildScrollView(
-        child: Column(
-
-          children: [
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _texto(),
-            ),
-            
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 5, 0, 0),
-              child: _optiones("Correo", "Ingrese por favor su correo", _email),
-            ),
-
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 15, 0, 0),
-              child: _btnGuardarCambios(),
-            ),
-            
-          ],
-        ),
-      );
-  }
-  
-  PreferredSizeWidget _appbarEditarPerfil() {
+  /// AppBar personalizado con gradiente
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Theme.of(context).focusColor,
-      automaticallyImplyLeading: false,
-      leading: InkWell(
-        splashColor: Colors.transparent,
-        focusColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        onTap: () async {
-          Navigator.pop(context);
-        },
-        child: Icon(
-          Icons.chevron_left_rounded,
-          color: Theme.of(context).scaffoldBackgroundColor,
-          size: 32,
+      elevation: 0.0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x4B1A1F24),
+              offset: Offset(0, 2),
+            )
+          ],
+          gradient: Metodos.gradientClasic(context),
         ),
       ),
-      title: Text(
-        "Cambiar Clave",
-        style: Metodos.btnTextStyle(context),
+      backgroundColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: const Text(
+        'Cambiar Clave',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       centerTitle: false,
-      elevation: 0,
     );
   }
+
+  /// Icono ilustrativo
+  Widget _buildIcon() {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        vertical: AppTokens.space24,
+        horizontal: AppTokens.space16,
+      ),
+      child: Center(
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: AppTokens.primaryBlue.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.lock_reset,
+            size: 60,
+            color: AppTokens.primaryBlue,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Card con información y formulario
+  Widget _buildFormCard() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Título
+            Text(
+              'Restablecer Contraseña',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+            SizedBox(height: AppTokens.space12),
+            // Descripción
+            Text(
+              'Ingrese el correo electrónico asociado con su cuenta y le enviaremos un enlace para restablecer su contraseña.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.justify,
+            ),
+            SizedBox(height: AppTokens.space24),
+            // Campo de correo
+            Text(
+              'Correo Electrónico',
+              style: context.textStyles.titleSmall?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
+              ),
+            ),
+            SizedBox(height: AppTokens.space8),
+            TextFormField(
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'ejemplo@correo.com',
+                hintStyle: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+                prefixIcon: Icon(
+                  Icons.email_outlined,
+                  color: AppTokens.primaryRed,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: context.colors.outline.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: AppTokens.primaryBlue,
+                    width: 2,
+                  ),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 1.5,
+                  ),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(
+                    color: Colors.red,
+                    width: 2,
+                  ),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                filled: true,
+                fillColor: context.colors.surfaceContainerHighest.withValues(alpha: 0.3),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space16,
+                  vertical: AppTokens.space16,
+                ),
+              ),
+              style: context.textStyles.bodyLarge,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Por favor ingrese su correo electrónico';
+                }
+                if (!value.contains('@') || !value.contains('.')) {
+                  return 'Ingrese un correo electrónico válido';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: AppTokens.space24),
+            // Botón de enviar
+            _buildSubmitButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Botón de enviar con gradiente
+  Widget _buildSubmitButton() {
+    return InkWell(
+      onTap: () async {
+        if (_formKey.currentState!.validate()) {
+          // Mostrar mensaje de éxito
+          context.showSuccessSnackbar('Correo enviado exitosamente');
+
+          // Esperar 2 segundos y volver
+          Timer(const Duration(seconds: 2), () {
+            if (mounted) {
+              Navigator.pop(context);
+            }
+          });
+        }
+      },
+      borderRadius: AppTokens.borderRadiusMedium,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
+        decoration: BoxDecoration(
+          gradient: Metodos.gradientClasic(context),
+          borderRadius: AppTokens.borderRadiusMedium,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.send_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            SizedBox(width: AppTokens.space8),
+            Text(
+              'Enviar Enlace',
+              style: context.textStyles.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: AppTokens.fontWeightMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Info adicional
+  Widget _buildAdditionalInfo() {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space20,
+      ),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: AppTokens.info.withValues(alpha: 0.1),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: AppTokens.info.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: AppTokens.info,
+            size: 24,
+          ),
+          SizedBox(width: AppTokens.space12),
+          Expanded(
+            child: Text(
+              'El enlace de restablecimiento será válido por 24 horas.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: AppTokens.info,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    _email.text = "Ingrese por favor su correo";
     return Scaffold(
-      appBar: _appbarEditarPerfil(),
-      backgroundColor: Theme.of(context).focusColor,
-      body:_body()
+      appBar: _buildAppBar(),
+      backgroundColor: context.colors.surfaceContainerLowest,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          top: AppTokens.space16,
+          bottom: AppTokens.space24,
+        ),
+        child: Column(
+          children: [
+            _buildIcon(),
+            _buildFormCard(),
+            _buildAdditionalInfo(),
+          ],
+        ),
+      ),
     );
   }
 }
-
-

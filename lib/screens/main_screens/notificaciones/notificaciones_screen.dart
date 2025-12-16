@@ -114,6 +114,9 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    // Detectar si hay una ruta anterior en el stack
+    final canPop = Navigator.of(context).canPop();
+
     return AppBar(
       toolbarHeight: 60,
       elevation: 0.0,
@@ -130,15 +133,24 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
         ),
       ),
       backgroundColor: Colors.transparent,
+      // Solo mostrar botón de volver si hay una ruta anterior
+      leading: canPop ? IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        tooltip: 'Volver',
+        onPressed: () => Navigator.of(context).pop(),
+      ) : null,
+      // Si no hay botón leading, no usar automaticallyImplyLeading
+      automaticallyImplyLeading: canPop,
       title: const Text(
         'Alertas',
         style: TextStyle(
           color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          fontWeight: AppTokens.fontWeightSemiBold,
+          letterSpacing: 1.5
         ),
       ),
-      centerTitle: false,
+      centerTitle: true,
       actions: [
         // Botón para marcar todas como leídas
         IconButton(

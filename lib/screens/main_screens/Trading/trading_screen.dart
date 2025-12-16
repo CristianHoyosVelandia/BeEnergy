@@ -1,6 +1,5 @@
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
-import 'package:be_energy/data/constants.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -18,6 +17,58 @@ class TradingScreen extends StatefulWidget {
 class _TradingScreenState extends State<TradingScreen> {
   Metodos metodos = Metodos();
 
+  /// AppBar personalizado con gradiente
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      elevation: 0.0,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x4B1A1F24),
+              offset: Offset(0, 2),
+            )
+          ],
+          gradient: Metodos.gradientClasic(context),
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: const Text(
+        'Transferir',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 1.5
+        ),
+      ),
+      centerTitle: true,
+    );
+  }
+
+  /// Título de sección (siguiendo patrón de HomeScreen)
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: AppTokens.space16,
+        bottom: AppTokens.space12,
+        top: AppTokens.space8,
+      ),
+      child: Text(
+        title,
+        style: context.textStyles.titleLarge?.copyWith(
+          fontWeight: AppTokens.fontWeightBold,
+        ),
+      ),
+    );
+  }
+
+  /// Imagen ilustrativa
   Widget _image() {
     return Padding(
       padding: EdgeInsets.only(
@@ -33,7 +84,8 @@ class _TradingScreenState extends State<TradingScreen> {
     );
   }
 
-  Widget _card() {
+  /// Card de balance (estilo mejorado siguiendo patrón home)
+  Widget _balanceCard() {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: AppTokens.space16,
@@ -41,17 +93,17 @@ class _TradingScreenState extends State<TradingScreen> {
       ),
       padding: EdgeInsets.all(AppTokens.space20),
       decoration: BoxDecoration(
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            blurRadius: 6,
-            color: Color(0x4B1A1F24),
-            offset: Offset(0, 2),
+            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.15),
+            offset: const Offset(0, 4),
           )
         ],
         gradient: Metodos.gradientClasic(context),
-        borderRadius: AppTokens.borderRadiusMedium,
+        borderRadius: AppTokens.borderRadiusLarge,
         border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -59,51 +111,94 @@ class _TradingScreenState extends State<TradingScreen> {
         mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Disponible label
-          Text(
-            "Disponible",
-            style: context.textStyles.labelMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: AppTokens.fontWeightSemiBold,
-              letterSpacing: 1.5,
-            ),
+          // Header con icono
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppTokens.space8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: AppTokens.space12),
+              Text(
+                "Saldo Disponible",
+                style: context.textStyles.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: AppTokens.fontWeightSemiBold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: AppTokens.space12),
+          SizedBox(height: AppTokens.space20),
           // Amount
           Text(
             "\$ 333.333",
             style: context.textStyles.displaySmall?.copyWith(
               color: Colors.white,
               fontWeight: AppTokens.fontWeightBold,
-              letterSpacing: 2,
+              letterSpacing: 1.5,
             ),
           ),
           SizedBox(height: AppTokens.space24),
-          // Card number and expiry
+          Divider(color: Colors.white.withValues(alpha: 0.3), height: 1),
+          SizedBox(height: AppTokens.space16),
+          // Card info
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                "* **** 0149 *",
-                style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightMedium,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Tarjeta",
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    "* **** 0149 *",
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: AppTokens.fontWeightMedium,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                "05/25",
-                style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightMedium,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Vence",
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    "05/25",
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: AppTokens.fontWeightMedium,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          SizedBox(height: AppTokens.space8),
-          // Card holder name
+          SizedBox(height: AppTokens.space12),
+          // Card holder
           Text(
             "CRISTIAN HOYOS",
-            style: context.textStyles.titleMedium?.copyWith(
+            style: context.textStyles.bodyLarge?.copyWith(
               color: Colors.white,
               fontWeight: AppTokens.fontWeightSemiBold,
               letterSpacing: 1.5,
@@ -114,7 +209,8 @@ class _TradingScreenState extends State<TradingScreen> {
     );
   }
 
-  Widget _actionButton(int action, String titulo, IconData icon) {
+  /// Botón de acción (mejorado con estilo home)
+  Widget _actionButton(int action, String titulo, IconData icon, Color iconColor) {
     return Expanded(
       flex: 1,
       child: InkWell(
@@ -139,28 +235,42 @@ class _TradingScreenState extends State<TradingScreen> {
           ),
           margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
           decoration: BoxDecoration(
-            gradient: Metodos.gradientClasic(context),
+            color: context.colors.surface,
             borderRadius: AppTokens.borderRadiusMedium,
             border: Border.all(
-              color: context.colors.outline.withValues(alpha: 0.2),
+              color: context.colors.outline.withValues(alpha: 0.1),
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 40,
-                color: Colors.white,
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
+                child: Icon(
+                  icon,
+                  size: 32,
+                  color: iconColor,
+                ),
               ),
               SizedBox(height: AppTokens.space12),
               Text(
                 titulo,
                 style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightSemiBold,
+                  fontWeight: AppTokens.fontWeightMedium,
+                  fontSize:  AppTokens.fontSize14,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -171,6 +281,7 @@ class _TradingScreenState extends State<TradingScreen> {
     );
   }
 
+  /// Sección de actividades (mejorada)
   Widget _actividades() {
     return Container(
       margin: EdgeInsets.symmetric(
@@ -179,73 +290,94 @@ class _TradingScreenState extends State<TradingScreen> {
       ),
       child: Row(
         children: [
-          _actionButton(1, "Energia", Icons.energy_savings_leaf),
-          _actionButton(2, "Dinero", Icons.transform_rounded),
+          _actionButton(1, "Energía", Icons.energy_savings_leaf, AppTokens.energyGreen),
+          _actionButton(2, "Dinero", Icons.account_balance, AppTokens.primaryBlue),
         ],
       ),
     );
   }
 
+  /// SpeedDial flotante (mejorado con estilo rojizo)
   Widget _btnFlotante() {
     return SpeedDial(
-      backgroundColor: context.colors.primary,
+      backgroundColor: AppTokens.primaryRed,
       foregroundColor: Colors.white,
-      overlayColor: context.colors.primary,
-      elevation: 15,
+      overlayColor: Colors.black,
+      elevation: 8,
       animatedIcon: AnimatedIcons.menu_close,
+      buttonSize: const Size(56, 56),
+      childrenButtonSize: const Size(50, 50),
       children: [
         SpeedDialChild(
           backgroundColor: Colors.white,
-          onTap: () {},
+          foregroundColor: AppTokens.primaryRed,
+          onTap: () {
+            context.showInfoSnackbar("Enviar dinero");
+          },
           labelWidget: Container(
-            padding: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppTokens.space12,
+              vertical: AppTokens.space8,
+            ),
             child: Text(
-              "Envia",
+              "Enviar",
               style: context.textStyles.titleSmall?.copyWith(
                 fontWeight: AppTokens.fontWeightBold,
+                color: Colors.white
               ),
             ),
           ),
-          child: Icon(
+          child: const Icon(
             Icons.arrow_forward_ios_sharp,
-            size: 15,
-            color: context.colors.primary,
+            size: 18,
           ),
         ),
         SpeedDialChild(
           backgroundColor: Colors.white,
-          onTap: () {},
-          child: Icon(
-            Icons.keyboard_arrow_down_outlined,
-            size: 25,
-            color: context.colors.primary,
-          ),
+          foregroundColor: AppTokens.primaryRed,
+          onTap: () {
+            context.showInfoSnackbar("Retirar dinero");
+          },
           labelWidget: Container(
-            padding: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppTokens.space12,
+              vertical: AppTokens.space8,
+            ),
             child: Text(
-              "Retira",
+              "Retirar",
               style: context.textStyles.titleSmall?.copyWith(
                 fontWeight: AppTokens.fontWeightBold,
+                color: Colors.white,
               ),
             ),
           ),
+          child: const Icon(
+            Icons.keyboard_arrow_down_outlined,
+            size: 22,
+          ),
         ),
         SpeedDialChild(
           backgroundColor: Colors.white,
-          onTap: () {},
-          child: Icon(
-            Icons.dashboard_customize_outlined,
-            size: 30,
-            color: context.colors.primary,
-          ),
+          foregroundColor: AppTokens.primaryRed,
+          onTap: () {
+            context.showInfoSnackbar("Servicios disponibles");
+          },
           labelWidget: Container(
-            padding: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppTokens.space12,
+              vertical: AppTokens.space8,
+            ),
             child: Text(
               "Servicios",
               style: context.textStyles.titleSmall?.copyWith(
                 fontWeight: AppTokens.fontWeightBold,
+                color: AppTokens.white,
               ),
             ),
+          ),
+          child: const Icon(
+            Icons.dashboard_customize_outlined,
+            size: 24,
           ),
         ),
       ],
@@ -254,37 +386,23 @@ class _TradingScreenState extends State<TradingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1)),
-      child: Scaffold(
-        appBar: metodos.appbarSecundaria(context, "Transferir", ColorsApp.color4),
-        backgroundColor: context.colors.surface,
-        body: Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            SingleChildScrollView(
-              child: GradientBackInsideApp(
-                color: context.colors.onSurfaceVariant,
-                height: 85,
-                opacity: 0.75,
-              ),
-            ),
-            ListView(
-              padding: EdgeInsets.only(
-                top: AppTokens.space8,
-                bottom: AppTokens.space24,
-              ),
-              children: [
-                _image(),
-                _card(),
-                _actividades(),
-              ],
-            ),
-          ],
+    return Scaffold(
+      appBar: _buildAppBar(),
+      backgroundColor: context.colors.surfaceContainerLowest,
+      body: ListView(
+        padding: EdgeInsets.only(
+          top: AppTokens.space8,
+          bottom: 100.0,
         ),
-        floatingActionButton: _btnFlotante(),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        children: [
+          _image(),
+          _balanceCard(),
+          _sectionTitle('Transferencias Rápidas'),
+          _actividades(),
+        ],
       ),
+      floatingActionButton: _btnFlotante(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
