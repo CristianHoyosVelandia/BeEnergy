@@ -60,7 +60,13 @@ class _BolsaScreenState extends State<BolsaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Intercambios P2P'),
+        title: const Text(
+          'Intercambios P2P',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w400
+          ),
+        ),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -93,39 +99,19 @@ class _BolsaScreenState extends State<BolsaScreen> {
           _buildMyContractsSection(),
         ],
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTokens.space16),
-          boxShadow: [
-            BoxShadow(
-              color: AppTokens.primaryRed.withValues(alpha: 0.4),
-              blurRadius: 12,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProsumerCreateOfferScreen(),
             ),
-          ],
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProsumerCreateOfferScreen(),
-              ),
-            );
-          },
-          backgroundColor: AppTokens.primaryRed,
-          foregroundColor: Colors.white,
-          elevation: 8,
-          icon: const Icon(Icons.add_circle_outline, size: 24),
-          label: Text(
-            'Crear Oferta',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
+          );
+        },
+        backgroundColor: AppTokens.primaryRed,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        child: const Icon(Icons.add_circle_outline, size: 24),
       ),
     );
   }

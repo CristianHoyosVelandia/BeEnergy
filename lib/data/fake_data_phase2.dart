@@ -433,10 +433,10 @@ class FakeDataPhase2 {
       totalProsumers: 1, // Cristian es prosumidor
       totalConsumers: 0,
       totalInstalledCapacity: 288, // kW
-      totalEnergyGenerated: 320, // kWh generados
-      totalEnergyImported: 0, // kWh importados
-      totalEnergyConsumed: 180, // kWh consumidos
-      totalEnergyExported: 0, // kWh exportados (aún no exporta)
+      totalEnergyGenerated: 320, // kWh generados durante el día
+      totalEnergyImported: 50, // kWh importados de la red (consumo nocturno)
+      totalEnergyConsumed: 180, // kWh consumidos totales
+      totalEnergyExported: 190, // kWh exportados a la red (excedentes diurnos)
       activeContracts: 1, // Solo los contratos de Cristian
     );
   }

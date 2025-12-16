@@ -158,10 +158,14 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
             child: PieChart(
               PieChartData(
                 sections: allocations.map((allocation) {
+                  // ⭐ NUEVO: Colorear según cumplimiento del 10%
+                  final isCompliant = allocation.sharePercentage <= 0.10;
+                  final color = isCompliant ? Colors.green : AppTokens.error;
+
                   return PieChartSectionData(
                     value: allocation.sharePercentage * 100,
                     title: '${(allocation.sharePercentage * 100).toStringAsFixed(1)}%',
-                    color: _getColorForIndex(allocations.indexOf(allocation)),
+                    color: color,
                     radius: 100,
                     titleStyle: context.textStyles.titleSmall?.copyWith(
                       color: Colors.white,
@@ -180,10 +184,11 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
             spacing: AppTokens.space12,
             runSpacing: AppTokens.space8,
             children: allocations.map((allocation) {
-              final index = allocations.indexOf(allocation);
+              final isCompliant = allocation.sharePercentage <= 0.10;
+              final color = isCompliant ? Colors.green : AppTokens.error;
               return _buildLegendItem(
                 allocation.userName,
-                _getColorForIndex(index),
+                color,
               );
             }).toList(),
           ),
@@ -192,15 +197,180 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
     );
   }
 
-  Color _getColorForIndex(int index) {
-    final colors = [
-      Colors.orange,
-      Colors.blue,
-      Colors.green,
-      Colors.purple,
-      Colors.teal,
-    ];
-    return colors[index % colors.length];
+  /// ⭐ NUEVO: Construye tarjeta de validación CREG 101 072
+  Widget _buildComplianceValidation() {
+    final allocations = FakeData.pdeAllocations;
+
+    // Calcular el PDE total y el porcentaje sobre Tipo 2
+    // Nota: En fake data actual puede estar sobre total surplus, no solo Tipo 2
+    // Para validación correcta, debería ser sobre surplusType2Only
+    final totalPDE = allocations.fold<double>(
+      0.0,
+      (sum, a) => sum + a.allocatedEnergy,
+    );
+
+    // Total Tipo 2 disponible (suma de todos los prosumidores)
+    final totalType2 = allocations.fold<double>(
+      0.0,
+      (sum, a) => sum + (a.surplusType2Only > 0 ? a.surplusType2Only : a.excessEnergy * 0.5),
+    );
+
+    final pdePercentage = totalType2 > 0 ? (totalPDE / totalType2) * 100 : 0.0;
+    final isCompliant = pdePercentage <= 10.0;
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: isCompliant
+            ? Colors.green.withValues(alpha: 0.1)
+            : AppTokens.error.withValues(alpha: 0.1),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: isCompliant
+              ? Colors.green.withValues(alpha: 0.3)
+              : AppTokens.error.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isCompliant ? Icons.check_circle : Icons.warning,
+                color: isCompliant ? Colors.green : AppTokens.error,
+                size: 24,
+              ),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Validación CREG 101 072',
+                      style: context.textStyles.titleSmall?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                        color: isCompliant ? Colors.green : AppTokens.error,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      'Artículo 3.4: PDE ≤ 10% del Tipo 2',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+          Divider(height: 1, color: context.colors.outline.withValues(alpha: 0.2)),
+          SizedBox(height: AppTokens.space16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Total Tipo 2',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      Formatters.formatEnergy(totalType2),
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PDE Asignado',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      Formatters.formatEnergy(totalPDE),
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Porcentaje',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: context.colors.onSurfaceVariant,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      '${pdePercentage.toStringAsFixed(1)}%',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                        color: isCompliant ? Colors.green : AppTokens.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+          // Estado de cumplimiento
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: isCompliant
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : AppTokens.error.withValues(alpha: 0.1),
+              borderRadius: AppTokens.borderRadiusSmall,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isCompliant ? Icons.check : Icons.close,
+                  color: isCompliant ? Colors.green : AppTokens.error,
+                  size: 20,
+                ),
+                SizedBox(width: AppTokens.space8),
+                Expanded(
+                  child: Text(
+                    isCompliant
+                        ? '✓ CUMPLE límite regulatorio (≤10%)'
+                        : '✗ EXCEDE límite regulatorio\nActual: ${pdePercentage.toStringAsFixed(1)}% | Máximo: 10.0%',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: isCompliant ? Colors.green : AppTokens.error,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildLegendItem(String label, Color color) {
@@ -488,6 +658,9 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
         children: [
           SizedBox(height: AppTokens.space16),
           _buildHeader(),
+          SizedBox(height: AppTokens.space16),
+          // ⭐ NUEVO: Validación regulatoria CREG 101 072
+          _buildComplianceValidation(),
           SizedBox(height: AppTokens.space16),
           _buildInfoCard(),
           SizedBox(height: AppTokens.space16),

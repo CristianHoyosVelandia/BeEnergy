@@ -994,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppTokens.primaryBlue,
             tooltip: "Notificaciones",
             onPressed: () {
-              context.showInfoSnackbar("Notificaciones");
+              context.push(const NotificacionesScreen());
             },
           ),
         ),
