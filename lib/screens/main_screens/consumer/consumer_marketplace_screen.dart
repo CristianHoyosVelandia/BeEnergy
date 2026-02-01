@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_phase2.dart';
+import '../../../data/fake_data_january_2026.dart';
 import '../../../models/p2p_offer.dart';
 import 'offer_detail_acceptance_screen.dart';
+import 'consumer_create_offer_screen.dart';
+import 'consumer_offers_list_screen.dart';
 
 /// Pantalla de Mercado P2P - CONSUMIDOR
 /// Muestra las ofertas P2P disponibles para compra
-/// FASE 2 - Transaccional - Diciembre 2025
+/// - Diciembre 2025: Ofertas de prosumidores (modelo antiguo)
+/// - Enero 2026+: Crear ofertas de compra basadas en PDE (modelo nuevo)
 class ConsumerMarketplaceScreen extends StatefulWidget {
   const ConsumerMarketplaceScreen({super.key});
 
@@ -15,11 +20,22 @@ class ConsumerMarketplaceScreen extends StatefulWidget {
   State<ConsumerMarketplaceScreen> createState() => _ConsumerMarketplaceScreenState();
 }
 
+enum MarketPeriod {
+  december2025('Diciembre 2025', '2025-12'),
+  january2026('Enero 2026', '2026-01');
+
+  final String displayName;
+  final String period;
+  const MarketPeriod(this.displayName, this.period);
+}
+
 class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final _ve = FakeDataPhase2.veDecember2025;
   final _consumer = FakeDataPhase2.anaLopez;
+
+  // Período seleccionado (por defecto Enero 2026)
+  MarketPeriod _selectedPeriod = MarketPeriod.january2026;
 
   @override
   void initState() {
@@ -51,26 +67,111 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mercado P2P'),
-        backgroundColor: AppTokens.energyGreen,
+        title: const Text(
+          'Mercado P2P',
+          style: TextStyle(color: Colors.white),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: Metodos.gradientClasic(context),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          if (_selectedPeriod == MarketPeriod.january2026)
+            IconButton(
+              icon: const Icon(Icons.help_outline, color: Colors.white),
+              tooltip: '¿Qué son los PDE?',
+              onPressed: () => _showPDEHelpDialog(),
+            ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white.withValues(alpha: 0.7),
-          tabs: const [
-            Tab(text: 'Ofertas Disponibles', icon: Icon(Icons.shopping_cart)),
-            Tab(text: 'Mis Compras', icon: Icon(Icons.receipt_long)),
-          ],
+          tabs: _selectedPeriod == MarketPeriod.december2025
+              ? const [
+                  Tab(text: 'Ofertas Disponibles', icon: Icon(Icons.shopping_cart)),
+                  Tab(text: 'Mis Compras', icon: Icon(Icons.receipt_long)),
+                ]
+              : const [
+                  Tab(text: 'Crear Oferta', icon: Icon(Icons.add_shopping_cart)),
+                  Tab(text: 'Mis Ofertas', icon: Icon(Icons.list)),
+                ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildAvailableOffersTab(),
-          _buildMyPurchasesTab(),
+          // Selector de período
+          _buildPeriodSelector(),
+
+          // Contenido según período
+          Expanded(
+            child: _selectedPeriod == MarketPeriod.december2025
+                ? TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildAvailableOffersTab(),
+                      _buildMyPurchasesTab(),
+                    ],
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildCreateOfferTab(),
+                      _buildMyOffersTab(),
+                    ],
+                  ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    return Container(
+      margin: EdgeInsets.all(AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: AppTokens.borderRadiusLarge,
+      ),
+      child: Row(
+        children: MarketPeriod.values.map((period) {
+          final isSelected = _selectedPeriod == period;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedPeriod = period;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: AppTokens.space12,
+                  horizontal: AppTokens.space8,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTokens.primaryRed : Colors.transparent,
+                  borderRadius: AppTokens.borderRadiusLarge,
+                ),
+                child: Text(
+                  period.displayName,
+                  textAlign: TextAlign.center,
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: isSelected ? Colors.white : Colors.black,
+                    fontWeight: isSelected
+                        ? AppTokens.fontWeightBold
+                        : AppTokens.fontWeightMedium,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -100,6 +201,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   }
 
   Widget _buildVEInfoCard() {
+    final ve = FakeDataPhase2.veDecember2025;
+
     return Container(
       margin: EdgeInsets.all(AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space16),
@@ -124,13 +227,275 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 ),
                 SizedBox(height: AppTokens.space4),
                 Text(
-                  'VE: \$${_ve.totalVE.toStringAsFixed(0)} COP/kWh | Rango P2P: \$${_ve.minAllowedPrice.toStringAsFixed(0)}-\$${_ve.maxAllowedPrice.toStringAsFixed(0)}',
+                  'VE: \$${ve.totalVE.toStringAsFixed(0)} COP/kWh | Rango P2P: \$${ve.minAllowedPrice.toStringAsFixed(0)}-\$${ve.maxAllowedPrice.toStringAsFixed(0)}',
                   style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ============================================================================
+  // DIÁLOGO DE AYUDA PDE
+  // ============================================================================
+
+  void _showPDEHelpDialog() {
+    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.help_outline, color: AppTokens.primaryRed),
+            SizedBox(width: 12),
+            Text('¿Qué son los PDE?'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Porcentaje de Distribución de Excedentes (PDE)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'El PDE es el % del excedente Tipo 2 que se distribuye en los miembros comunitarios según la resoluciòn CREG 101 072 Art 3.4.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                '¿Por qué crear una oferta?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'El proceso de crear una oferta se hace con el fin de buscar favorabilidad en la asignación de los PDE.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Rango de Precios:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Mínimo: \$${minValue.toStringAsFixed(2)} COP/kWh',
+                style: const TextStyle(fontSize: 14),
+              ),
+              Text(
+                'Máximo: \$${maxValue.toStringAsFixed(2)} COP/kWh',
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Los valores mínimo y máximo están limitados para que los consumidores puedan generar un ahorro y los prosumidores un valor agregado sobre el precio mínimo de los mercados regulados.',
+                style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================================
+  // TABS ENERO 2026
+  // ============================================================================
+
+  Widget _buildCreateOfferTab() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppTokens.space32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_shopping_cart,
+              size: 80,
+              color: AppTokens.primaryRed.withValues(alpha: 0.7),
+            ),
+            SizedBox(height: AppTokens.space24),
+            Text(
+              'Crear Oferta de Compra',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppTokens.space12),
+            Text(
+              'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppTokens.space32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ConsumerCreateOfferScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Crear Oferta'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTokens.primaryRed,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space24,
+                  vertical: AppTokens.space16,
+                ),
+              ),
+            ),
+            SizedBox(height: AppTokens.space16),
+            OutlinedButton.icon(
+              onPressed: () {
+                final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+                final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+                                  FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: AppTokens.primaryRed),
+                        SizedBox(width: 12),
+                        Text('¿Cómo funciona?'),
+                      ],
+                    ),
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Nuevo Modelo - Enero 2026',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            '¿Qué cambió?',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('• Los consumidores ahora crean ofertas de compra'),
+                          const Text('• Las ofertas se basan en % del PDE disponible'),
+                          const Text('• Un administrador hace la liquidación'),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Rango de Precios:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text('Mínimo: \$${minValue.toStringAsFixed(2)} COP/kWh'),
+                          Text('Máximo: \$${maxValue.toStringAsFixed(2)} COP/kWh'),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Estos límites garantizan ahorro para consumidores y valor agregado para prosumidores.',
+                            style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Diferencia con Diciembre 2025:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('• Antes: Prosumidores publicaban, consumidores aceptaban'),
+                          const Text('• Ahora: Consumidores ofertan, admin liquida'),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Entendido'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.info_outline),
+              label: const Text('¿Cómo funciona?'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMyOffersTab() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppTokens.space32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.list_alt,
+              size: 80,
+              color: AppTokens.primaryRed.withValues(alpha: 0.7),
+            ),
+            SizedBox(height: AppTokens.space24),
+            Text(
+              'Mis Ofertas de Compra',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppTokens.space12),
+            Text(
+              'Ve el estado de tus ofertas: pendientes, confirmadas o parciales.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: AppTokens.space32),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ConsumerOffersListScreen(
+                      period: _selectedPeriod.period,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.list),
+              label: const Text('Ver Mis Ofertas'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTokens.primaryRed,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppTokens.space24,
+                  vertical: AppTokens.space16,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,11 +528,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: AppTokens.primaryPurple.withValues(alpha: 0.2),
+                    backgroundColor: AppTokens.primaryRed.withValues(alpha: 0.2),
                     child: Text(
                       offer.sellerName[0].toUpperCase(),
                       style: const TextStyle(
-                        color: AppTokens.primaryPurple,
+                        color: AppTokens.primaryRed,
                         fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
@@ -186,12 +551,12 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                         SizedBox(height: AppTokens.space4),
                         Row(
                           children: [
-                            Icon(Icons.verified, size: 16, color: Colors.green),
+                            Icon(Icons.verified, size: 16, color: AppTokens.energyGreen),
                             SizedBox(width: AppTokens.space4),
                             Text(
                               'Verificado',
                               style: context.textStyles.bodySmall?.copyWith(
-                                color: Colors.green,
+                                color: AppTokens.energyGreen,
                               ),
                             ),
                           ],
@@ -205,14 +570,14 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                       vertical: AppTokens.space4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
+                      color: AppTokens.energyGreen.withValues(alpha: 0.1),
                       borderRadius: AppTokens.borderRadiusMedium,
-                      border: Border.all(color: Colors.green),
+                      border: Border.all(color: AppTokens.energyGreen),
                     ),
                     child: Text(
                       offer.status.displayName,
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: Colors.green,
+                        color: AppTokens.energyGreen,
                         fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
@@ -270,11 +635,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 padding: EdgeInsets.all(AppTokens.space12),
                 decoration: BoxDecoration(
                   color: savingsPerKwh > 0
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.orange.withValues(alpha: 0.1),
+                      ? AppTokens.energyGreen.withValues(alpha: 0.1)
+                      : AppTokens.primaryRed.withValues(alpha: 0.1),
                   borderRadius: AppTokens.borderRadiusMedium,
                   border: Border.all(
-                    color: savingsPerKwh > 0 ? Colors.green : Colors.orange,
+                    color: savingsPerKwh > 0 ? AppTokens.energyGreen : AppTokens.primaryRed.withValues(alpha: 0.5),
                   ),
                 ),
                 child: Row(
@@ -284,14 +649,14 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                       children: [
                         Icon(
                           savingsPerKwh > 0 ? Icons.trending_down : Icons.trending_up,
-                          color: savingsPerKwh > 0 ? Colors.green : Colors.orange,
+                          color: savingsPerKwh > 0 ? AppTokens.energyGreen : AppTokens.primaryRed,
                           size: 20,
                         ),
                         SizedBox(width: AppTokens.space8),
                         Text(
                           savingsPerKwh > 0 ? 'Ahorro' : 'Costo adicional',
                           style: context.textStyles.bodyMedium?.copyWith(
-                            color: savingsPerKwh > 0 ? Colors.green : Colors.orange,
+                            color: savingsPerKwh > 0 ? AppTokens.energyGreen : AppTokens.primaryRed,
                             fontWeight: AppTokens.fontWeightSemiBold,
                           ),
                         ),
@@ -300,7 +665,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     Text(
                       '${savingsPerKwh > 0 ? '-' : '+'}\$${totalSavings.abs().toStringAsFixed(0)} (${savingsPercentage.abs().toStringAsFixed(1)}%)',
                       style: context.textStyles.bodyMedium?.copyWith(
-                        color: savingsPerKwh > 0 ? Colors.green : Colors.orange,
+                        color: savingsPerKwh > 0 ? AppTokens.energyGreen : AppTokens.primaryRed,
                         fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
@@ -474,13 +839,13 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     vertical: AppTokens.space4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
+                    color: AppTokens.energyGreen.withValues(alpha: 0.1),
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                   child: Text(
                     contract.status.toUpperCase(),
                     style: context.textStyles.bodySmall?.copyWith(
-                      color: Colors.green,
+                      color: AppTokens.energyGreen,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),

@@ -112,6 +112,10 @@ class PDEAllocation {
   final bool isPDECompliant; // Cumple límite ≤10%
   final String regulationArticle; // Artículo CREG aplicable
 
+  // ⭐ NUEVO (Enero 2026): Tracking de distribución por liquidación
+  final double pdeAllocatedToConsumers; // kWh distribuidos vía liquidación
+  final Map<int, double>? consumerDistribution; // userId → kWh asignados
+
   PDEAllocation({
     required this.id,
     required this.userId,
@@ -124,10 +128,15 @@ class PDEAllocation {
     this.surplusType2Only = 0.0,
     this.isPDECompliant = true,
     this.regulationArticle = 'CREG 101 072 Art 3.4',
+    this.pdeAllocatedToConsumers = 0.0,
+    this.consumerDistribution,
   });
 
   /// Verifica si cumple límite regulatorio PDE ≤10%
   bool get meetsRegulatoryLimit => sharePercentage <= 0.10;
+
+  /// PDE restante disponible para liquidación
+  double get pdeRemaining => allocatedEnergy - pdeAllocatedToConsumers;
 
   factory PDEAllocation.fromJson(Map<String, dynamic> json) {
     return PDEAllocation(
@@ -142,6 +151,14 @@ class PDEAllocation {
       surplusType2Only: (json['surplus_type2_only'] as num?)?.toDouble() ?? 0.0,
       isPDECompliant: json['is_pde_compliant'] as bool? ?? true,
       regulationArticle: json['regulation_article'] as String? ?? 'CREG 101 072 Art 3.4',
+      pdeAllocatedToConsumers: (json['pde_allocated_to_consumers'] as num?)?.toDouble() ?? 0.0,
+      consumerDistribution: json['consumer_distribution'] != null
+          ? Map<int, double>.from(
+              (json['consumer_distribution'] as Map).map(
+                (k, v) => MapEntry(int.parse(k.toString()), (v as num).toDouble()),
+              ),
+            )
+          : null,
     );
   }
 
@@ -158,6 +175,8 @@ class PDEAllocation {
       'surplus_type2_only': surplusType2Only,
       'is_pde_compliant': isPDECompliant,
       'regulation_article': regulationArticle,
+      'pde_allocated_to_consumers': pdeAllocatedToConsumers,
+      'consumer_distribution': consumerDistribution,
     };
   }
 }

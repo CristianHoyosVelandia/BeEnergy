@@ -17,36 +17,34 @@ import 'fake_data_phase2.dart';
 /// Clase que contiene todos los datos fake de Enero 2026
 class FakeDataJanuary2026 {
   // ============================================================================
-  // VE (VALOR DE ENERGÍA) - ENERO 2026
+  // CONSTANTES ECONÓMICAS - ENERO 2026
   // ============================================================================
+  // Documentación completa en: DOCS/CONSTANTES_ECONOMICAS.md
 
-  /// VE para Enero 2026 (mismo que Diciembre 2025)
-  /// VE = CU + MC + PCN = 150 + 200 + 100 = 450 COP/kWh
-  static final VECalculation veJanuary2026 = VECalculation.calculate(
-    period: '2026-01',
-    cuComponent: 150, // Cargo por Uso de redes
-    mcComponent: 200, // Costo de comercialización
-    pcnComponent: 100, // Precio de energía en contratos
-    source: 'manual',
-  );
+  /// MC_m - Valor Energía / Precio Promedio de los Contratos
+  /// Este es el precio promedio de los contratos de la simulación económica
+  /// Valor base para cálculos de rango de precios P2P
+  static const double mcmValorEnergiaPromedio = 300.0; // COP/kWh
+
+  /// Costo de comercialización
+  static const double costoComercializacion = 70.0; // COP/kWh
+
+  /// Costo de energía (tarifa total)
+  static const double costoEnergia = 800.0; // COP/kWh
 
   // ============================================================================
-  // TARIFAS PARA VALIDACIÓN DE PRECIOS (CONSUMIDORES)
+  // RANGO DE PRECIOS PARA CONSUMIDORES - ENERO 2026
   // ============================================================================
-
-  /// Tarifa total de energía (COP/kWh)
-  static const double tarifaTotalEnergia = 550.0;
-
-  /// Costo de transporte (componente CU)
-  static const double costoTransporte = 150.0;
-
-  /// Precio máximo que puede ofertar un consumidor
-  /// Tarifa Total - Costo Transporte = 550 - 0 = 550 (ajustar según negocio)
-  static const double precioMaximoConsumidor = 550.0;
+  // Fórmulas documentadas en: DOCS/CONSTANTES_ECONOMICAS.md
 
   /// Precio mínimo que puede ofertar un consumidor
-  /// VE + 10% = 450 * 1.1 = 495 COP/kWh
-  static double get precioMinimoConsumidor => veJanuary2026.totalVE * 1.1;
+  /// Fórmula: MC_m × 1.1 = 300.0 × 1.1 = 330.0 COP/kWh
+  static const double precioMinimoConsumidor = 330.0;
+
+  /// Precio máximo que puede ofertar un consumidor
+  /// Fórmula: (Costo Energía - Costo Comercialización) × 0.95
+  /// = (800.0 - 70.0) × 0.95 = 730.0 × 0.95 = 693.5 COP/kWh
+  static const double precioMaximoConsumidor = 693.5;
 
   // ============================================================================
   // USUARIOS - COMUNIDAD UAO (Reutilizar de Diciembre 2025)
@@ -64,7 +62,11 @@ class FakeDataJanuary2026 {
   // ============================================================================
   // REGISTROS DE ENERGÍA - ENERO 2026
   // ============================================================================
-
+  static final PDEConstants pdeConstantsJan2026 = PDEConstants(
+    mcmValorEnergiaPromedio: mcmValorEnergiaPromedio,
+    costoComercializacion: costoComercializacion,
+    costoEnergia: costoEnergia,
+  );
   /// Energía de María García - Enero 2026
   /// Generada: 300 kWh, Consumida: 170 kWh
   /// Excedente: 130 kWh → Tipo 1: 65 kWh, Tipo 2: 65 kWh (50/50)
@@ -153,7 +155,7 @@ class FakeDataJanuary2026 {
   /// Cálculo:
   /// - PDE total disponible: 6.5 kWh
   /// - Ana solicita: 100% = 6.5 kWh
-  /// - Precio ofrecido: 520 COP/kWh (dentro del rango 495-550)
+  /// - Precio ofrecido: 520 COP/kWh (dentro del rango 330-693.5)
   /// - Costo estimado: 6.5 * 520 = 3,380 COP
   static final ConsumerOffer anaOfferJan2026 = ConsumerOffer(
     id: 1,
@@ -162,7 +164,7 @@ class FakeDataJanuary2026 {
     communityId: 1,
     period: '2026-01',
     pdePercentageRequested: 1.0, // 100% del PDE
-    pricePerKwh: 520.0, // COP/kWh (495-550 permitido)
+    pricePerKwh: 520.0, // COP/kWh (330-693.5 permitido)
     energyKwhCalculated: null, // Se calcula en liquidación
     status: ConsumerOfferStatus.pending,
     createdAt: DateTime(2026, 1, 5, 10, 0),
@@ -223,8 +225,8 @@ class FakeDataJanuary2026 {
   /// - En Ene 2026: Ana recibe 6.5 kWh de PDE PAGANDO 520 COP/kWh
   ///
   /// Validación:
-  /// - Precio 520 está fuera de rango VE±10% (405-495) ❌
-  /// - Pero está en rango para consumidores (495-550) ✅
+  /// - Precio 520 está dentro del rango para consumidores (330-693.5) ✅
+  /// - MC_m (300) × 1.1 = 330 ≤ 520 ≤ 693.5 ✅
   /// - Energía disponible: María tiene 58.5 kWh P2P ✅
   static final P2PContract contractFromLiquidationJan2026 = P2PContract(
     id: 300,
@@ -238,8 +240,8 @@ class FakeDataJanuary2026 {
     status: 'active',
     createdAt: DateTime(2026, 1, 10, 15, 0),
     period: '2026-01',
-    calculatedVE: 450.0, // VE del período
-    priceWithinVERange: false, // 520 > 495 (VE+10%)
+    calculatedVE: 300.0, // MC_m del período
+    priceWithinVERange: true, // 520 está dentro del rango 330-693.5
     completedAt: null, // Aún no completado
   );
 
@@ -380,7 +382,7 @@ class FakeDataJanuary2026 {
         'january2026': {
           'model': 'Consumidores ofertan % del PDE',
           'pdeModel': 'Pagado (precio ofertado)',
-          'priceRange': 'VE+10% a Tarifa-Transporte (495-550)',
+          'priceRange': 'MC_m×1.1 a (Energía-Comercialización)×0.95 (330-693.5)',
           'liquidation': 'Matching manual por admin',
           'anaReceived': 6.5, // kWh PDE comprado
           'anaPaid': 3380.0, // Por el PDE
@@ -395,4 +397,16 @@ class FakeDataJanuary2026 {
           'liquidationRequired': true, // Nuevo proceso requerido
         },
       };
+}
+
+class PDEConstants {
+  final double mcmValorEnergiaPromedio;
+  final double costoComercializacion;
+  final double costoEnergia;
+
+  PDEConstants({
+    required this.mcmValorEnergiaPromedio,
+    required this.costoComercializacion,
+    required this.costoEnergia,
+  });
 }

@@ -9,6 +9,8 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../../../models/callmodels.dart';
 import '../../../data/fake_data.dart';
 import '../../../data/fake_data_phase2.dart';
+import '../../../data/fake_data_january_2026.dart';
+import '../consumer/consumer_marketplace_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
@@ -19,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Metodos metodos = Metodos();
-  String _selectedPeriod = '2025-12'; // '2025-12' = Diciembre, '2025-11' = Noviembre
+  String _selectedPeriod = '2026-01'; // '2026-01' = Enero 2026, '2025-12' = Diciembre, '2025-11' = Noviembre
   bool _isAdminView = false; // Vista de usuario por defecto
 
   // Transacciones P2P según período seleccionado
@@ -260,11 +262,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Indicador visual compacto de estado mensual con botón para cambiar período
   Widget _buildMonthlyStatusIndicator() {
-    final isCurrentMonth = _selectedPeriod == '2025-12';
-    final statusColor = isCurrentMonth ? AppTokens.energyGreen : Colors.grey;
-    final statusIcon = isCurrentMonth ? Icons.autorenew_rounded : Icons.lock_outline;
-    final statusText = isCurrentMonth ? 'MES EN CURSO' : 'MES CERRADO';
-    final periodLabel = isCurrentMonth ? 'Diciembre 2025' : 'Noviembre 2025';
+    final isJanuary2026 = _selectedPeriod == '2026-01';
+    final isDecember2025 = _selectedPeriod == '2025-12';
+    final isCurrentMonth = isJanuary2026 || isDecember2025;
+
+    Color statusColor;
+    IconData statusIcon;
+    String statusText;
+    String periodLabel;
+
+    if (isJanuary2026) {
+      statusColor = AppTokens.primaryPurple;
+      statusIcon = Icons.auto_awesome;
+      statusText = 'NUEVO MODELO';
+      periodLabel = 'Enero 2026';
+    } else if (isDecember2025) {
+      statusColor = AppTokens.energyGreen;
+      statusIcon = Icons.autorenew_rounded;
+      statusText = 'MES EN CURSO';
+      periodLabel = 'Diciembre 2025';
+    } else {
+      statusColor = Colors.grey;
+      statusIcon = Icons.lock_outline;
+      statusText = 'MES CERRADO';
+      periodLabel = 'Noviembre 2025';
+    }
 
     return InkWell(
       onTap: _showPeriodSelectorModal,
@@ -400,6 +422,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               SizedBox(height: AppTokens.space20),
               // Opciones de período
+              _buildModalPeriodOption(
+                period: '2026-01',
+                title: 'Enero 2026',
+                subtitle: '⚡ Nuevo: Ofertas de Consumidores + PDE',
+                icon: Icons.auto_awesome,
+                iconColor: AppTokens.primaryPurple,
+                badge: '✨',
+              ),
+              Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
               _buildModalPeriodOption(
                 period: '2025-12',
                 title: 'Diciembre 2025',
@@ -850,6 +881,247 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Widget destacado del PDE - Solo para Enero 2026
+  Widget _buildPDEHighlightCard() {
+    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia - FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+    return GestureDetector(
+      onTap: () {
+        // Navegar al marketplace con tab de Enero 2026
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ConsumerMarketplaceScreen(),
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+        padding: EdgeInsets.all(AppTokens.space20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTokens.primaryRed,
+              AppTokens.primaryRed.withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppTokens.borderRadiusLarge,
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.primaryRed.withValues(alpha: 0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
+                  child: const Icon(
+                    Icons.bolt,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '⚡ Nuevo: PDE Disponible',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                      SizedBox(height: AppTokens.space4),
+                      Text(
+                        'Enero 2026 - Modelo de Ofertas',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ],
+            ),
+            SizedBox(height: AppTokens.space20),
+
+            // PDE Amount
+            // Container(
+            //   padding: EdgeInsets.all(AppTokens.space16),
+            //   decoration: BoxDecoration(
+            //     color: Colors.white.withValues(alpha: 0.15),
+            //     borderRadius: AppTokens.borderRadiusMedium,
+            //     border: Border.all(
+            //       color: Colors.white.withValues(alpha: 0.3),
+            //       width: 1,
+            //     ),
+            //   ),
+            //   child: Column(
+            //     children: [
+            //       Row(
+            //         mainAxisAlignment: MainAxisAlignment.center,
+            //         crossAxisAlignment: CrossAxisAlignment.end,
+            //         children: [
+            //           Text(
+            //             totalPDEAvailable.toStringAsFixed(1),
+            //             style: const TextStyle(
+            //               color: Colors.white,
+            //               fontSize: 48,
+            //               fontWeight: FontWeight.bold,
+            //             ),
+            //           ),
+            //           SizedBox(width: AppTokens.space8),
+            //           Padding(
+            //             padding: EdgeInsets.only(bottom: AppTokens.space12),
+            //             child: Text(
+            //               'kWh',
+            //               style: TextStyle(
+            //                 color: Colors.white.withValues(alpha: 0.9),
+            //                 fontSize: 20,
+            //                 fontWeight: AppTokens.fontWeightSemiBold,
+            //               ),
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       SizedBox(height: AppTokens.space8),
+            //       Text(
+            //         'Programa de Distribución de Excedentes',
+            //         style: TextStyle(
+            //           color: Colors.white.withValues(alpha: 0.8),
+            //           fontSize: 12,
+            //         ),
+            //         textAlign: TextAlign.center,
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // SizedBox(height: AppTokens.space16),
+
+            // Info footer
+            Row(
+              children: [
+                // Expanded(
+                //   child: Container(
+                //     padding: EdgeInsets.all(AppTokens.space12),
+                //     decoration: BoxDecoration(
+                //       color: Colors.white.withValues(alpha: 0.1),
+                //       borderRadius: AppTokens.borderRadiusSmall,
+                //     ),
+                //     child: Column(
+                //       crossAxisAlignment: CrossAxisAlignment.start,
+                //       children: [
+                //         Text(
+                //           'Prosumidor',
+                //           style: TextStyle(
+                //             color: Colors.white.withValues(alpha: 0.7),
+                //             fontSize: 11,
+                //           ),
+                //         ),
+                //         SizedBox(height: AppTokens.space4),
+                //         Text(
+                //           prosumerName,
+                //           style: const TextStyle(
+                //             color: Colors.white,
+                //             fontSize: 13,
+                //             fontWeight: FontWeight.bold,
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
+                // SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(AppTokens.space12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Rango Precio',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 11,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '$minValue - $maxValue COP',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: AppTokens.space16),
+
+            // CTA Button
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: AppTokens.space12,
+                horizontal: AppTokens.space16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppTokens.borderRadiusMedium,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.add_shopping_cart,
+                    color: AppTokens.primaryRed,
+                    size: 20,
+                  ),
+                  SizedBox(width: AppTokens.space8),
+                  Text(
+                    'Crear Oferta de PDE',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.primaryRed,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget body() {
     return ListView(
       padding: EdgeInsets.only(
@@ -862,6 +1134,11 @@ class _HomeScreenState extends State<HomeScreen> {
         // Indicador visual de estado mensual con selector de período
         _buildMonthlyStatusIndicator(),
         SizedBox(height: AppTokens.space16),
+        // Widget destacado del PDE (solo para Enero 2026)
+        if (_selectedPeriod == '2026-01') ...[
+          _buildPDEHighlightCard(),
+          SizedBox(height: AppTokens.space16),
+        ],
         _indicadores(),
         SizedBox(height: AppTokens.space24),
         Padding(
@@ -957,7 +1234,7 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 45.0,
           height: 45.0,
           decoration: BoxDecoration(
-            color: _isAdminView ? AppTokens.primaryRed : AppTokens.info,
+            color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryBlue,
             border: Border.all(width: 2.0, color: Colors.white),
             borderRadius: BorderRadius.circular(25.0),
           ),
