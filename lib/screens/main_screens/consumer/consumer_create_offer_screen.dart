@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/consumer_offer_service.dart';
 import '../../../widgets/pde_indicator.dart';
@@ -36,7 +37,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   );
 
   // Controles del formulario
-  double _pdePercentageRequested = 0.15; // 15% por defecto
+  double _pdePercentageRequested = 5.0; // 5% por defecto (rango 0-9.99)
   double _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor; // Precio mínimo
 
   bool _isLoading = false;
@@ -49,9 +50,6 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor;
   }
 
-  /// Calcula energía estimada en kWh desde porcentaje
-  double get _estimatedEnergyKwh => _pdePercentageRequested * _totalPDEAvailable;
-
   /// Verifica si el precio está en rango válido (330 a 693.5 COP/kWh)
   bool get _isPriceValid {
     final minPrice = FakeDataJanuary2026.precioMinimoConsumidor;
@@ -60,7 +58,12 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   }
 
   /// Calcula el valor total estimado
-  double get _totalValue => _estimatedEnergyKwh * _pricePerKwh;
+  double get _totalValue {
+    // Convertir porcentaje (1-100) a decimal (0.01-1.0)
+    final pdeDecimal = _pdePercentageRequested / 100.0;
+    final energyKwh = pdeDecimal * _totalPDEAvailable;
+    return energyKwh * _pricePerKwh;
+  }
 
   /// Crea la oferta de consumidor
   Future<void> _createOffer() async {
@@ -70,13 +73,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     });
 
     try {
+      print('Creando oferta de consumidor... pdePercentageRequested: $_pdePercentageRequested%, pricePerKwh: $_pricePerKwh');
       // Validaciones
-      if (_pdePercentageRequested < 0.01) {
-        throw Exception('Debe solicitar al menos 1% del PDE');
+      if (_pdePercentageRequested <= 0.0) {
+        throw Exception('Debe solicitar más de 0% del PDE');
       }
 
-      if (_pdePercentageRequested > 1.0) {
-        throw Exception('No puede solicitar más del 100% del PDE');
+      if (_pdePercentageRequested > 9.99) {
+        throw Exception('No puede solicitar más del 9.99% del PDE (máximo 10% por usuario)');
       }
 
       if (!_isPriceValid) {
@@ -87,13 +91,16 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         );
       }
 
+      // Convertir porcentaje (1-100) a decimal (0.01-1.0)
+      final pdePercentage = _pdePercentageRequested / 100.0;
+
       // Crear oferta usando el servicio
       final offer = await _offerService.createConsumerOffer(
         buyerId: _consumer.userId,
         buyerName: _consumer.fullName,
         communityId: _consumer.communityId,
         period: '2026-01',
-        pdePercentageRequested: _pdePercentageRequested,
+        pdePercentageRequested: pdePercentage,
         pricePerKwh: _pricePerKwh,
         ve: _ve,
         tarifaMax: FakeDataJanuary2026.precioMaximoConsumidor,
@@ -131,19 +138,16 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(height: AppTokens.space12),
             const Text(
               'Tu oferta de compra ha sido publicada exitosamente. '
               'El administrador revisará las ofertas durante la liquidación mensual.',
             ),
-            SizedBox(height: AppTokens.space16),
+            SizedBox(height: AppTokens.space32),
             _buildInfoRow('Oferta #', '$offerId'),
             _buildInfoRow(
               'PDE Solicitado',
-              '${(_pdePercentageRequested * 100).toStringAsFixed(1)}%',
-            ),
-            _buildInfoRow(
-              'Energía estimada',
-              '≈ ${_estimatedEnergyKwh.toStringAsFixed(2)} kWh',
+              '${_pdePercentageRequested.toStringAsFixed(2)}%',
             ),
             _buildInfoRow('Precio', '${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
             _buildInfoRow('Valor estimado', '\$${_totalValue.toStringAsFixed(0)}'),
@@ -151,19 +155,19 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
-                color: AppTokens.primaryPurple.withValues(alpha: 0.1),
+                color: AppTokens.primaryRed.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
-                border: Border.all(color: AppTokens.primaryPurple.withValues(alpha: 0.3)),
+                border: Border.all(color: AppTokens.primaryRed.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTokens.primaryPurple.withValues(alpha: 0.7), size: 20),
+                  Icon(Icons.info_outline, color: AppTokens.primaryRed.withValues(alpha: 0.7), size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
                       'Energía final dependerá de la liquidación',
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.primaryPurple.withValues(alpha: 0.8),
+                        color: AppTokens.primaryRed.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -207,9 +211,18 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear Oferta de Compra'),
-        backgroundColor: AppTokens.primaryPurple,
+        title: const Text(
+          'Crear Oferta de PDE',
+          style: TextStyle(color: Colors.white),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: Metodos.gradientClasic(context),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -219,8 +232,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                   // Header: PDE Disponible
                   _buildPDEAvailabilityCard(),
 
-                  // % del PDE solicitado
-                  _buildPDEPercentageSlider(),
+                  // kWh del PDE solicitado
+                  _buildPDEKwhSlider(),
 
                   // Precio por kWh
                   _buildPriceSlider(),
@@ -239,30 +252,30 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested < 0.01
+        onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
             ? null
             : _createOffer,
-        backgroundColor: _isPriceValid && _pdePercentageRequested >= 0.01
-            ? AppTokens.primaryPurple
+        backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
+            ? AppTokens.primaryRed
             : Colors.grey,
         icon: const Icon(Icons.publish),
-        label: const Text('Publicar Oferta'),
+        label: const Text('+'),
       ),
     );
   }
 
   Widget _buildPDEAvailabilityCard() {
-    return PDEAvailabilitySummary(
-      totalPDEAvailable: _totalPDEAvailable,
-      period: 'Enero 2026',
-      showHelp: true,
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
+      child: PDEAvailabilitySummary(
+        totalPDEAvailable: _totalPDEAvailable,
+        period: 'Enero 2026',
+        showHelp: true,
+      ),
     );
   }
 
-  Widget _buildPDEPercentageSlider() {
-    final percentageText = '${(_pdePercentageRequested * 100).toStringAsFixed(1)}%';
-    final kwhText = '≈ ${_estimatedEnergyKwh.toStringAsFixed(2)} kWh';
-
+  Widget _buildPDEKwhSlider() {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
       child: Padding(
@@ -274,15 +287,58 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '% del PDE Solicitado',
+                  'PDE Solicitado (%)',
                   style: context.textStyles.titleMedium?.copyWith(
                     fontWeight: AppTokens.fontWeightSemiBold,
                   ),
                 ),
-                PDEIndicator(
-                  percentage: _pdePercentageRequested,
-                  totalPDEAvailable: _totalPDEAvailable,
-                  mode: PDEIndicatorMode.compact,
+                SizedBox(
+                  width: 120,
+                  child: TextField(
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textAlign: TextAlign.center,
+                    style: context.textStyles.bodyLarge?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
+                      color: AppTokens.primaryRed,
+                    ),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppTokens.space12,
+                        vertical: AppTokens.space8,
+                      ),
+                      filled: true,
+                      fillColor: AppTokens.primaryRed.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(color: AppTokens.primaryRed),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(color: AppTokens.primaryRed),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(color: AppTokens.primaryRed, width: 2),
+                      ),
+                      suffixText: '%',
+                      suffixStyle: context.textStyles.bodyMedium?.copyWith(
+                        color: AppTokens.primaryRed,
+                      ),
+                    ),
+                    controller: TextEditingController(
+                      text: _pdePercentageRequested.toStringAsFixed(2),
+                    )..selection = TextSelection.fromPosition(
+                        TextPosition(offset: _pdePercentageRequested.toStringAsFixed(2).length),
+                      ),
+                    onChanged: (value) {
+                      final parsed = double.tryParse(value);
+                      if (parsed != null && parsed > 0.0 && parsed <= 9.99) {
+                        setState(() {
+                          _pdePercentageRequested = parsed;
+                        });
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
@@ -290,10 +346,10 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Slider(
               value: _pdePercentageRequested,
               min: 0.01,
-              max: 1.0,
-              divisions: 99,
-              label: '$percentageText ($kwhText)',
-              activeColor: AppTokens.primaryPurple,
+              max: 9.99,
+              divisions: 998,
+              label: '${_pdePercentageRequested.toStringAsFixed(2)}%',
+              activeColor: AppTokens.primaryRed,
               onChanged: (value) {
                 setState(() {
                   _pdePercentageRequested = value;
@@ -303,26 +359,26 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('1%', style: context.textStyles.bodySmall),
-                Text('100%', style: context.textStyles.bodySmall),
+                Text('0.01%', style: context.textStyles.bodySmall),
+                Text('9.99%', style: context.textStyles.bodySmall),
               ],
             ),
             SizedBox(height: AppTokens.space12),
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
-                color: AppTokens.primaryPurple.withValues(alpha: 0.1),
+                color: AppTokens.primaryRed.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: AppTokens.primaryPurple, size: 20),
+                  Icon(Icons.info_outline, color: AppTokens.primaryRed.withValues(alpha: 0.7), size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
-                      'Energía final calculada durante liquidación',
+                      'Energía final asignada dependerá de la liquidación del administrador',
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.primaryPurple,
+                        color: AppTokens.primaryRed.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -355,38 +411,80 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                     fontWeight: AppTokens.fontWeightSemiBold,
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppTokens.space12,
-                    vertical: AppTokens.space8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _isPriceValid
-                        ? AppTokens.energyGreen.withValues(alpha: 0.1)
-                        : context.colors.error.withValues(alpha: 0.1),
-                    borderRadius: AppTokens.borderRadiusMedium,
-                    border: Border.all(
-                      color: _isPriceValid ? AppTokens.energyGreen : context.colors.error,
-                    ),
-                  ),
-                  child: Text(
-                    '\$${_pricePerKwh.toStringAsFixed(0)}',
+                SizedBox(
+                  width: 140,
+                  child: TextField(
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    textAlign: TextAlign.center,
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: _isPriceValid ? AppTokens.energyGreen : context.colors.error,
+                      color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
                     ),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppTokens.space12,
+                        vertical: AppTokens.space8,
+                      ),
+                      filled: true,
+                      fillColor: _isPriceValid
+                          ? AppTokens.primaryRed.withValues(alpha: 0.1)
+                          : context.colors.error.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(
+                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(
+                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: AppTokens.borderRadiusMedium,
+                        borderSide: BorderSide(
+                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                          width: 2,
+                        ),
+                      ),
+                      prefixText: '\$',
+                      suffixText: ' COP/kWh',
+                      prefixStyle: context.textStyles.bodyMedium?.copyWith(
+                        color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                      ),
+                      suffixStyle: context.textStyles.bodySmall?.copyWith(
+                        color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                      ),
+                    ),
+                    controller: TextEditingController(
+                      text: _pricePerKwh.toStringAsFixed(0),
+                    )..selection = TextSelection.fromPosition(
+                        TextPosition(offset: _pricePerKwh.toStringAsFixed(0).length),
+                      ),
+                    onChanged: (value) {
+                      final parsed = double.tryParse(value);
+                      if (parsed != null && parsed >= minPrice && parsed <= maxPrice) {
+                        setState(() {
+                          _pricePerKwh = parsed;
+                        });
+                      }
+                    },
                   ),
                 ),
               ],
             ),
             SizedBox(height: AppTokens.space8),
             Text(
-              'MC_m (Precio Promedio): \$${FakeDataJanuary2026.mcmValorEnergiaPromedio.toStringAsFixed(0)} COP/kWh',
+              'MCm (Precio Promedio): \$${FakeDataJanuary2026.mcmValorEnergiaPromedio.toStringAsFixed(0)} COP/kWh',
               style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
             ),
+            SizedBox(height: AppTokens.space8),
             Text(
-              'Rango válido: MC_m×1.1 a (Energía-Comercialización)×0.95',
-              style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
+              'Rango válido:',
+              style: context.textStyles.titleSmall?.copyWith(
+                fontWeight: AppTokens.fontWeightMedium
+              ),
             ),
             SizedBox(height: AppTokens.space16),
             Slider(
@@ -395,7 +493,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
               label: '\$${_pricePerKwh.toStringAsFixed(0)}',
-              activeColor: _isPriceValid ? AppTokens.energyGreen : context.colors.error,
+              activeColor: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
               onChanged: (value) {
                 setState(() {
                   _pricePerKwh = value;
@@ -406,7 +504,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('\$${minPrice.toStringAsFixed(0)}', style: context.textStyles.bodySmall),
-                Text('MC_m×1.1', style: context.textStyles.bodySmall?.copyWith(color: Colors.grey)),
+                // Text('MC_m×1.1', style: context.textStyles.bodySmall?.copyWith(color: Colors.grey)),
                 Text('\$${maxPrice.toStringAsFixed(1)}', style: context.textStyles.bodySmall),
               ],
             ),
@@ -417,60 +515,96 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   }
 
   Widget _buildPriceValidationCard() {
-    final isValid = _isPriceValid;
-    final minPrice = FakeDataJanuary2026.precioMinimoConsumidor;
-    final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor;
+    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
 
-    return Card(
+    return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      color: isValid ? AppTokens.energyGreen.withValues(alpha: 0.1) : context.colors.error.withValues(alpha: 0.1),
-      child: Padding(
-        padding: EdgeInsets.all(AppTokens.space16),
-        child: Row(
-          children: [
-            Icon(
-              isValid ? Icons.check_circle : Icons.warning,
-              color: isValid ? AppTokens.energyGreen : context.colors.error,
-              size: 32,
-            ),
-            SizedBox(width: AppTokens.space12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isValid ? 'Precio Válido' : 'Precio Fuera de Rango',
-                    style: context.textStyles.titleSmall?.copyWith(
-                      color: isValid ? AppTokens.energyGreen : context.colors.error,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    'Rango: ${minPrice.toStringAsFixed(0)}-${maxPrice.toStringAsFixed(0)} COP/kWh',
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: isValid ? AppTokens.energyGreen.withValues(alpha: 0.8) : context.colors.error.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    'CREG 101 072 - Rango consumidor',
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      padding: EdgeInsets.all(AppTokens.space20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTokens.primaryRed,
+            AppTokens.primaryRed.withValues(alpha: 0.8),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: AppTokens.borderRadiusLarge,
+        boxShadow: [
+          BoxShadow(
+            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _isPriceValid ? Icons.check_circle : Icons.warning,
+                color: Colors.white,
+                size: 28,
+              ),
+              SizedBox(width: AppTokens.space12),
+              Text(
+                _isPriceValid ? 'Precio Válido' : 'Precio Fuera de Rango',
+                style: context.textStyles.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space16),
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: AppTokens.borderRadiusMedium,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'Rango de Precios',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space8),
+                Text(
+                  '\$${minValue.toStringAsFixed(2)} - \$${maxValue.toStringAsFixed(2)} COP/kWh',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space8),
+                Text(
+                  'CREG 101 072 - Art 3.4',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildOfferPreview() {
-    final percentageText = '${(_pdePercentageRequested * 100).toStringAsFixed(1)}%';
-
     return Card(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
       child: Padding(
@@ -479,32 +613,46 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Vista Previa',
+              'Vista Previa de Oferta PDE',
               style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: AppTokens.fontWeightSemiBold,
+                fontWeight: AppTokens.fontWeightBold,
+                color: AppTokens.primaryRed,
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            _buildPreviewRow('Comprador', _consumer.fullName),
-            _buildPreviewRow('NIU', _consumer.niu),
-            _buildPreviewRow('% PDE Solicitado', percentageText),
-            _buildPreviewRow('Energía estimada', '≈ ${_estimatedEnergyKwh.toStringAsFixed(2)} kWh'),
-            _buildPreviewRow('Precio', '\$${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildPreviewRow('PDE Solicitado', '${_pdePercentageRequested.toStringAsFixed(2)}%'),
+            _buildPreviewRow('Precio Ofertado', '\$${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
             Divider(height: AppTokens.space24),
             _buildPreviewRow(
-              'Valor estimado',
+              'Valor Total Estimado',
               '\$${_totalValue.toStringAsFixed(0)}',
               isBold: true,
             ),
-            SizedBox(height: AppTokens.space8),
-            Text(
-              'Válida hasta: 31/01/2026',
-              style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
-            ),
-            SizedBox(height: AppTokens.space8),
-            Text(
-              'Estado: Pendiente de liquidación',
-              style: context.textStyles.bodySmall?.copyWith(color: AppTokens.primaryPurple),
+            SizedBox(height: AppTokens.space16),
+            Container(
+              padding: EdgeInsets.all(AppTokens.space12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.1),
+                borderRadius: AppTokens.borderRadiusSmall,
+                border: Border.all(
+                  color: Colors.amber.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.schedule, color: Colors.amber[700], size: 18),
+                  SizedBox(width: AppTokens.space8),
+                  Expanded(
+                    child: Text(
+                      'Oferta válida hasta: 31/01/2026 - Pendiente de liquidación',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: Colors.amber[900],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
