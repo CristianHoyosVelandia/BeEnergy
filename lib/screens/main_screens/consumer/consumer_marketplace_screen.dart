@@ -5,7 +5,9 @@ import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../models/p2p_offer.dart';
+import '../../../models/consumer_offer.dart';
 import '../../../services/consumer_offer_service.dart';
+import '../../../widgets/pde_indicator.dart';
 import 'offer_detail_acceptance_screen.dart';
 import 'consumer_create_offer_screen.dart';
 import 'consumer_offers_list_screen.dart';
@@ -42,6 +44,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   // Estado de oferta existente
   bool _hasExistingOffer = false;
   bool _isCheckingOffer = true;
+  ConsumerOffer? _existingOffer;
 
   @override
   void initState() {
@@ -52,14 +55,15 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
   /// Verifica si existe una oferta para el período actual
   Future<void> _checkExistingOffer() async {
-    final hasOffer = await _offerService.hasOfferForPeriod(
+    final offer = await _offerService.getBuyerOfferForPeriod(
       _consumer.userId,
       _selectedPeriod.period,
     );
 
     if (mounted) {
       setState(() {
-        _hasExistingOffer = hasOffer;
+        _existingOffer = offer;
+        _hasExistingOffer = offer != null && offer.status == ConsumerOfferStatus.pending;
         _isCheckingOffer = false;
       });
     }
@@ -349,66 +353,76 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       );
     }
 
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppTokens.space32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _hasExistingOffer ? Icons.edit : Icons.add_shopping_cart,
-              size: 80,
-              color: AppTokens.primaryRed.withValues(alpha: 0.7),
-            ),
-            SizedBox(height: AppTokens.space24),
-            Text(
-              _hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta de Compra',
-              style: context.textStyles.titleLarge?.copyWith(
-                fontWeight: AppTokens.fontWeightBold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: AppTokens.space12),
-            Text(
-              _hasExistingOffer
-                  ? 'Ya tienes una oferta para ${_selectedPeriod.displayName}. Puedes modificarla aquí.'
-                  : 'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: AppTokens.space32),
-            ElevatedButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ConsumerCreateOfferScreen(),
-                  ),
-                );
-                // Recargar estado al volver
-                _checkExistingOffer();
-              },
-              icon: Icon(_hasExistingOffer ? Icons.edit : Icons.add),
-              label: Text(_hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTokens.primaryRed,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTokens.space24,
-                  vertical: AppTokens.space16,
-                ),
-              ),
-            ),
-            SizedBox(height: AppTokens.space16),
-            OutlinedButton.icon(
-              onPressed: () {
-                final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
-                final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-                                  FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppTokens.space24),
+      child: Column(
+        children: [
+          // Mostrar resumen de oferta existente si hay una
+          if (_hasExistingOffer && _existingOffer != null)
+            _buildExistingOfferSummary(_existingOffer!),
 
-                showDialog(
+          if (_hasExistingOffer && _existingOffer != null)
+            SizedBox(height: AppTokens.space32),
+
+          // Card de acción principal
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _hasExistingOffer ? Icons.edit : Icons.add_shopping_cart,
+                  size: 80,
+                  color: AppTokens.primaryRed.withValues(alpha: 0.7),
+                ),
+                SizedBox(height: AppTokens.space24),
+                Text(
+                  _hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta de Compra',
+                  style: context.textStyles.titleLarge?.copyWith(
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: AppTokens.space12),
+                Text(
+                  _hasExistingOffer
+                      ? 'Puedes modificar tu oferta para ${_selectedPeriod.displayName}.'
+                      : 'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: AppTokens.space32),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConsumerCreateOfferScreen(),
+                      ),
+                    );
+                    // Recargar estado al volver
+                    _checkExistingOffer();
+                  },
+                  icon: Icon(_hasExistingOffer ? Icons.edit : Icons.add),
+                  label: Text(_hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTokens.primaryRed,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppTokens.space24,
+                      vertical: AppTokens.space16,
+                    ),
+                  ),
+                ),
+                SizedBox(height: AppTokens.space16),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+                    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+                                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+
+                    showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Row(
@@ -468,12 +482,203 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     ],
                   ),
                 );
-              },
-              icon: const Icon(Icons.info_outline),
-              label: const Text('¿Cómo funciona?'),
+                  },
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('¿Cómo funciona?'),
+                ),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget que muestra el resumen de la oferta existente
+  Widget _buildExistingOfferSummary(ConsumerOffer offer) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTokens.primaryRed,
+            AppTokens.primaryRed.withValues(alpha: 0.85),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: AppTokens.borderRadiusLarge,
+        boxShadow: [
+          BoxShadow(
+            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: EdgeInsets.all(AppTokens.space16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.only(
+                topLeft: AppTokens.borderRadiusLarge.topLeft,
+                topRight: AppTokens.borderRadiusLarge.topRight,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tu Oferta Actual',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                      Text(
+                        _selectedPeriod.displayName,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppTokens.space12,
+                    vertical: AppTokens.space8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: AppTokens.borderRadiusMedium,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  child: Text(
+                    'PENDIENTE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: AppTokens.fontWeightBold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contenido principal
+          Padding(
+            padding: EdgeInsets.all(AppTokens.space20),
+            child: Column(
+              children: [
+                // PDE Solicitado y Precio
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PDE Solicitado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 13,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '${(offer.pdePercentageRequested * 100).toStringAsFixed(2)}%',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Precio Ofertado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 13,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '\$${offer.pricePerKwh.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                        Text(
+                          'COP/kWh',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: AppTokens.space20),
+
+                // Info adicional
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: AppTokens.borderRadiusMedium,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        size: 16,
+                      ),
+                      SizedBox(width: AppTokens.space8),
+                      Expanded(
+                        child: Text(
+                          'El administrador liquidará tu oferta al final del período',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

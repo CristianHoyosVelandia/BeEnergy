@@ -45,7 +45,7 @@ class PDEIndicator extends StatelessWidget {
     final percentageText = '${(percentage * 100).toStringAsFixed(1)}%';
     final kwhText = '≈ ${kwh.toStringAsFixed(2)} kWh';
 
-    final color = customColor ?? AppTokens.primaryPurple;
+    final color = customColor ?? AppTokens.primaryRed;
 
     Widget content;
 

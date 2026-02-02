@@ -10,6 +10,7 @@ import '../../../models/callmodels.dart';
 import '../../../data/fake_data.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
+import '../../../data/fake_periods_data.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,15 +22,35 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Metodos metodos = Metodos();
-  String _selectedPeriod = '2026-01'; // '2026-01' = Enero 2026, '2025-12' = Diciembre, '2025-11' = Noviembre
+  String _selectedPeriod = FakePeriodsData.currentPeriod; // Período actual por defecto
   bool _isAdminView = false; // Vista de usuario por defecto
+
+  /// Obtiene el período seleccionado como objeto MonthPeriod
+  MonthPeriod get _currentPeriodData {
+    return FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
+           FakePeriodsData.currentPeriodData;
+  }
+
+  /// Verifica si el período seleccionado es el actual
+  bool get _isCurrentPeriod {
+    return _currentPeriodData.status == PeriodStatus.current;
+  }
 
   // Transacciones P2P según período seleccionado
   List<Map<String, dynamic>> get data {
-    final isCurrentMonth = _selectedPeriod == '2025-12';
-    final contracts = isCurrentMonth
-        ? FakeDataPhase2.allContracts.take(5).toList()
-        : FakeData.p2pContracts.take(5).toList();
+    // Determinar qué datos usar según el período
+    List contracts;
+
+    switch (_selectedPeriod) {
+      case '2026-01': // Enero 2026 - Nuevo modelo (solo contrato de liquidación)
+        contracts = [FakeDataJanuary2026.contractFromLiquidationJan2026];
+        break;
+      case '2025-12': // Diciembre 2025 - Modelo antiguo
+        contracts = FakeDataPhase2.allContracts.take(5).toList();
+        break;
+      default: // Históricos
+        contracts = FakeData.p2pContracts.take(5).toList();
+    }
     return contracts.asMap().entries.map((entry) {
       final index = entry.key;
       final contract = entry.value;
@@ -55,21 +76,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<GGData> _getChartData() {
     // Datos según vista (Admin/Usuario) y período seleccionado
-    final isCurrentMonth = _selectedPeriod == '2025-12';
+    late dynamic stats;
+    late int p2pEnergy;
 
-    // Seleccionar datos según vista
-    final stats = _isAdminView
-      ? (isCurrentMonth ? FakeDataPhase2.communityStats : FakeData.communityStats)
-      : (isCurrentMonth ? FakeDataPhase2.cristianIndividualStatsDec2025 : FakeData.cristianIndividualStatsNov2025);
+    switch (_selectedPeriod) {
+      case '2026-01': // Enero 2026
+        stats = _isAdminView
+            ? FakeDataPhase2.communityStats // Usar datos de comunidad (temporalmente Phase2)
+            : FakeDataPhase2.cristianIndividualStatsDec2025; // Usuario individual
 
-    // Calcular intercambios P2P según contratos del período y vista
-    final p2pEnergy = isCurrentMonth
-        ? (_isAdminView
-          ? FakeDataPhase2.allContracts.fold<double>(0, (sum, c) => sum + c.energyCommitted).toInt()
-          : 50) // Cristian individual: 50 kWh P2P
-        : (_isAdminView
-          ? 650 // Comunidad: 650 kWh
-          : 30); // Cristian individual: 30 kWh
+        p2pEnergy = _isAdminView
+            ? 7 // Comunidad: 6.5 kWh del PDE (redondeado a 7)
+            : 7; // Cristian individual: 6.5 kWh P2P
+        break;
+
+      case '2025-12': // Diciembre 2025
+        stats = _isAdminView
+            ? FakeDataPhase2.communityStats
+            : FakeDataPhase2.cristianIndividualStatsDec2025;
+
+        p2pEnergy = _isAdminView
+            ? FakeDataPhase2.allContracts.fold<double>(0, (sum, c) => sum + c.energyCommitted).toInt()
+            : 50; // Cristian individual: 50 kWh P2P
+        break;
+
+      default: // Históricos (Nov 2025 y anteriores)
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+
+        p2pEnergy = _isAdminView
+            ? 650 // Comunidad: 650 kWh
+            : 30; // Cristian individual: 30 kWh
+    }
 
     final List<GGData> chartData = [
       GGData('Directa Solar', stats.totalEnergyGenerated.toInt()),
@@ -223,14 +262,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _saludoText() {
     // Determinar datos según vista (Admin/Usuario) y período seleccionado
-    final isCurrentMonth = _selectedPeriod == '2025-12';
-    final periodLabel = isCurrentMonth ? 'Actual' : 'Historico';
+    final periodData = _currentPeriodData;
+    final periodLabel = periodData.status == PeriodStatus.current ? 'Actual' : 'Histórico';
 
     // Texto descriptivo según vista
     final viewLabel = _isAdminView ? 'Comunidad UAO' : 'Mi Energía';
-    final totalMembers = _isAdminView
-      ? (isCurrentMonth ? FakeDataPhase2.allMembers.length : FakeData.communityStats.totalMembers)
-      : 1; // Vista usuario: solo 1 (Cristian)
+
+    // Determinar total de miembros según período
+    late int totalMembers;
+    if (_isAdminView) {
+      switch (_selectedPeriod) {
+        case '2026-01':
+        case '2025-12':
+          totalMembers = FakeDataPhase2.allMembers.length;
+          break;
+        default:
+          totalMembers = FakeData.communityStats.totalMembers;
+      }
+    } else {
+      totalMembers = 1; // Vista usuario: solo 1 (usuario individual)
+    }
+
     final membersLabel = _isAdminView ? '$totalMembers miembros' : 'Vista Individual';
 
     return Container(
@@ -262,31 +314,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Indicador visual compacto de estado mensual con botón para cambiar período
   Widget _buildMonthlyStatusIndicator() {
-    final isJanuary2026 = _selectedPeriod == '2026-01';
-    final isDecember2025 = _selectedPeriod == '2025-12';
-    final isCurrentMonth = isJanuary2026 || isDecember2025;
+    // Obtener datos del período desde FakePeriodsData
+    final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
+                       FakePeriodsData.currentPeriodData;
 
-    Color statusColor;
-    IconData statusIcon;
-    String statusText;
-    String periodLabel;
-
-    if (isJanuary2026) {
-      statusColor = AppTokens.primaryPurple;
-      statusIcon = Icons.auto_awesome;
-      statusText = 'NUEVO MODELO';
-      periodLabel = 'Enero 2026';
-    } else if (isDecember2025) {
-      statusColor = AppTokens.energyGreen;
-      statusIcon = Icons.autorenew_rounded;
-      statusText = 'MES EN CURSO';
-      periodLabel = 'Diciembre 2025';
-    } else {
-      statusColor = Colors.grey;
-      statusIcon = Icons.lock_outline;
-      statusText = 'MES CERRADO';
-      periodLabel = 'Noviembre 2025';
-    }
+    final statusColor = periodData.getStatusColor();
+    final statusIcon = periodData.getStatusIcon();
+    final statusText = periodData.getStatusText();
+    final periodLabel = periodData.displayName;
+    final isCurrentMonth = periodData.status == PeriodStatus.current;
 
     return InkWell(
       onTap: _showPeriodSelectorModal,
@@ -377,8 +413,12 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.45,
+          ),
           decoration: BoxDecoration(
             color: this.context.colors.surface,
             borderRadius: BorderRadius.only(
@@ -421,32 +461,48 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: AppTokens.space20),
-              // Opciones de período
-              _buildModalPeriodOption(
-                period: '2026-01',
-                title: 'Enero 2026',
-                subtitle: '⚡ Nuevo: Ofertas de Consumidores + PDE',
-                icon: Icons.auto_awesome,
-                iconColor: AppTokens.primaryPurple,
-                badge: '✨',
-              ),
-              Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
-              _buildModalPeriodOption(
-                period: '2025-12',
-                title: 'Diciembre 2025',
-                subtitle: 'Mes en Curso - Transaccional',
-                icon: Icons.bolt_rounded,
-                iconColor: AppTokens.energyGreen,
-                badge: '🔄',
-              ),
-              Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
-              _buildModalPeriodOption(
-                period: '2025-11',
-                title: 'Noviembre 2025',
-                subtitle: 'Histórico - Solo lectura',
-                icon: Icons.history_rounded,
-                iconColor: Colors.grey,
-                badge: '📊',
+              // Lista de períodos con scroll
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      ...FakePeriodsData.availablePeriods.map((period) {
+                        final metadata = FakePeriodsData.getPeriodMetadata(period.period);
+                        final subtitle = metadata?['description'] ?? 'Datos de comunidad energética';
+
+                        // Determinar badge según estado
+                        String badge;
+                        switch (period.status) {
+                          case PeriodStatus.current:
+                            badge = '✨';
+                            break;
+                          case PeriodStatus.historical:
+                            badge = period.hasData ? '🔄' : '📊';
+                            break;
+                          case PeriodStatus.future:
+                            badge = '🔒';
+                            break;
+                        }
+
+                        return Column(
+                          children: [
+                            if (FakePeriodsData.availablePeriods.indexOf(period) > 0)
+                              Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
+                            _buildModalPeriodOption(
+                              period: period.period,
+                              title: period.displayName,
+                              subtitle: subtitle,
+                              icon: period.getStatusIcon(),
+                              iconColor: period.getStatusColor(),
+                              badge: badge,
+                              enabled: period.hasData,
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
               ),
               SizedBox(height: AppTokens.space20),
             ],
@@ -464,17 +520,18 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required Color iconColor,
     required String badge,
+    bool enabled = true,
   }) {
     final isSelected = _selectedPeriod == period;
 
     return InkWell(
-      onTap: () {
+      onTap: enabled ? () {
         setState(() {
           _selectedPeriod = period;
         });
         Navigator.pop(context);
         context.showInfoSnackbar('Período cambiado a $title');
-      },
+      } : null,
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppTokens.space20,
@@ -1134,8 +1191,8 @@ class _HomeScreenState extends State<HomeScreen> {
         // Indicador visual de estado mensual con selector de período
         _buildMonthlyStatusIndicator(),
         SizedBox(height: AppTokens.space16),
-        // Widget destacado del PDE (solo para Enero 2026)
-        if (_selectedPeriod == '2026-01') ...[
+        // Widget destacado del PDE (solo para período actual que es Enero 2026)
+        if (_isCurrentPeriod) ...[
           _buildPDEHighlightCard(),
           SizedBox(height: AppTokens.space16),
         ],

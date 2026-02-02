@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
+import '../../../data/fake_data_phase2.dart';
 import '../../../services/consumer_offer_service.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../widgets/pde_indicator.dart';
@@ -28,10 +30,11 @@ class ConsumerOffersListScreen extends StatefulWidget {
 
 class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
   final ConsumerOfferService _offerService = ConsumerOfferService();
-  final _consumer = FakeDataJanuary2026.anaLopez;
+  final _consumer = FakeDataPhase2.anaLopez;
   final _totalPDEAvailable = FakeDataJanuary2026.pdeJan2026.allocatedEnergy;
 
-  bool _isLoading = false;
+  bool _isLoading = true;
+  List<ConsumerOffer> _offers = [];
 
   @override
   void initState() {
@@ -39,15 +42,19 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
     _loadOffers();
   }
 
-  void _loadOffers() {
+  Future<void> _loadOffers() async {
     setState(() => _isLoading = true);
 
-    // Cargar datos fake
-    _offerService.initializeWithFakeData([
-      FakeDataJanuary2026.anaOfferJan2026,
-    ]);
+    // Cargar ofertas desde almacenamiento local
+    final offers = await _offerService.getBuyerOfferForPeriod(
+      _consumer.userId,
+      widget.period,
+    );
 
-    setState(() => _isLoading = false);
+    setState(() {
+      _offers = offers != null ? [offers] : [];
+      _isLoading = false;
+    });
   }
 
   Future<void> _cancelOffer(ConsumerOffer offer) async {
@@ -69,7 +76,10 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: AppTokens.primaryRed,
+              side: const BorderSide(color: AppTokens.primaryRed),
+            ),
             child: const Text('Sí, Cancelar'),
           ),
         ],
@@ -112,29 +122,41 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final offers = _offerService.getBuyerOffers(_consumer.userId, widget.period);
-    final pendingOffers = offers.where((o) => o.status == ConsumerOfferStatus.pending).toList();
-    final matchedOffers = offers.where((o) => o.status == ConsumerOfferStatus.matched).toList();
-    final partialOffers = offers.where((o) => o.status == ConsumerOfferStatus.partialMatch).toList();
-    final inactiveOffers = offers.where(
+    final pendingOffers = _offers.where((o) => o.status == ConsumerOfferStatus.pending).toList();
+    final matchedOffers = _offers.where((o) => o.status == ConsumerOfferStatus.matched).toList();
+    final partialOffers = _offers.where((o) => o.status == ConsumerOfferStatus.partialMatch).toList();
+    final inactiveOffers = _offers.where(
       (o) => o.status == ConsumerOfferStatus.cancelled || o.status == ConsumerOfferStatus.expired,
     ).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mis Ofertas - ${widget.period}'),
-        backgroundColor: AppTokens.primaryPurple,
+        title: const Text(
+          'Mis Ofertas',
+          style: TextStyle(color: Colors.white),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: Metodos.gradientClasic(context),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : offers.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+              ),
+            )
+          : _offers.isEmpty
               ? _buildEmptyState()
               : ListView(
                   padding: EdgeInsets.all(AppTokens.space16),
                   children: [
                     // Estadísticas
-                    _buildStatsCard(offers.length, pendingOffers.length, matchedOffers.length),
+                    _buildStatsCard(_offers.length, pendingOffers.length, matchedOffers.length),
                     SizedBox(height: AppTokens.space24),
 
                     // Ofertas Pending
@@ -142,7 +164,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                       _buildSectionHeader(
                         'Ofertas Pendientes',
                         Icons.pending_actions,
-                        Colors.orange,
+                        AppTokens.primaryRed,
                       ),
                       ...pendingOffers.map((offer) => _buildOfferCard(offer, canCancel: true)),
                       SizedBox(height: AppTokens.space16),
@@ -183,14 +205,6 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                     SizedBox(height: AppTokens.space64),
                   ],
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(context).pop(); // Volver a marketplace para crear oferta
-        },
-        backgroundColor: AppTokens.primaryPurple,
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva Oferta'),
-      ),
     );
   }
 
@@ -227,7 +241,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Crear Oferta'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTokens.primaryPurple,
+                backgroundColor: AppTokens.primaryRed,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -254,9 +268,9 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Total', total, AppTokens.primaryPurple),
-                _buildStatItem('Pendientes', pending, Colors.orange),
-                _buildStatItem('Confirmadas', matched, Colors.green),
+                _buildStatItem('Total', total, AppTokens.primaryRed),
+                _buildStatItem('Pendientes', pending, AppTokens.primaryRed),
+                _buildStatItem('Confirmadas', matched, AppTokens.primaryRed),
               ],
             ),
           ],
@@ -414,8 +428,8 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                   icon: const Icon(Icons.cancel, size: 20),
                   label: const Text('Cancelar Oferta'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
+                    foregroundColor: AppTokens.primaryRed,
+                    side: const BorderSide(color: AppTokens.primaryRed),
                   ),
                 ),
               ),
@@ -432,15 +446,15 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
 
     switch (status) {
       case ConsumerOfferStatus.pending:
-        color = AppTokens.primaryPurple; // Morado para pending
+        color = Colors.orange;
         icon = Icons.pending_actions;
         break;
       case ConsumerOfferStatus.matched:
-        color = AppTokens.energyGreen; // Verde para matched
+        color = AppTokens.energyGreen;
         icon = Icons.check_circle;
         break;
       case ConsumerOfferStatus.partialMatch:
-        color = AppTokens.primaryPurple.withValues(alpha: 0.7); // Morado suave para partial
+        color = AppTokens.primaryRed.withValues(alpha: 0.7);
         icon = Icons.pie_chart;
         break;
       case ConsumerOfferStatus.expired:
@@ -448,7 +462,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
         icon = Icons.timer_off;
         break;
       case ConsumerOfferStatus.cancelled:
-        color = Colors.grey.shade600; // Gris oscuro en vez de rojo
+        color = Colors.grey.shade600;
         icon = Icons.cancel;
         break;
     }
