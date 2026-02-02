@@ -5,6 +5,7 @@ import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../models/p2p_offer.dart';
+import '../../../services/consumer_offer_service.dart';
 import 'offer_detail_acceptance_screen.dart';
 import 'consumer_create_offer_screen.dart';
 import 'consumer_offers_list_screen.dart';
@@ -33,14 +34,35 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   late TabController _tabController;
 
   final _consumer = FakeDataPhase2.anaLopez;
+  final _offerService = ConsumerOfferService();
 
   // Período seleccionado (por defecto Enero 2026)
   MarketPeriod _selectedPeriod = MarketPeriod.january2026;
+
+  // Estado de oferta existente
+  bool _hasExistingOffer = false;
+  bool _isCheckingOffer = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkExistingOffer();
+  }
+
+  /// Verifica si existe una oferta para el período actual
+  Future<void> _checkExistingOffer() async {
+    final hasOffer = await _offerService.hasOfferForPeriod(
+      _consumer.userId,
+      _selectedPeriod.period,
+    );
+
+    if (mounted) {
+      setState(() {
+        _hasExistingOffer = hasOffer;
+        _isCheckingOffer = false;
+      });
+    }
   }
 
   @override
@@ -318,6 +340,15 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   // ============================================================================
 
   Widget _buildCreateOfferTab() {
+    // Mostrar loading mientras se verifica
+    if (_isCheckingOffer) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space32),
@@ -325,13 +356,13 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.add_shopping_cart,
+              _hasExistingOffer ? Icons.edit : Icons.add_shopping_cart,
               size: 80,
               color: AppTokens.primaryRed.withValues(alpha: 0.7),
             ),
             SizedBox(height: AppTokens.space24),
             Text(
-              'Crear Oferta de Compra',
+              _hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta de Compra',
               style: context.textStyles.titleLarge?.copyWith(
                 fontWeight: AppTokens.fontWeightBold,
               ),
@@ -339,7 +370,9 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
             ),
             SizedBox(height: AppTokens.space12),
             Text(
-              'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
+              _hasExistingOffer
+                  ? 'Ya tienes una oferta para ${_selectedPeriod.displayName}. Puedes modificarla aquí.'
+                  : 'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
               style: context.textStyles.bodyMedium?.copyWith(
                 color: Colors.grey,
               ),
@@ -347,16 +380,18 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
             ),
             SizedBox(height: AppTokens.space32),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ConsumerCreateOfferScreen(),
                   ),
                 );
+                // Recargar estado al volver
+                _checkExistingOffer();
               },
-              icon: const Icon(Icons.add),
-              label: const Text('Crear Oferta'),
+              icon: Icon(_hasExistingOffer ? Icons.edit : Icons.add),
+              label: Text(_hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTokens.primaryRed,
                 foregroundColor: Colors.white,

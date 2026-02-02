@@ -119,7 +119,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('El Programa de Distribución de Excedentes ha sido asignado exitosamente.'),
+            const Text('El Porcentaje de Distribución de Excedentes ha sido asignado exitosamente.'),
             SizedBox(height: AppTokens.space16),
             _buildInfoRow('Total PDE', '${_totalPDEAssigned.toStringAsFixed(2)} kWh'),
             _buildInfoRow('Porcentaje', '${_pdePercentage.toStringAsFixed(1)}%'),
