@@ -150,7 +150,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               '${_pdePercentageRequested.toStringAsFixed(2)}%',
             ),
             _buildInfoRow('Precio', '${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
-            _buildInfoRow('Valor estimado', '\$${_totalValue.toStringAsFixed(0)}'),
+            // _buildInfoRow('Valor estimado', '\$${_totalValue.toStringAsFixed(0)}'),
             SizedBox(height: AppTokens.space16),
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
