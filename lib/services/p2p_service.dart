@@ -480,4 +480,71 @@ class P2PService {
     _nextContractId = 1;
     _nextAuditId = 1;
   }
+
+  // ============================================================================
+  // CONTRATOS DESDE LIQUIDACIÓN (ENERO 2026+)
+  // ============================================================================
+
+  /// Crea un contrato P2P desde el resultado de una liquidación
+  ///
+  /// Este método es llamado por LiquidationService cuando el admin
+  /// finaliza una sesión de liquidación.
+  ///
+  /// A diferencia de acceptOffer() (Dic 2025), aquí el contrato se crea
+  /// desde un LiquidationMatch que ya tiene toda la información validada.
+  Future<P2PContract> createContractFromLiquidation({
+    required dynamic match, // LiquidationMatch
+    required String period,
+    VECalculation? ve,
+  }) async {
+    // Extraer datos del match
+    final sellerId = match.prosumerId as int;
+    final sellerName = match.prosumerName as String;
+    final buyerId = match.buyerId as int;
+    final buyerName = match.buyerName as String;
+    final energyKwh = match.energyKwh as double;
+    final pricePerKwh = match.pricePerKwh as double;
+
+    // Crear contrato
+    final contract = P2PContract(
+      id: _nextContractId++,
+      sellerId: sellerId,
+      sellerName: sellerName,
+      buyerId: buyerId,
+      buyerName: buyerName,
+      communityId: 1, // TODO: Obtener de contexto
+      energyCommitted: energyKwh,
+      agreedPrice: pricePerKwh,
+      status: 'active',
+      createdAt: DateTime.now(),
+      period: period,
+      calculatedVE: ve?.totalVE ?? 0.0,
+      priceWithinVERange: ve?.isPriceWithinRange(pricePerKwh) ?? false,
+    );
+
+    // Guardar contrato
+    _contracts.add(contract);
+
+    // Auditar contrato ejecutado desde liquidación
+    _auditAction(
+      userId: buyerId,
+      actionType: AuditAction.contractExecuted,
+      resourceType: 'P2PContract',
+      resourceId: contract.id,
+      data: {
+        'seller': sellerName,
+        'buyer': buyerName,
+        'energyCommitted': energyKwh,
+        'agreedPrice': pricePerKwh,
+        'totalValue': contract.totalValue,
+        've': ve?.totalVE ?? 0.0,
+        'priceWithinVERange': contract.priceWithinVERange,
+        'source': 'liquidation', // Marca que viene de liquidación
+      },
+      regulationArticle: 'CREG 101 072 Art 4.3',
+      complianceStatus: ComplianceStatus.compliant,
+    );
+
+    return contract;
+  }
 }

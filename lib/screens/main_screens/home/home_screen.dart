@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _saludoText() {
     // Determinar datos según vista (Admin/Usuario) y período seleccionado
     final isCurrentMonth = _selectedPeriod == '2025-12';
-    final periodLabel = isCurrentMonth ? 'Diciembre 2025' : 'Noviembre 2025';
+    final periodLabel = isCurrentMonth ? 'Actual' : 'Historico';
 
     // Texto descriptivo según vista
     final viewLabel = _isAdminView ? 'Comunidad UAO' : 'Mi Energía';
