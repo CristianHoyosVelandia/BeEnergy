@@ -309,6 +309,43 @@ class FakeData {
     HourlyEnergyData(hour: 20, generation: 0, consumption: 1.2),
   ];
 
+  /// Datos horarios completos (0-23h) para gráfico de análisis
+  /// Basados en la imagen de referencia: consumo con picos en mañana y noche,
+  /// producción solar 6-18h con pico al mediodía, áreas apiladas.
+  static final List<HourlyAnalysisData> hourlyAnalysis = [
+    // Noche (sin solar): consumo bajo, todo importado
+    HourlyAnalysisData(hour: 0,  consumption: 0.055, solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.055, gridExport: 0.0),
+    HourlyAnalysisData(hour: 1,  consumption: 0.055, solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.055, gridExport: 0.0),
+    HourlyAnalysisData(hour: 2,  consumption: 0.055, solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.055, gridExport: 0.0),
+    HourlyAnalysisData(hour: 3,  consumption: 0.055, solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.055, gridExport: 0.0),
+    HourlyAnalysisData(hour: 4,  consumption: 0.055, solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.055, gridExport: 0.0),
+    HourlyAnalysisData(hour: 5,  consumption: 0.06,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.06,  gridExport: 0.0),
+    // Amanecer: sube consumo, aparece producción incipiente
+    HourlyAnalysisData(hour: 6,  consumption: 0.11,  solarProd: 0.05, selfConsumption: 0.05, gridImport: 0.06,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 7,  consumption: 0.33,  solarProd: 0.05, selfConsumption: 0.05, gridImport: 0.28, gridExport: 0.0),
+    // Producción crece, consumo baja → autoconsumo, luego exportación
+    HourlyAnalysisData(hour: 8,  consumption: 0.29,  solarProd: 0.22, selfConsumption: 0.22, gridImport: 0.07,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 9,  consumption: 0.24,  solarProd: 0.44, selfConsumption: 0.24, gridImport: 0.0,   gridExport: 0.20),
+    HourlyAnalysisData(hour: 10, consumption: 0.17,  solarProd: 0.58, selfConsumption: 0.17, gridImport: 0.0,   gridExport: 0.41),
+    // Pico solar mediodía
+    HourlyAnalysisData(hour: 11, consumption: 0.10,  solarProd: 0.64, selfConsumption: 0.10, gridImport: 0.0,   gridExport: 0.54),
+    HourlyAnalysisData(hour: 12, consumption: 0.10,  solarProd: 0.60, selfConsumption: 0.10, gridImport: 0.0,   gridExport: 0.50),
+    // Tarde: producción baja gradualmente
+    HourlyAnalysisData(hour: 13, consumption: 0.16,  solarProd: 0.51, selfConsumption: 0.16, gridImport: 0.0,   gridExport: 0.35),
+    HourlyAnalysisData(hour: 14, consumption: 0.16,  solarProd: 0.38, selfConsumption: 0.16, gridImport: 0.0,   gridExport: 0.22),
+    HourlyAnalysisData(hour: 15, consumption: 0.16,  solarProd: 0.19, selfConsumption: 0.16, gridImport: 0.0,   gridExport: 0.03),
+    HourlyAnalysisData(hour: 16, consumption: 0.16,  solarProd: 0.06, selfConsumption: 0.06, gridImport: 0.10,  gridExport: 0.0),
+    // Atardecer: sin solar, consumo sube
+    HourlyAnalysisData(hour: 17, consumption: 0.19,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.19,  gridExport: 0.0),
+    // Noche: consumo alto, todo importado
+    HourlyAnalysisData(hour: 18, consumption: 0.22,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.22,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 19, consumption: 0.39,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.39,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 20, consumption: 0.50,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.50,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 21, consumption: 0.45,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.45,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 22, consumption: 0.22,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.22,  gridExport: 0.0),
+    HourlyAnalysisData(hour: 23, consumption: 0.10,  solarProd: 0.0,  selfConsumption: 0.0,  gridImport: 0.10,  gridExport: 0.0),
+  ];
+
   // Datos para gráfico de importación/exportación diaria (diciembre 2025)
   static final List<DailyEnergyData> dailyEnergyData = List.generate(30, (index) {
     final day = index + 1;

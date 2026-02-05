@@ -54,7 +54,7 @@ class FakeDataJanuary2026 {
   static final CommunityMember mariaGarcia = FakeDataPhase2.mariaGarcia;
 
   /// USUARIO 2: CONSUMIDOR - Ana López
-  static final CommunityMember anaLopez = FakeDataPhase2.anaLopez;
+  static final CommunityMember anaLopez = FakeDataPhase2.cristianHoyos;
 
   /// USUARIO 3: ADMINISTRADOR - Admin UAO
   static final CommunityMember adminUAO = FakeDataPhase2.adminUAO;
