@@ -34,10 +34,10 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
         .where((m) => !m.isProsumer)
         .toList();
 
-    // Total Tipo 2 disponible (María tiene 70 kWh)
-    final totalType2 = FakeDataPhase2.mariaDec2025.surplusType2;
+    // Excedentes totales disponibles para la comunidad
+    final totalType2 = FakeDataPhase2.pdeDec2025.excessEnergy;
 
-    // PDE máximo permitido: 10%
+    // PDE máximo permitido: 10% de los excedentes totales
     final maxPDE = totalType2 * 0.10;
 
     // Distribución homogénea entre consumidores
@@ -54,10 +54,10 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
     return _consumerAllocations.values.fold(0.0, (sum, value) => sum + value);
   }
 
-  /// Calcula el porcentaje de PDE respecto al Tipo 2 total
+  /// Calcula el porcentaje de PDE respecto a los excedentes totales
   double get _pdePercentage {
-    final totalType2 = FakeDataPhase2.mariaDec2025.surplusType2;
-    return totalType2 > 0 ? (_totalPDEAssigned / totalType2) * 100 : 0.0;
+    final totalExcedentes = FakeDataPhase2.pdeDec2025.excessEnergy;
+    return totalExcedentes > 0 ? (_totalPDEAssigned / totalExcedentes) * 100 : 0.0;
   }
 
   /// Verifica si cumple el límite regulatorio
@@ -180,13 +180,13 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalType2 = FakeDataPhase2.mariaDec2025.surplusType2;
+    final totalType2 = FakeDataPhase2.pdeDec2025.excessEnergy;
     final maxPDE = totalType2 * 0.10;
     final consumers = FakeDataPhase2.allMembers.where((m) => !m.isProsumer).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Asignar PDE - Diciembre 2025'),
+        title: const Text('Asignar PDE - Enero 2026'),
         backgroundColor: AppTokens.primaryBlue,
         foregroundColor: Colors.white,
       ),

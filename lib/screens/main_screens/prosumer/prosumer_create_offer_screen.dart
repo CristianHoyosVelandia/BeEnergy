@@ -19,7 +19,6 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
 
   // Datos del prosumidor (María García)
   final _prosumer = FakeDataPhase2.mariaGarcia;
-  final _energyRecord = FakeDataPhase2.mariaDec2025;
   final _ve = FakeDataPhase2.veDecember2025;
   final _pdeAllocation = FakeDataPhase2.pdeDec2025;
 
@@ -39,11 +38,11 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
     _pricePerKwh = _ve.totalVE; // Iniciar con VE base
   }
 
-  /// Calcula energía disponible para P2P
+  /// Calcula energía disponible para P2P (Excedentes totales - PDE cedido)
   double get _availableForP2P {
-    final type2 = _energyRecord.surplusType2;
+    final excedentes = _pdeAllocation.excessEnergy;
     final pdeCeded = _pdeAllocation.allocatedEnergy;
-    return type2 - pdeCeded;
+    return excedentes - pdeCeded;
   }
 
   /// Verifica si el precio está en rango VE
@@ -232,7 +231,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
   }
 
   Widget _buildAvailabilityCard() {
-    final type2 = _energyRecord.surplusType2;
+    final excedentes = _pdeAllocation.excessEnergy;
     final pdeCeded = _pdeAllocation.allocatedEnergy;
     final available = _availableForP2P;
 
@@ -293,7 +292,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
             ),
             child: Column(
               children: [
-                _buildAvailabilityRow('Tipo 2 total', type2, Colors.white),
+                _buildAvailabilityRow('Excedentes totales', excedentes, Colors.white),
                 SizedBox(height: AppTokens.space8),
                 _buildAvailabilityRow('PDE cedido', pdeCeded, Colors.white.withValues(alpha: 0.7), isSubtraction: true),
                 Divider(color: Colors.white.withValues(alpha: 0.3), height: AppTokens.space16),

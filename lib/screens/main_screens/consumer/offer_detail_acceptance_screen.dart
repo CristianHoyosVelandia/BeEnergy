@@ -23,7 +23,7 @@ class OfferDetailAcceptanceScreen extends StatefulWidget {
 class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScreen> {
   final P2PService _p2pService = P2PService();
 
-  final _consumer = FakeDataPhase2.anaLopez;
+  final _consumer = FakeDataPhase2.cristianHoyos;
   final _ve = FakeDataPhase2.veDecember2025;
 
   double _energyToBuy = 0.0;

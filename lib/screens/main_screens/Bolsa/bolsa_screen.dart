@@ -20,8 +20,7 @@ class BolsaScreen extends StatefulWidget {
 
 class _BolsaScreenState extends State<BolsaScreen> {
   // Usuario prosumidor (Cristian Hoyos según datos del backend)
-  final _prosumer = FakeDataPhase2.mariaGarcia; // Usaremos los datos de María pero con el nombre de Cristian
-  final _energyRecord = FakeDataPhase2.mariaDec2025;
+  final _prosumer = FakeDataPhase2.mariaGarcia;
   final _pdeAllocation = FakeDataPhase2.pdeDec2025;
   final _ve = FakeDataPhase2.veDecember2025;
 
@@ -39,11 +38,11 @@ class _BolsaScreenState extends State<BolsaScreen> {
         .toList();
   }
 
-  /// Calcula disponibilidad P2P (Tipo 2 - PDE cedido)
+  /// Calcula disponibilidad P2P (Excedentes totales - PDE cedido)
   double get _availableForP2P {
-    final type2 = _energyRecord.surplusType2;
+    final excedentes = _pdeAllocation.excessEnergy;
     final pdeCeded = _pdeAllocation.allocatedEnergy;
-    return type2 - pdeCeded;
+    return excedentes - pdeCeded;
   }
 
   /// Calcula energía ya ofertada
@@ -445,10 +444,10 @@ class _BolsaScreenState extends State<BolsaScreen> {
           Divider(height: 1),
           SizedBox(height: AppTokens.space20),
 
-          // Tipo 2 Total
+          // Excedentes Totales
           _buildAvailabilityMetric(
-            'Tipo 2 Total',
-            _energyRecord.surplusType2,
+            'Excedentes Totales',
+            _pdeAllocation.excessEnergy,
             'Excedente vendible',
             AppTokens.energyGreen,
             Icons.sunny,

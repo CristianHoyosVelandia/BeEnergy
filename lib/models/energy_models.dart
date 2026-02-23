@@ -194,6 +194,26 @@ class HourlyEnergyData {
   });
 }
 
+/// Datos horarios completos para gráfico de análisis (24h)
+/// Incluye: consumo, producción solar, autoconsumo, importada, exportada
+class HourlyAnalysisData {
+  final int hour;
+  final double consumption;   // Consumo total (kWh/h)
+  final double solarProd;     // Producción solar (kWh/h)
+  final double selfConsumption; // Autoconsumo (min(consumo, producción))
+  final double gridImport;    // Energía importada de la red
+  final double gridExport;    // Energía exportada a la red
+
+  HourlyAnalysisData({
+    required this.hour,
+    required this.consumption,
+    required this.solarProd,
+    required this.selfConsumption,
+    required this.gridImport,
+    required this.gridExport,
+  });
+}
+
 /// Datos para gráficos de energía por día
 class DailyEnergyData {
   final int day;

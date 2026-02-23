@@ -7,11 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../models/callmodels.dart';
+import '../../../models/community_models.dart';
 import '../../../data/fake_data.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../data/fake_periods_data.dart';
 import '../consumer/consumer_marketplace_screen.dart';
+import 'transaction_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
@@ -38,13 +40,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Transacciones P2P según período seleccionado
   List<Map<String, dynamic>> get data {
-    // Determinar qué datos usar según el período
-    List contracts;
+    // Enero 2026: ingreso por PDE del consumidor
+    if (_selectedPeriod == '2026-01') {
+      final pde = FakeDataPhase2.pdeDec2025;
+      final totalCost = pde.allocatedEnergy * FakeDataPhase2.precioP2P; // 41.21 × 400 = 16484
+      final consumer = FakeDataPhase2.cristianHoyos;
+      return [
+        {
+          'numTransaccion': 1,
+          'entrada': true,
+          'nombre': '${consumer.userName} ${consumer.userLastName}',
+          'dinero': Formatters.formatCurrency(totalCost),
+          'energia': Formatters.formatEnergy(pde.allocatedEnergy),
+          'fecha': 'Ene 2026',
+          'fuente': 'PDE',
+        },
+      ];
+    }
 
+    // Períodos históricos: mapear desde contratos
+    List contracts;
     switch (_selectedPeriod) {
-      case '2026-01': // Enero 2026 - Nuevo modelo (solo contrato de liquidación)
-        contracts = [FakeDataJanuary2026.contractFromLiquidationJan2026];
-        break;
       case '2025-12': // Diciembre 2025 - Modelo antiguo
         contracts = FakeDataPhase2.allContracts.take(5).toList();
         break;
@@ -54,11 +70,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return contracts.asMap().entries.map((entry) {
       final index = entry.key;
       final contract = entry.value;
-      // Determinar si es entrada (venta) o salida (compra) basado en el userId
       final isIncome = contract.sellerId == (widget.myUser?.idUser ?? 24);
       final nombre = isIncome ? contract.buyerName : contract.sellerName;
 
-      // Formatear fecha manualmente sin locale (evita error de inicialización)
       final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
       final fecha = '${contract.createdAt.day}-${months[contract.createdAt.month - 1]}';
 
@@ -78,41 +92,48 @@ class _HomeScreenState extends State<HomeScreen> {
     // Datos según vista (Admin/Usuario) y período seleccionado
     late dynamic stats;
     late int p2pEnergy;
+    // Para 2026-01: Red = solo importación real de la red (no autoconsumo solar)
+    double? gridImportOverride;
 
     switch (_selectedPeriod) {
-      case '2026-01': // Enero 2026
+      case '2026-01': // Enero 2026 – datos del caso de estudio
         stats = _isAdminView
-            ? FakeDataPhase2.communityStats // Usar datos de comunidad (temporalmente Phase2)
-            : FakeDataPhase2.cristianIndividualStatsDec2025; // Usuario individual
+            ? FakeDataPhase2.communityStats          // Admin: comunidad agregada
+            : FakeDataPhase2.cristianIndividualStatsDec2025; // Usuario: prosumidor l₁
 
-        p2pEnergy = _isAdminView
-            ? 7 // Comunidad: 6.5 kWh del PDE (redondeado a 7)
-            : 7; // Cristian individual: 6.5 kWh P2P
+        // P2P: energía del contrato activo (408.38 kWh)
+        p2pEnergy = FakeDataPhase2.allContracts
+            .fold<double>(0, (sum, c) => sum + c.energyCommitted)
+            .toInt();
+
+        // Prosumidor l₁ no importa de red (su 107.7 es autoconsumo solar)
+        // Admin: solo el consumidor k₁ importa 120 kWh de red
+        gridImportOverride = _isAdminView ? 120.0 : 0.0;
         break;
 
-      case '2025-12': // Diciembre 2025
-        stats = _isAdminView
-            ? FakeDataPhase2.communityStats
-            : FakeDataPhase2.cristianIndividualStatsDec2025;
-
-        p2pEnergy = _isAdminView
-            ? FakeDataPhase2.allContracts.fold<double>(0, (sum, c) => sum + c.energyCommitted).toInt()
-            : 50; // Cristian individual: 50 kWh P2P
-        break;
-
-      default: // Históricos (Nov 2025 y anteriores)
+      case '2025-12': // Diciembre 2025 – datos históricos Phase1
         stats = _isAdminView
             ? FakeData.communityStats
             : FakeData.cristianIndividualStatsNov2025;
 
         p2pEnergy = _isAdminView
-            ? 650 // Comunidad: 650 kWh
-            : 30; // Cristian individual: 30 kWh
+            ? 650
+            : 30;
+        break;
+
+      default: // Históricos anteriores
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+
+        p2pEnergy = _isAdminView
+            ? 650
+            : 30;
     }
 
     final List<GGData> chartData = [
       GGData('Directa Solar', stats.totalEnergyGenerated.toInt()),
-      GGData('Red', stats.totalEnergyImported.toInt()),
+      GGData('Red', (gridImportOverride ?? stats.totalEnergyImported).toInt()),
       GGData('Intercambios P2P', p2pEnergy),
     ];
     return chartData;
@@ -153,39 +174,73 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _trData() {
-    // Datos según vista (Admin/Usuario) y período seleccionado
-    final isCurrentMonth = _selectedPeriod == '2025-12';
+    // Seleccionar datos según vista y período
+    late CommunityStats stats;
+    late double costPerKwh;
 
-    // Seleccionar datos según vista
-    final stats = _isAdminView
-      ? (isCurrentMonth ? FakeDataPhase2.communityStats : FakeData.communityStats)
-      : (isCurrentMonth ? FakeDataPhase2.cristianIndividualStatsDec2025 : FakeData.cristianIndividualStatsNov2025);
+    switch (_selectedPeriod) {
+      case '2026-01':
+        stats = _isAdminView
+            ? FakeDataPhase2.communityStats
+            : FakeDataPhase2.cristianIndividualStatsDec2025;
+        costPerKwh = FakeDataPhase2.mc; // MC = 300 COP/kWh
+        break;
+      default:
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+        costPerKwh = FakeData.regulatedCosts.totalCostPerKwh;
+    }
 
-    final importEnergy = stats.totalEnergyImported;
+    // Para 2026-01: la primera tarjeta depende de la vista
+    // Prosumidor: Autoconsumo (107.7 kWh desde solar, no es importación de red)
+    // Admin: Importada de red (120 kWh, solo el consumidor k₁)
+    final bool isJan2026 = _selectedPeriod == '2026-01';
+    final String firstTitle = isJan2026
+        ? (_isAdminView ? "Importada de red" : "Autoconsumo solar")
+        : "Importe";
+    final double firstEnergy = isJan2026
+        ? (_isAdminView ? 120.0 : 107.7) // Admin: red del consumidor | Prosumidor: autoconsumo
+        : stats.totalEnergyImported;
+    final IconData firstIcon = isJan2026 && !_isAdminView
+        ? Icons.light_mode_rounded   // sol para autoconsumo
+        : Icons.trending_down_rounded;
+    final Color firstColor = isJan2026 && !_isAdminView
+        ? AppTokens.energyGreen      // verde para autoconsumo solar
+        : AppTokens.error;
+
     final exportEnergy = stats.totalEnergyExported;
-
-    // Cálculo de costos según período
-    final costPerKwh = isCurrentMonth
-        ? 450.0 // Diciembre: usar tarifa base VE
-        : FakeData.regulatedCosts.totalCostPerKwh; // Noviembre: usar datos existentes
 
     return Column(
       children: [
         _energyCard(
-          title: "Importe",
-          energy: importEnergy,
-          amount: importEnergy * costPerKwh,
-          icon: Icons.trending_down_rounded,
-          color: AppTokens.error,
+          title: firstTitle,
+          energy: firstEnergy,
+          amount: firstEnergy * costPerKwh,
+          icon: firstIcon,
+          color: firstColor,
         ),
         SizedBox(height: AppTokens.space8),
         _energyCard(
-          title: "Exporte",
+          title: "Exportada",
           energy: exportEnergy,
           amount: exportEnergy * costPerKwh,
           icon: Icons.trending_up_rounded,
           color: AppTokens.primaryRed,
         ),
+        // Excedentes totales – solo para enero 2026
+        if (isJan2026) ...[
+          SizedBox(height: AppTokens.space8),
+          _energyCard(
+            title: "Excedentes totales",
+            energy: FakeDataPhase2.pdeDec2025.excessEnergy, // 412.5 kWh
+            amount: 0, // No tiene valor monetario directo; se oculta en el card
+            icon: Icons.bolt_rounded,
+            color: AppTokens.primaryPurple,
+            subtitle: "Disponibles para la comunidad",
+            hideAmount: true,
+          ),
+        ],
       ],
     );
   }
@@ -197,6 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
     required double amount,
     required IconData icon,
     required Color color,
+    String? subtitle,
+    bool hideAmount = false,
   }) {
     return Container(
       padding: EdgeInsets.all(AppTokens.space16),
@@ -234,6 +291,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: AppTokens.fontWeightMedium,
                   ),
                 ),
+                if (subtitle != null) ...[
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    subtitle,
+                    style: context.textStyles.labelSmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                      fontSize: AppTokens.fontSize10,
+                    ),
+                  ),
+                ],
                 SizedBox(height: AppTokens.space8),
                 Text(
                   Formatters.formatEnergy(energy),
@@ -243,15 +310,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: AppTokens.space4),
-                Text(
-                  Formatters.formatCurrency(amount),
-                  style: context.textStyles.titleMedium?.copyWith(
-                    color: color,
-                    fontWeight: AppTokens.fontWeightSemiBold,
+                if (!hideAmount) ...[
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    Formatters.formatCurrency(amount),
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: color,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ],
               ],
             ),
           ),
@@ -271,14 +340,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Determinar total de miembros según período
     late int totalMembers;
     if (_isAdminView) {
-      switch (_selectedPeriod) {
-        case '2026-01':
-        case '2025-12':
-          totalMembers = FakeDataPhase2.allMembers.length;
-          break;
-        default:
-          totalMembers = FakeData.communityStats.totalMembers;
-      }
+      totalMembers = _selectedPeriod == '2026-01'
+          ? FakeDataPhase2.allMembers.length
+          : FakeData.communityStats.totalMembers;
     } else {
       totalMembers = 1; // Vista usuario: solo 1 (usuario individual)
     }
@@ -806,10 +870,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return InkWell(
           onTap: () {
-            // TODO: Navegar a detalle de transacción
-            context.showInfoSnackbar(
-              "Transacción #${transaction['numTransaccion']}"
-            );
+            if (_selectedPeriod == '2026-01') {
+              context.push(const TransactionDetailScreen());
+            } else {
+              context.showInfoSnackbar(
+                "Transacción #${transaction['numTransaccion']}"
+              );
+            }
           },
           borderRadius: AppTokens.borderRadiusMedium,
           child: Container(
@@ -1179,6 +1246,73 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Tarjetas de precios de referencia para el gestor comunitario (admin)
+  Widget _buildPriceCardsAdmin() {
+    final prices = [
+      {'label': 'Precio unitario de bolsa (MC)', 'value': FakeDataPhase2.mc},
+      {'label': 'Costo unitario de venta (CUV)', 'value': FakeDataPhase2.cuv},
+      {'label': 'Costo de comercialización', 'value': FakeDataPhase2.costoComercializacion},
+      {'label': 'Precio de transacción P2P', 'value': FakeDataPhase2.precioP2P},
+    ];
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: AppTokens.space12),
+            child: Text(
+              "Precios de referencia",
+              style: context.textStyles.titleMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
+              ),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(AppTokens.space16),
+            decoration: BoxDecoration(
+              color: context.colors.surface,
+              borderRadius: AppTokens.borderRadiusLarge,
+              border: Border.all(
+                color: context.colors.outline.withValues(alpha: 0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              children: prices.asMap().entries.map((entry) {
+                final i = entry.key;
+                final price = entry.value;
+                return Column(children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        price['label'] as String,
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                      Text(
+                        '\$${Formatters.formatNumber((price['value'] as double).toInt())} COP/kWh',
+                        style: context.textStyles.bodyMedium?.copyWith(
+                          fontWeight: AppTokens.fontWeightBold,
+                          color: context.colors.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (i < prices.length - 1)
+                    Divider(height: AppTokens.space24, color: context.colors.outline.withValues(alpha: 0.1)),
+                ]);
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget body() {
     return ListView(
       padding: EdgeInsets.only(
@@ -1198,6 +1332,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         _indicadores(),
         SizedBox(height: AppTokens.space24),
+        // Precios de referencia del mes (solo admin, período actual)
+        if (_isAdminView && _isCurrentPeriod) ...[
+          _buildPriceCardsAdmin(),
+          SizedBox(height: AppTokens.space24),
+        ],
         Padding(
           padding: EdgeInsets.only(
             left: AppTokens.space16,

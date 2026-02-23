@@ -30,7 +30,7 @@ class ConsumerOffersListScreen extends StatefulWidget {
 
 class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
   final ConsumerOfferService _offerService = ConsumerOfferService();
-  final _consumer = FakeDataPhase2.anaLopez;
+  final _consumer = FakeDataPhase2.cristianHoyos;
   final _totalPDEAvailable = FakeDataJanuary2026.pdeJan2026.allocatedEnergy;
 
   bool _isLoading = true;

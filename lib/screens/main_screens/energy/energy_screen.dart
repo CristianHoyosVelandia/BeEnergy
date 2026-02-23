@@ -191,6 +191,28 @@ class _EnergyScreenState extends State<EnergyScreen> {
     );
   }
   
+  Widget _legendItem(String label, Color color) {
+    return Row(
+      children: [
+        Container(
+          height: 14,
+          width: 14,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: AppTokens.borderRadiusSmall,
+          ),
+        ),
+        SizedBox(width: AppTokens.space4),
+        Text(
+          label,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _figura1() {
     return const LineChartSample();
   }
@@ -220,12 +242,25 @@ class _EnergyScreenState extends State<EnergyScreen> {
           Padding(
             padding: EdgeInsets.only(bottom: AppTokens.space8),
             child: Text(
-              "Electricidad Generada PV",
+              "Análisis Horario Completo",
               style: context.textStyles.titleMedium?.copyWith(
                 fontWeight: AppTokens.fontWeightSemiBold,
               ),
             ),
           ),
+          // Leyenda
+          Wrap(
+            spacing: AppTokens.space12,
+            runSpacing: AppTokens.space4,
+            children: [
+              _legendItem('Consumo',        const Color(0xFF0000FF)),
+              _legendItem('Producción Solar',const Color(0xFFFFFF00)),
+              _legendItem('Autoconsumo',     const Color(0xFF90EE90)),
+              _legendItem('Importada',       const Color(0xFFFA8072)),
+              _legendItem('Exportada',       const Color(0xFFDA70D6)),
+            ],
+          ),
+          SizedBox(height: AppTokens.space4),
           _figura1()
         ]
       )
@@ -363,294 +398,190 @@ class _EnergyScreenState extends State<EnergyScreen> {
   }
 }
 
-class LineChartSample extends StatefulWidget {
+/// Gráfico de análisis horario completo con 5 series:
+/// Consumo (línea azul), Producción Solar (línea amarilla),
+/// Autoconsumo (área verde), Importada (área salmón), Exportada (área rosa/morada)
+class LineChartSample extends StatelessWidget {
   const LineChartSample({super.key});
 
   @override
-  State<LineChartSample> createState() => _LineChartSampleState();
-}
-
-class _LineChartSampleState extends State<LineChartSample> {
-  List<Color> gradientColors = [
-    AppTokens.primaryRed,
-    AppTokens.error,
-  ];
-
-  bool showAvg = false;
-
-  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        AspectRatio(
-          aspectRatio: 1.70,
-          child: Padding(
-            padding: EdgeInsets.only(
-              right: AppTokens.space16,
-              left: AppTokens.space12,
-              top: AppTokens.space24,
-              bottom: AppTokens.space12,
-            ),
-            child: LineChart(
-              showAvg ? avgData() : mainData(),
-            ),
-          ),
+    return AspectRatio(
+      aspectRatio: 1.5,
+      child: Padding(
+        padding: EdgeInsets.only(
+          right: AppTokens.space8,
+          left: AppTokens.space4,
+          top: AppTokens.space12,
+          bottom: AppTokens.space8,
         ),
-        SizedBox(
-          width: 60,
-          height: 34,
-          child: TextButton(
-            onPressed: () {
-              setState(() {
-                showAvg = !showAvg;
-              });
+        child: LineChart(_buildChartData(context)),
+      ),
+    );
+  }
+
+  // ─── Colores de la imagen de referencia ───
+  static const Color _colorConsumo   = Color(0xFF0000FF); // azul
+  static const Color _colorSolar     = Color(0xFFFFFF00); // amarillo
+  static const Color _colorAutoconsumo = Color(0xFF90EE90); // verde claro
+  static const Color _colorImportada = Color(0xFFFA8072); // salmón
+  static const Color _colorExportada = Color(0xFFDA70D6); // orchid/rosa
+
+  LineChartData _buildChartData(BuildContext context) {
+    final data = FakeData.hourlyAnalysis;
+
+    // Serie 1: Consumo (línea sólida azul, sin área)
+    final consumoSpots = data.map((d) => FlSpot(d.hour.toDouble(), d.consumption)).toList();
+
+    // Serie 2: Producción Solar (línea sólida amarilla, sin área)
+    final solarSpots = data.map((d) => FlSpot(d.hour.toDouble(), d.solarProd)).toList();
+
+    // Serie 3: Autoconsumo (área verde bajo la línea de consumo)
+    final autoconsumoSpots = data.map((d) => FlSpot(d.hour.toDouble(), d.selfConsumption)).toList();
+
+    // Serie 4: Importada (área salmón)
+    final importadaSpots = data.map((d) => FlSpot(d.hour.toDouble(), d.gridImport)).toList();
+
+    // Serie 5: Exportada (área rosa/morada)
+    final exportadaSpots = data.map((d) => FlSpot(d.hour.toDouble(), d.gridExport)).toList();
+
+    return LineChartData(
+      lineTouchData: LineTouchData(
+        enabled: true,
+        touchTooltipData: LineTouchTooltipData(
+          getTooltipColor: (spot) => Colors.white.withValues(alpha: 0.95),
+          maxContentWidth: 200,
+          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+            return touchedSpots.map((spot) {
+              final labels = ['Consumo', 'Solar', 'Autoconsumo', 'Importada', 'Exportada'];
+              final colors = [_colorConsumo, _colorSolar, _colorAutoconsumo, _colorImportada, _colorExportada];
+              final idx = spot.barIndex;
+              return LineTooltipItem(
+                '${labels[idx]}: ${spot.y.toStringAsFixed(2)} kWh/h',
+                TextStyle(color: colors[idx], fontWeight: FontWeight.bold, fontSize: 11),
+              );
+            }).toList();
+          },
+        ),
+      ),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: true,
+        verticalInterval: 3,
+        horizontalInterval: 0.1,
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: context.colors.outline.withValues(alpha: 0.15),
+          strokeWidth: 0.5,
+        ),
+        getDrawingVerticalLine: (value) => FlLine(
+          color: context.colors.outline.withValues(alpha: 0.15),
+          strokeWidth: 0.5,
+        ),
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 24,
+            interval: 3,
+            getTitlesWidget: (value, meta) {
+              final style = context.textStyles.labelSmall?.copyWith(
+                fontSize: AppTokens.fontSize10,
+                color: context.colors.onSurfaceVariant,
+              );
+              return SideTitleWidget(
+                meta: meta,
+                child: Text('${value.toInt()}', style: style),
+              );
             },
-            child: Text(
-              'avg',
-              style: TextStyle(
-                fontSize: AppTokens.fontSize12,
-                color: showAvg
-                  ? context.colors.primary.withValues(alpha: 0.5)
-                  : context.colors.primary,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
-    final style = context.textStyles.labelSmall?.copyWith(
-      fontWeight: AppTokens.fontWeightBold,
-      fontSize: AppTokens.fontSize10,
-    );
-    Widget text;
-    switch (value.toInt()) {
-      case 7:
-        text = Text('7:00 a.m', style: style);
-        break;
-      case 12:
-        text = Text('12:00 m', style: style);
-        break;
-      case 17:
-        text = Text('17:00 p.m', style: style);
-        break;
-
-      default:
-        text = Text('', style: style);
-        break;
-    }
-
-    return SideTitleWidget(
-      meta: meta,
-      child: text,
-    );
-  }
-
-  Widget leftTitleWidgets(double value, TitleMeta meta) {
-    final style = context.textStyles.labelSmall?.copyWith(
-      fontWeight: AppTokens.fontWeightBold,
-      fontSize: AppTokens.fontSize12,
-    );
-    String text;
-    switch (value.toInt()) {
-      case 1:
-        text = '2 kW';
-        break;
-      case 3:
-        text = '5 kW';
-        break;
-      case 5:
-        text = '10 kW';
-        break;
-      default:
-        return Container();
-    }
-
-    return Text(text, style: style, textAlign: TextAlign.left);
-  }
-
-  LineChartData mainData() {
-    // Datos horarios reales de generación PV (diciembre 2025)
-    final hourlyData = FakeData.hourlyGeneration;
-    final spots = hourlyData.map((data) =>
-      FlSpot(data.hour.toDouble(), data.generation)
-    ).toList();
-
-    return LineChartData(
-      gridData: FlGridData(
-        show: true,
-        drawHorizontalLine: true,
-        verticalInterval: 1,
-        horizontalInterval: 1,
-        getDrawingVerticalLine: (value) {
-          return FlLine(
-            color: context.colors.outline.withValues(alpha: 0.2),
-            strokeWidth: 1,
-          );
-        },
-        getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: context.colors.outline.withValues(alpha: 0.2),
-            strokeWidth: 1,
-          );
-        },
-      ),
-      titlesData: FlTitlesData(
-        show: true,
-        rightTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        topTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 30,
-            interval: 1,
-            getTitlesWidget: bottomTitleWidgets,
           ),
         ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 1,
-            getTitlesWidget: leftTitleWidgets,
-            reservedSize: 42,
+            reservedSize: 38,
+            interval: 0.1,
+            getTitlesWidget: (value, meta) {
+              // Solo mostrar etiquetas en 0, 0.2, 0.4, 0.6
+              if (value == 0.0 || value == 0.2 || value == 0.4 || value == 0.6) {
+                final style = context.textStyles.labelSmall?.copyWith(
+                  fontSize: AppTokens.fontSize10,
+                  color: context.colors.onSurfaceVariant,
+                );
+                return Text(value.toStringAsFixed(1), style: style, textAlign: TextAlign.right);
+              }
+              return const SizedBox();
+            },
           ),
         ),
       ),
       borderData: FlBorderData(
         show: true,
         border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.2),
-        ),
-      ),
-      minX: 6,
-      maxX: 20,
-      minY: 0,
-      maxY: 5,
-      lineBarsData: [
-        LineChartBarData(
-          spots: spots,
-          isCurved: true,
-          gradient: LinearGradient(
-            colors: gradientColors,
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: false,
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            gradient: LinearGradient(
-              colors: gradientColors
-                  .map((color) => color.withAlpha((0.3 * 255).toInt()))
-                  .toList(),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  LineChartData avgData() {
-    return LineChartData(
-      lineTouchData: LineTouchData(enabled: false),
-      gridData: FlGridData(
-        show: true,
-        drawHorizontalLine: true,
-        verticalInterval: 1,
-        horizontalInterval: 1,
-        getDrawingVerticalLine: (value) {
-          return FlLine(
-            color: context.colors.outline.withValues(alpha: 0.2),
-            strokeWidth: 1,
-          );
-        },
-        getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: context.colors.outline.withValues(alpha: 0.2),
-            strokeWidth: 1,
-          );
-        },
-      ),
-      titlesData: FlTitlesData(
-        show: true,
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 30,
-            getTitlesWidget: bottomTitleWidgets,
-            interval: 1,
-          ),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            getTitlesWidget: leftTitleWidgets,
-            reservedSize: 42,
-            interval: 1,
-          ),
-        ),
-        topTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        rightTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-      ),
-      borderData: FlBorderData(
-        show: true,
-        border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.2),
+          color: context.colors.outline.withValues(alpha: 0.25),
+          width: 1,
         ),
       ),
       minX: 0,
-      maxX: 11,
+      maxX: 23,
       minY: 0,
-      maxY: 6,
+      maxY: 0.7,
       lineBarsData: [
+        // 0: Consumo – línea azul sólida, sin área
         LineChartBarData(
-          spots: const [
-            FlSpot(0, 3.44),
-            FlSpot(2.6, 3.44),
-            FlSpot(4.9, 3.44),
-            FlSpot(6.8, 3.44),
-            FlSpot(8, 3.44),
-            FlSpot(9.5, 3.44),
-            FlSpot(11, 3.44),
-          ],
-          isCurved: true,
-          gradient: LinearGradient(
-            colors: [
-              ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                  .lerp(0.2)!,
-              ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                  .lerp(0.2)!,
-            ],
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: false,
-          ),
+          spots: consumoSpots,
+          isCurved: false,
+          color: _colorConsumo,
+          barWidth: 2.5,
+          dotData: FlDotData(show: true),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 1: Producción Solar – línea amarilla sólida, sin área
+        LineChartBarData(
+          spots: solarSpots,
+          isCurved: false,
+          color: _colorSolar,
+          barWidth: 2.5,
+          dotData: FlDotData(show: true),
+          belowBarData: BarAreaData(show: false),
+        ),
+        // 2: Autoconsumo – área verde (bajo consumo)
+        LineChartBarData(
+          spots: autoconsumoSpots,
+          isCurved: false,
+          color: _colorAutoconsumo,
+          barWidth: 0,
+          dotData: FlDotData(show: false),
           belowBarData: BarAreaData(
             show: true,
-            gradient: LinearGradient(
-              colors: [
-                ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                    .lerp(0.2)!
-                    .withAlpha((0.1 * 255).toInt()),
-                ColorTween(begin: gradientColors[0], end: gradientColors[1])
-                    .lerp(0.2)!
-                    .withAlpha((0.1 * 255).toInt()),
-              ],
-            ),
+            color: _colorAutoconsumo.withValues(alpha: 0.55),
+          ),
+        ),
+        // 3: Importada – área salmón
+        LineChartBarData(
+          spots: importadaSpots,
+          isCurved: false,
+          color: _colorImportada,
+          barWidth: 0,
+          dotData: FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            color: _colorImportada.withValues(alpha: 0.45),
+          ),
+        ),
+        // 4: Exportada – área rosa/morada
+        LineChartBarData(
+          spots: exportadaSpots,
+          isCurved: false,
+          color: _colorExportada,
+          barWidth: 0,
+          dotData: FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            color: _colorExportada.withValues(alpha: 0.45),
           ),
         ),
       ],

@@ -9,8 +9,8 @@ class AppTokens {
 
   /// Paleta de colores primarios - Energía y sostenibilidad
   static const Color primaryBlue = Color(0xFF0070C0);
-  static const Color primaryPurple = Color(0xFF7E57C2);
   static const Color primaryRed = Color(0xFF891427);
+  static const Color primaryPurple = Color(0xFF7E57C2);
   static const Color primaryYellow = Color(0xFFFFD966);
 
   /// Escala de grises

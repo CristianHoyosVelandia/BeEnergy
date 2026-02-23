@@ -35,7 +35,7 @@ enum MarketPeriod {
 class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final _consumer = FakeDataPhase2.anaLopez;
+  final _consumer = FakeDataPhase2.cristianHoyos;
   final _offerService = ConsumerOfferService();
 
   // Período seleccionado (por defecto Enero 2026)
