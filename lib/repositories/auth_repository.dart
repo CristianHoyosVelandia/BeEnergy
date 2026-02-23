@@ -1,9 +1,12 @@
 // ignore_for_file: avoid_print
 
+import 'package:flutter/foundation.dart';
+
 import '../core/api/api_client.dart';
 import '../core/api/api_response.dart';
 import '../core/api/api_exceptions.dart';
 import '../core/constants/api_endpoints.dart';
+import '../core/constants/microservice_config.dart';
 
 /// Repositorio para manejar operaciones de autenticación
 class AuthRepository {
@@ -39,25 +42,66 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _apiClient.post(
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
         ApiEndpoints.login,
         data: {
-          'correo': email,
-          'clave': password,
+          'email': email,
+          'password': password,
         },
       );
 
-      // Si el login es exitoso, guardar el token
-      if (response.data['status'] == true && response.data['token'] != null) {
-        _apiClient.setAuthToken(response.data['token']);
+      final data = response.data as Map<String, dynamic>;
+      final success = data['success'] == true;
+      final responseData = data['data'];
+      if (success && responseData != null) {
+        final token = responseData['access_token'] ?? responseData['token'];
+        if (token != null) {
+          _apiClient.setAuthToken(token);
+        }
       }
 
       return ApiResponse.fromJson(
-        response.data,
-        (data) => data as Map<String, dynamic>,
+        data,
+        (d) => d as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en login: ${e.message}');
+      if (kDebugMode) debugPrint('Auth login: ${e.message}');
+      rethrow;
+    }
+  }
+
+  /// Verificar OTP 2FA tras login exitoso con credenciales
+  Future<ApiResponse<Map<String, dynamic>>> verify2fa({
+    required String tempSession,
+    required String otp,
+  }) async {
+    try {
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
+        ApiEndpoints.verify2fa,
+        data: {
+          'temp_session': tempSession,
+          'otp': otp,
+        },
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final success = data['success'] == true;
+      final responseData = data['data'];
+      if (success && responseData != null) {
+        final token = responseData['access_token'] ?? responseData['token'];
+        if (token != null) {
+          _apiClient.setAuthToken(token);
+        }
+      }
+
+      return ApiResponse.fromJson(
+        data,
+        (d) => d as Map<String, dynamic>,
+      );
+    } on ApiException catch (e) {
+      if (kDebugMode) debugPrint('Auth verify2fa: ${e.message}');
       rethrow;
     }
   }
@@ -71,51 +115,81 @@ class AuthRepository {
   /// [idCiudad] - ID de la ciudad
   ///
   /// Retorna un [ApiResponse] con los datos del usuario registrado
+  /// Registro con nombre, apellido, teléfono, correo, contraseña, tipo de perfil
   Future<ApiResponse<Map<String, dynamic>>> register({
     required String nombre,
+    required String apellido,
     required String email,
     required String password,
-    required String telefono,
-    required int idCiudad,
+    String? telefono,
+    int? idCiudad,
+    int role = 1, // 1=consumidor, 2=prosumidor
   }) async {
     try {
-      final response = await _apiClient.post(
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
         ApiEndpoints.register,
         data: {
-          'nombre': nombre,
-          'correo': email,
-          'clave': password,
-          'telefono': telefono,
-          'idCiudad': idCiudad,
+          'name': nombre,
+          'lastname': apellido,
+          'email': email,
+          'password': password,
+          'phone': telefono ?? '',
+          'role': role,
         },
       );
 
       return ApiResponse.fromJson(
-        response.data,
+        response.data as Map<String, dynamic>,
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en registro: ${e.message}');
+      if (kDebugMode) debugPrint('Auth register: ${e.message}');
       rethrow;
     }
   }
 
-  /// Cierra la sesión del usuario
-  ///
-  /// Retorna un [ApiResponse] indicando el resultado
+  /// Cierra la sesión (client-side: remueve token)
   Future<ApiResponse<void>> logout() async {
+    _apiClient.removeAuthToken();
+    return ApiResponse.success(data: null, message: 'Sesión cerrada');
+  }
+
+  /// Verificar token
+  Future<ApiResponse<Map<String, dynamic>>> verifyToken() async {
     try {
-      final response = await _apiClient.post(ApiEndpoints.logout);
-
-      // Remover el token de autenticación
-      _apiClient.removeAuthToken();
-
+      final response = await _apiClient.getFromService(
+        Microservice.auth,
+        ApiEndpoints.verifyToken,
+      );
       return ApiResponse.fromJson(
-        response.data,
-        (_) => null,
+        response.data as Map<String, dynamic>,
+        (d) => d as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en logout: ${e.message}');
+      if (kDebugMode) debugPrint('Auth verifyToken: ${e.message}');
+      rethrow;
+    }
+  }
+
+  /// Obtener ciudades (auth_service)
+  Future<ApiResponse<List<dynamic>>> getCities() async {
+    try {
+      final response = await _apiClient.getFromService(
+        Microservice.auth,
+        ApiEndpoints.cities,
+      );
+      final body = response.data as Map<String, dynamic>;
+      final list = body['data'];
+      if (list is List) {
+        return ApiResponse.success(
+          data: list,
+          message: body['message'] ?? 'Ciudades obtenidas',
+        );
+      }
+      return ApiResponse.success(data: <dynamic>[], message: 'Sin ciudades');
+    } on ApiException catch (e) {
+      if (kDebugMode) debugPrint('Auth cities: ${e.message}');
       rethrow;
     }
   }
@@ -125,50 +199,63 @@ class AuthRepository {
   /// [email] - Correo electrónico del usuario
   ///
   /// Retorna un [ApiResponse] indicando el resultado
+  /// Recuperación de contraseña por correo
   Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
     required String email,
   }) async {
     try {
-      final response = await _apiClient.post(
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
         ApiEndpoints.forgotPassword,
-        data: {'correo': email},
+        data: {'email': email},
       );
 
       return ApiResponse.fromJson(
-        response.data,
+        response.data as Map<String, dynamic>,
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en recuperación de contraseña: ${e.message}');
+      if (kDebugMode) debugPrint('Auth forgotPassword: ${e.message}');
       rethrow;
     }
   }
 
-  /// Resetea la contraseña del usuario
-  ///
-  /// [token] - Token de reseteo recibido por correo
-  /// [newPassword] - Nueva contraseña
-  ///
-  /// Retorna un [ApiResponse] indicando el resultado
+  /// Resetea la contraseña del usuario con OTP
   Future<ApiResponse<Map<String, dynamic>>> resetPassword({
-    required String token,
+    required String otp,
     required String newPassword,
+    String? email,
+    String? document,
   }) async {
     try {
-      final response = await _apiClient.post(
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
         ApiEndpoints.resetPassword,
         data: {
-          'token': token,
-          'nuevaClave': newPassword,
+          'otp': otp,
+          'new_password': newPassword,
+          if (email != null && email.isNotEmpty) 'email': email,
+          if (document != null && document.isNotEmpty) 'document': document,
         },
       );
 
-      return ApiResponse.fromJson(
-        response.data,
-        (data) => data as Map<String, dynamic>,
+      final body = response.data;
+      if (body is! Map<String, dynamic>) {
+        return ApiResponse.success(
+          data: <String, dynamic>{},
+          message: body?.toString() ?? 'Contraseña actualizada',
+        );
+      }
+      final success = body['success'] == true || body['status'] == true;
+      final message = body['message'] ?? body['msg'];
+      final data = body['data'];
+      return ApiResponse<Map<String, dynamic>>(
+        success: success,
+        message: message is String ? message : null,
+        data: data is Map<String, dynamic> ? data : <String, dynamic>{},
       );
     } on ApiException catch (e) {
-      print('Error al resetear contraseña: ${e.message}');
+      if (kDebugMode) debugPrint('Auth resetPassword: ${e.message}');
       rethrow;
     }
   }
@@ -182,22 +269,24 @@ class AuthRepository {
     required String refreshToken,
   }) async {
     try {
-      final response = await _apiClient.post(
+      final response = await _apiClient.postFromService(
+        Microservice.auth,
         ApiEndpoints.refreshToken,
         data: {'refreshToken': refreshToken},
       );
 
-      // Actualizar el token si es exitoso
-      if (response.data['status'] == true && response.data['token'] != null) {
-        _apiClient.setAuthToken(response.data['token']);
+      final data = response.data as Map<String, dynamic>;
+      final respData = data['data'];
+      if (respData != null && (respData['access_token'] ?? respData['token']) != null) {
+        _apiClient.setAuthToken(respData['access_token'] ?? respData['token']);
       }
 
       return ApiResponse.fromJson(
-        response.data,
-        (data) => data as Map<String, dynamic>,
+        data,
+        (d) => d as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error al refrescar token: ${e.message}');
+      if (kDebugMode) debugPrint('Auth refreshToken: ${e.message}');
       rethrow;
     }
   }

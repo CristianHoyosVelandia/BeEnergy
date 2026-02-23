@@ -5,11 +5,13 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
+import '../../../models/callmodels.dart';
 import '../../../routes.dart';
 import '../Dinero/card_screen.dart';
 
 class TradingScreen extends StatefulWidget {
-  const TradingScreen({super.key});
+  final MyUser? myUser;
+  const TradingScreen({super.key, this.myUser});
 
   @override
   State<TradingScreen> createState() => _TradingScreenState();
@@ -126,8 +128,11 @@ class _TradingScreenState extends State<TradingScreen> {
             case 2:
               context.push(const Cardscreen());
               break;
+            case 3:
+              context.push(OfertasP2PScreen(myUser: widget.myUser));
+              break;
             default:
-              context.push(const TradingScreen());
+              context.push(TradingScreen(myUser: widget.myUser));
               break;
           }
         },
@@ -181,6 +186,7 @@ class _TradingScreenState extends State<TradingScreen> {
         children: [
           _actionButton(1, "Energia", Icons.energy_savings_leaf),
           _actionButton(2, "Dinero", Icons.transform_rounded),
+          _actionButton(3, "Ofertas P2P", Icons.sell_outlined),
         ],
       ),
     );

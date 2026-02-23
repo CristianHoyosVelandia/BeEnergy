@@ -9,97 +9,77 @@ class AppTheme {
 
   // ==================== COLOR SCHEMES ====================
 
-  /// ColorScheme para modo claro
+  /// ColorScheme para modo claro - alto contraste para legibilidad
   static const ColorScheme _lightColorScheme = ColorScheme.light(
-    // Colores primarios
-    primary: AppTokens.primaryRed,
+    primary: AppTokens.primaryTeal,
     onPrimary: AppTokens.white,
-    primaryContainer: Color(0xFFFFDAD6),
-    onPrimaryContainer: Color(0xFF410002),
+    primaryContainer: Color(0xFFCCFBF1),
+    onPrimaryContainer: Color(0xFF134E4A),
 
-    // Colores secundarios
-    secondary: AppTokens.primaryRed,
-    // secondary: AppTokens.primaryPurple,
+    secondary: AppTokens.primaryTeal,
     onSecondary: AppTokens.white,
-    secondaryContainer: Color(0xFFE8DEF8),
-    onSecondaryContainer: Color(0xFF1D192B),
+    secondaryContainer: Color(0xFFCCFBF1),
+    onSecondaryContainer: Color(0xFF134E4A),
 
-    // Colores terciarios (amarillo/energía)
     tertiary: AppTokens.primaryYellow,
-    onTertiary: AppTokens.black,
-    tertiaryContainer: Color(0xFFFFE082),
-    onTertiaryContainer: Color(0xFF2B1700),
+    onTertiary: AppTokens.grey900,
+    tertiaryContainer: Color(0xFFFEF3C7),
+    onTertiaryContainer: Color(0xFF422C00),
 
-    // Colores de error
     error: AppTokens.error,
     onError: AppTokens.white,
-    errorContainer: Color(0xFFFFDAD6),
-    onErrorContainer: Color(0xFF410002),
+    errorContainer: Color(0xFFFEE2E2),
+    onErrorContainer: Color(0xFF7F1D1D),
 
-    // Colores de superficie
     surface: AppTokens.white,
-    onSurface: AppTokens.black,
+    onSurface: AppTokens.grey900,
     surfaceContainerHighest: AppTokens.grey100,
     onSurfaceVariant: AppTokens.grey700,
 
-    // Colores de outline
-    outline: AppTokens.grey400,
-    outlineVariant: AppTokens.grey300,
+    outline: AppTokens.grey600,
+    outlineVariant: AppTokens.grey400,
 
-    // Colores de sombra
     shadow: Colors.black,
     scrim: Colors.black,
-
-    // Colores inversos
     inverseSurface: AppTokens.grey900,
     onInverseSurface: AppTokens.grey100,
-    inversePrimary: Color(0xFFFFB4AB),
+    inversePrimary: Color(0xFF5EEAD4),
   );
 
-  /// ColorScheme para modo oscuro
+  /// ColorScheme para modo oscuro - texto claro sobre fondo oscuro
   static const ColorScheme _darkColorScheme = ColorScheme.dark(
-    // Colores primarios
-    primary: Color(0xFFFFB4AB),
-    onPrimary: Color(0xFF690005),
-    primaryContainer: Color(0xFF93000A),
-    onPrimaryContainer: Color(0xFFFFDAD6),
+    primary: Color(0xFF5EEAD4),
+    onPrimary: Color(0xFF00382F),
+    primaryContainer: Color(0xFF005047),
+    onPrimaryContainer: Color(0xFF5EEAD4),
 
-    // Colores secundarios
-    secondary: Color(0xFFD0BCFF),
-    onSecondary: Color(0xFF371E73),
-    secondaryContainer: Color(0xFF4F378B),
-    onSecondaryContainer: Color(0xFFE8DEF8),
+    secondary: Color(0xFF5EEAD4),
+    onSecondary: Color(0xFF00382F),
+    secondaryContainer: Color(0xFF005047),
+    onSecondaryContainer: Color(0xFFCCFBF1),
 
-    // Colores terciarios
-    tertiary: Color(0xFFFFD966),
-    onTertiary: Color(0xFF452B00),
-    tertiaryContainer: Color(0xFF633F00),
-    onTertiaryContainer: Color(0xFFFFE082),
+    tertiary: Color(0xFFFCD34D),
+    onTertiary: Color(0xFF422C00),
+    tertiaryContainer: Color(0xFF5C3D00),
+    onTertiaryContainer: Color(0xFFFEF3C7),
 
-    // Colores de error
-    error: Color(0xFFFFB4AB),
-    onError: Color(0xFF690005),
-    errorContainer: Color(0xFF93000A),
-    onErrorContainer: Color(0xFFFFDAD6),
+    error: Color(0xFFFCA5A5),
+    onError: Color(0xFF7F1D1D),
+    errorContainer: Color(0xFF991B1B),
+    onErrorContainer: Color(0xFFFEE2E2),
 
-    // Colores de superficie
     surface: AppTokens.grey900,
     onSurface: AppTokens.grey100,
     surfaceContainerHighest: AppTokens.grey800,
-    onSurfaceVariant: AppTokens.grey400,
+    onSurfaceVariant: AppTokens.grey300,
 
-    // Colores de outline
-    outline: AppTokens.grey600,
+    outline: AppTokens.grey500,
     outlineVariant: AppTokens.grey700,
-
-    // Colores de sombra
     shadow: Colors.black,
     scrim: Colors.black,
-
-    // Colores inversos
     inverseSurface: AppTokens.grey100,
     onInverseSurface: AppTokens.grey900,
-    inversePrimary: AppTokens.primaryRed,
+    inversePrimary: AppTokens.primaryTeal,
   );
 
   // ==================== TEXT THEMES ====================
@@ -246,15 +226,15 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: _lightColorScheme,
-      textTheme: _textTheme(AppTokens.black),
+      textTheme: _textTheme(AppTokens.grey900),
       fontFamily: AppTokens.fontFamilyPrimary,
 
       // Colores legacy (para compatibilidad)
-      primaryColor: AppTokens.primaryRed,
-      cardColor: AppTokens.primaryPurple,
-      canvasColor: AppTokens.primaryRed,
+      primaryColor: AppTokens.primaryTeal,
+      cardColor: AppTokens.white,
+      canvasColor: AppTokens.primaryTeal,
       indicatorColor: AppTokens.primaryYellow,
-      focusColor: AppTokens.black,
+      focusColor: AppTokens.grey900,
 
       // Scaffold
       scaffoldBackgroundColor: AppTokens.white,
@@ -266,12 +246,12 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: _lightColorScheme.onSurface,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: _textTheme(AppTokens.black).titleLarge,
+        titleTextStyle: _textTheme(AppTokens.grey900).titleLarge,
         toolbarHeight: 60,
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: AppTokens.elevation2,
         shape: RoundedRectangleBorder(
           borderRadius: AppTokens.borderRadiusMedium,
@@ -291,7 +271,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppTokens.borderRadiusMedium,
           ),
-          textStyle: _textTheme(AppTokens.white).labelLarge,
+          textStyle: _textTheme(AppTokens.white).labelLarge?.copyWith(fontWeight: FontWeight.w600),
           minimumSize: const Size.fromHeight(AppTokens.buttonHeightMedium),
         ),
       ),
@@ -306,7 +286,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppTokens.borderRadiusMedium,
           ),
-          textStyle: _textTheme(AppTokens.primaryRed).labelLarge,
+          textStyle: _textTheme(AppTokens.primaryTeal).labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -321,10 +301,10 @@ class AppTheme {
             borderRadius: AppTokens.borderRadiusMedium,
           ),
           side: const BorderSide(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryTeal,
             width: AppTokens.borderWidthNormal,
           ),
-          textStyle: _textTheme(AppTokens.primaryRed).labelLarge,
+          textStyle: _textTheme(AppTokens.primaryTeal).labelLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -343,14 +323,14 @@ class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: AppTokens.borderRadiusMedium,
           borderSide: const BorderSide(
-            color: AppTokens.grey300,
+            color: AppTokens.grey400,
             width: AppTokens.borderWidthNormal,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppTokens.borderRadiusMedium,
           borderSide: const BorderSide(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryTeal,
             width: AppTokens.borderWidthThick,
           ),
         ),
@@ -368,8 +348,8 @@ class AppTheme {
             width: AppTokens.borderWidthThick,
           ),
         ),
-        labelStyle: _textTheme(AppTokens.grey700).bodyMedium,
-        hintStyle: _textTheme(AppTokens.grey500).bodyMedium,
+        labelStyle: _textTheme(AppTokens.grey800).bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+        hintStyle: _textTheme(AppTokens.grey600).bodyMedium?.copyWith(color: AppTokens.grey600),
         errorStyle: _textTheme(AppTokens.error).bodySmall,
       ),
 
@@ -377,8 +357,8 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppTokens.white,
-        selectedItemColor: AppTokens.primaryRed,
-        unselectedItemColor: AppTokens.grey500,
+        selectedItemColor: AppTokens.primaryTeal,
+        unselectedItemColor: AppTokens.grey600,
         elevation: AppTokens.elevation8,
         showSelectedLabels: true,
         showUnselectedLabels: true,
@@ -386,7 +366,7 @@ class AppTheme {
 
       // Floating Action Button
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppTokens.primaryRed,
+        backgroundColor: AppTokens.primaryTeal,
         foregroundColor: AppTokens.white,
         elevation: AppTokens.elevation6,
         shape: CircleBorder(),
@@ -395,26 +375,26 @@ class AppTheme {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: AppTokens.grey200,
-        selectedColor: AppTokens.primaryRed,
+        selectedColor: AppTokens.primaryTeal,
         disabledColor: AppTokens.grey300,
         padding: const EdgeInsets.symmetric(
           horizontal: AppTokens.spacingMedium,
           vertical: AppTokens.spacingSmall,
         ),
-        labelStyle: _textTheme(AppTokens.black).labelMedium,
+        labelStyle: _textTheme(AppTokens.grey900).labelMedium,
         shape: RoundedRectangleBorder(
           borderRadius: AppTokens.borderRadiusLarge,
         ),
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         elevation: AppTokens.elevation24,
         shape: RoundedRectangleBorder(
           borderRadius: AppTokens.borderRadiusXLarge,
         ),
-        titleTextStyle: _textTheme(AppTokens.black).headlineSmall,
-        contentTextStyle: _textTheme(AppTokens.black).bodyMedium,
+        titleTextStyle: _textTheme(AppTokens.grey900).headlineSmall,
+        contentTextStyle: _textTheme(AppTokens.grey900).bodyMedium,
       ),
 
       // Divider
@@ -426,13 +406,13 @@ class AppTheme {
 
       // Icon
       iconTheme: const IconThemeData(
-        color: AppTokens.black,
+        color: AppTokens.grey800,
         size: AppTokens.iconSizeMedium,
       ),
 
       // Progress Indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppTokens.primaryRed,
+        color: AppTokens.primaryTeal,
         linearTrackColor: AppTokens.grey300,
         circularTrackColor: AppTokens.grey300,
       ),
@@ -473,7 +453,7 @@ class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: AppTokens.elevation2,
         color: AppTokens.grey800,
         shape: RoundedRectangleBorder(
@@ -489,22 +469,22 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppTokens.grey900,
-        selectedItemColor: Color(0xFFFFB4AB),
-        unselectedItemColor: AppTokens.grey500,
+        selectedItemColor: Color(0xFF5EEAD4),
+        unselectedItemColor: AppTokens.grey400,
         elevation: AppTokens.elevation8,
         showSelectedLabels: true,
         showUnselectedLabels: true,
       ),
 
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: Color(0xFFFFB4AB),
-        foregroundColor: Color(0xFF690005),
+        backgroundColor: Color(0xFF0D9488),
+        foregroundColor: AppTokens.white,
         elevation: AppTokens.elevation6,
         shape: CircleBorder(),
       ),
 
       iconTheme: const IconThemeData(
-        color: AppTokens.white,
+        color: AppTokens.grey100,
         size: AppTokens.iconSizeMedium,
       ),
     );

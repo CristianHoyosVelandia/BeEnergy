@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/api/api_exceptions.dart';
+import 'package:be_energy/repositories/user_repository.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/my_user.dart';
@@ -20,14 +22,17 @@ class EditarPerfilScreen extends StatefulWidget {
 
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   Metodos metodos = Metodos();
+  final UserRepository _userRepository = UserRepository();
 
   final TextEditingController _nombre = TextEditingController();
+  final TextEditingController _apellido = TextEditingController();
   final TextEditingController _email = TextEditingController();
+  final TextEditingController _telefono = TextEditingController();
   final TextEditingController _edad = TextEditingController();
   final TextEditingController _titulo = TextEditingController();
 
-
-  bool val= false;
+  bool _saving = false;
+  bool val = false;
 
   Widget _contenPrincipalCard(){
     return Column(
@@ -105,6 +110,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           child: Text(
             "Cambiar Foto",
             style: context.textStyles.titleMedium?.copyWith(
+              color: context.colors.onSurface,
               fontWeight: AppTokens.fontWeightMedium,
             ),
           ),
@@ -147,15 +153,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             borderRadius: AppTokens.borderRadiusSmall,
           ),
           errorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 1,
             ),
             borderRadius: AppTokens.borderRadiusSmall,
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 2,
             ),
             borderRadius: AppTokens.borderRadiusSmall,
@@ -194,9 +200,42 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     return InkWell(
       highlightColor: Colors.transparent,
       splashColor: Colors.transparent,
-      onTap: () async {
-        await Metodos.flushbarPositivo(context, 'Cambios realizados correctamente');
-        Timer(const Duration(seconds: 2), () => context.pop());
+      onTap: _saving ? null : () async {
+        final userId = widget.myUser.idUser;
+        if (userId == null || userId <= 0) {
+          Metodos.flushbarNegativo(context, 'Usuario no válido');
+          return;
+        }
+        setState(() => _saving = true);
+        try {
+          final resp = await _userRepository.updateProfile(
+            userId,
+            name: _nombre.text.trim().isEmpty ? null : _nombre.text.trim(),
+            lastname: _apellido.text.trim().isEmpty ? null : _apellido.text.trim(),
+            phone: _telefono.text.trim().isEmpty ? null : _telefono.text.trim(),
+            email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+          );
+          if (resp.success && context.mounted) {
+            await Metodos.flushbarPositivo(context, 'Cambios guardados correctamente');
+            if (context.mounted) context.pop();
+          } else if (context.mounted) {
+            final msg = (resp.message ?? '').toLowerCase();
+            String show = resp.message ?? 'Error al guardar';
+            if (msg.contains('correo') && msg.contains('registrado')) show = 'El correo ya está registrado';
+            else if (msg.contains('formato') || msg.contains('inválido') || msg.contains('teléfono')) show = 'Revise el formato de teléfono y correo electrónico';
+            Metodos.flushbarNegativo(context, show);
+          }
+        } on ApiException catch (e) {
+          if (context.mounted) {
+            final m = e.message.toLowerCase();
+            String show = e.message;
+            if (m.contains('correo') && m.contains('registrado')) show = 'El correo ya está registrado';
+            else if (m.contains('formato') || m.contains('inválido')) show = 'Revise el formato de teléfono y correo electrónico';
+            Metodos.flushbarNegativo(context, show);
+          }
+        } finally {
+          if (mounted) setState(() => _saving = false);
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(
@@ -210,9 +249,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         ),
         child: Center(
           child: Text(
-            'Guardar Cambios',
+            _saving ? 'Guardando...' : 'Guardar Cambios',
             style: context.textStyles.titleMedium?.copyWith(
-              color: Colors.white,
+              color: context.colors.onPrimary,
               fontWeight: AppTokens.fontWeightBold,
             ),
           ),
@@ -220,7 +259,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       ),
     );
   }
-  
+
   Widget _cartaPrincipal(){
     return SizedBox(
       width: context.width,
@@ -236,10 +275,10 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       child: Column(
         children: [
           _cartaPrincipal(),
-          _optiones("Nombre", "Ingrese por favor su nombre", _nombre),
-          _optiones("Correo", "Ingrese por favor su correo", _email),
-          _optiones("Edad", "Ingrese por favor su edad", _edad),
-          _optiones("Titulo", "Ingrese por favor su titulo", _titulo),
+          _optiones("Nombre", "Ingrese su nombre", _nombre),
+          _optiones("Apellido", "Ingrese su apellido", _apellido),
+          _optiones("Correo", "Ingrese su correo", _email),
+          _optiones("Teléfono", "Ingrese su teléfono", _telefono),
           _btnGuardarCambios(),
         ],
       ),
@@ -276,11 +315,11 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   }
   @override
   Widget build(BuildContext context) {
-    _email.text  = widget.myUser.correo ?? "";
-    _nombre.text = widget.myUser.nombre ?? "";
-    _titulo.text = "Ing. Mecatrónico";
-    _edad.text   = "27";
-
+    if (_nombre.text.isEmpty && widget.myUser.nombre != null) {
+      _nombre.text = widget.myUser.nombre!;
+      _email.text = widget.myUser.correo ?? "";
+      _telefono.text = widget.myUser.telefono ?? "";
+    }
     return Scaffold(
       appBar: _appbarEditarPerfil(),
       backgroundColor: context.colors.surface,

@@ -3,14 +3,14 @@
 import 'package:flutter/material.dart';
 
 class ColorsApp {
-  //azul
+  // Azul - buena visibilidad en fondos claros
   static const color1 = '0070C0';
-  //morado
+  // Morado - buena visibilidad en fondos claros
   static const color2 = '7E57C2';
-  //amarillo 
+  // Rojo oscuro - alta visibilidad
   static const color3 = '891427';
-  //verde
-  static const color4 = 'FFD966';
+  // Ámbar oscuro - mejor contraste que amarillo puro
+  static const color4 = 'D97706';
 }
 
 const double K_PADDING_SHORT = 5;

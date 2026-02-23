@@ -154,14 +154,20 @@ class DatabaseHelper{
       );
     }
 
-    // Elimino la data de usuario al cerrar sec
-    void deleteUserLocal(int? idUser) async {
+    // Elimino la data de usuario al cerrar sesión (por id)
+    Future<void> deleteUserLocal(int? idUser) async {
       final dbConnection = await db;
       await dbConnection!.delete(
         tbUsuarioLogIn,
         where: "idUser = ?",
         whereArgs: [idUser],
       );
+    }
+
+    /// Borra todos los usuarios de la tabla de login (para cerrar sesión sin importar el id)
+    Future<void> clearLoginUser() async {
+      final dbConnection = await db;
+      await dbConnection!.delete(tbUsuarioLogIn);
     }
 
   ////////////////////////////////////////////////////////////////////

@@ -3,9 +3,11 @@
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
+import 'reset_password_screen.dart';
 
 class NoRecuerdomiclaveScreen extends StatefulWidget {
   const NoRecuerdomiclaveScreen({super.key});
@@ -15,7 +17,15 @@ class NoRecuerdomiclaveScreen extends StatefulWidget {
 }
 
 class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
-  final TextEditingController _email = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final AuthRepository _authRepository = AuthRepository();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   Widget _modernInput({
     required String label,
@@ -31,20 +41,20 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
       child: TextFormField(
         controller: controller,
         style: context.textStyles.bodyLarge?.copyWith(
-          color: Colors.grey[800],
+          color: context.colors.onSurface,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           labelStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[600],
+            color: context.colors.onSurfaceVariant,
             fontWeight: AppTokens.fontWeightMedium,
           ),
           hintStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[400],
+            color: context.colors.outline,
           ),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.95),
+          fillColor: context.colors.surface,
           contentPadding: EdgeInsets.symmetric(
             horizontal: AppTokens.space20,
             vertical: AppTokens.space16,
@@ -65,21 +75,21 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             Icons.email_outlined,
-            color: Colors.red,
+            color: context.colors.primary,
           ),
         ),
         validator: validator,
@@ -96,7 +106,7 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
           Text(
             "¿Ya tienes cuenta?",
             style: context.textStyles.bodyLarge?.copyWith(
-              color: Colors.grey[600],
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           SizedBox(width: AppTokens.space8),
@@ -109,10 +119,10 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
             child: Text(
               "Volver a login",
               style: context.textStyles.titleMedium?.copyWith(
-                color: Colors.red,
+                color: context.colors.primary,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
-                decorationColor: Colors.red,
+                decorationColor: context.colors.primary,
                 decorationThickness: 2,
               ),
             ),
@@ -188,12 +198,15 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
             SizedBox(height: AppTokens.space16),
 
             _modernInput(
-              label: 'Email',
-              hint: 'Ingresa tu correo electrónico',
-              controller: _email,
+              label: 'Correo electrónico',
+              hint: 'correo@ejemplo.com',
+              controller: _emailController,
               validator: (value) {
-                if (!Metodos.validateEmail(value!)) {
-                  return 'Ingrese un email válido';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Ingresa tu correo';
+                }
+                if (!Metodos.validateEmail(value.trim())) {
+                  return 'Ingresa un correo válido';
                 }
                 return null;
               },
@@ -205,26 +218,67 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                 vertical: AppTokens.space16,
               ),
               child: ElevatedButton(
-                onPressed: () async {
-                  // Lógica para enviar email de recuperación
+                onPressed: _isLoading ? null : () async {
+                  final email = _emailController.text.trim();
+                  if (!Metodos.validateEmail(email)) {
+                    Metodos.flushbarNegativo(context, 'Ingresa un correo válido');
+                    return;
+                  }
+                  setState(() => _isLoading = true);
+                  try {
+                    final response = await _authRepository.forgotPassword(email: email);
+                    if (context.mounted) {
+                      if (response.success) {
+                        Metodos.flushbarPositivo(
+                          context,
+                          'Si existe una cuenta con este correo, recibirás un código por email.',
+                        );
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (context.mounted) {
+                            context.push(ResetPasswordScreen(email: email));
+                          }
+                        });
+                      } else {
+                        Metodos.flushbarNegativo(
+                          context,
+                          response.message ?? 'No se pudo enviar el código. Intenta de nuevo.',
+                        );
+                      }
+                    }
+                  } catch (_) {
+                    if (context.mounted) {
+                      Metodos.flushbarNegativo(context, 'Error de conexión. Intenta de nuevo.');
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isLoading = false);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 4,
                 ),
-                child: Text(
-                  'Enviar',
-                  style: context.textStyles.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: AppTokens.fontWeightBold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(context.colors.onPrimary),
+                        ),
+                      )
+                    : Text(
+                        'Enviar código',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: context.colors.onPrimary,
+                          fontWeight: AppTokens.fontWeightBold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
               ),
             ),
 

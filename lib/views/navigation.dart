@@ -36,7 +36,7 @@ class _NavPagesState extends State<NavPages> {
     pages = [
       HomeScreen(myUser: widget.myUser,),
       EnergyScreen(myUser: widget.myUser),
-      TradingScreen(),
+      TradingScreen(myUser: widget.myUser),
       // NotificacionesScreen(),
       IntercambiosEnergyScreen(),
       MicuentaScreen(myUser: widget.myUser,),
@@ -80,7 +80,9 @@ class _NavPagesState extends State<NavPages> {
         children: [
           Icon(
             icon,
-            color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
+            color: currentIndex == currentIndexTap
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -92,7 +94,9 @@ class _NavPagesState extends State<NavPages> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
+              color: currentIndex == currentIndexTap
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           )
         ],
@@ -116,7 +120,7 @@ class _NavPagesState extends State<NavPages> {
               currentIndex=2;
             });
           },
-          backgroundColor: Theme.of(context).canvasColor,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           // child: SvgPicture.asset(
           //   BeenergyIcons.climatechange,
           //   height: 30,
@@ -131,7 +135,7 @@ class _NavPagesState extends State<NavPages> {
           child: Icon(
             Icons.add_outlined,
             size: 35,
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: Theme.of(context).colorScheme.onPrimary,
           )
         ),
       );

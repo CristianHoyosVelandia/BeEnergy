@@ -7,12 +7,21 @@ void main() async {
   // Inicialización de Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cargar variables de entorno
+  // Cargar variables de entorno (raíz del proyecto o desde assets)
+  bool envLoaded = false;
   try {
     await dotenv.load(fileName: ".env");
-  } catch (e) {
-    // Si no existe el .env, continuar sin él
-    debugPrint('⚠️ No se pudo cargar .env: $e');
+    envLoaded = true;
+  } catch (_) {}
+  if (!envLoaded) {
+    try {
+      await dotenv.load(fileName: "assets/.env");
+      envLoaded = true;
+    } catch (_) {}
+  }
+  if (!envLoaded) {
+    debugPrint('⚠️ No se encontró .env. Copia .env.example a .env y configura las URLs de los microservicios.');
+    debugPrint('   En emulador Android usa 10.0.2.2 en lugar de localhost.');
   }
 
   runApp(const MyApp());
@@ -47,6 +56,7 @@ class MyApp extends StatelessWidget {
         'register'        : (context) => const RegisterScreen(),
         'trading'         : (context) => const TradingScreen(),
         'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
+        'resetPassword'   : (context) => const ResetPasswordScreen(),
       },
     );
   }

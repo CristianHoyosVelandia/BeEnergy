@@ -13,8 +13,7 @@ import '../routes.dart';
 
 class Metodos {
 
-   actionBtn(BuildContext context, int accionbtn){
-   
+   Future<void> actionBtn(BuildContext context, int accionbtn) async {
     switch (accionbtn) {
         case 0:
           Navigator.of(context).pop();
@@ -30,13 +29,15 @@ class Metodos {
           Navigator.pop(context, false);
           break;
         case 3:
-          DatabaseHelper dbHelper = DatabaseHelper();
-          dbHelper.deleteUserLocal(1);
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const Beenergy()),
-            (Route<dynamic> route) => false
-          );
+          final dbHelper = DatabaseHelper();
+          await dbHelper.clearLoginUser();
+          if (context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const Beenergy()),
+              (Route<dynamic> route) => false
+            );
+          }
           break;
         case 4:
           Navigator.pop(context, true);
@@ -117,7 +118,7 @@ class Metodos {
                           btn1,
                           style: Metodos.tittleTextStyle2(context),
                         ),
-                        onPressed: () => actionBtn(context, accionbtn1)
+                        onPressed: () async { await actionBtn(context, accionbtn1); }
                       ),
                     ),
                   )
@@ -193,7 +194,7 @@ class Metodos {
                         btn1,
                         style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
                       ),
-                      onPressed: () => actionBtn(context, accionbtn1)
+                      onPressed: () async { await actionBtn(context, accionbtn1); }
                     ),
                   ),
                 )
@@ -217,7 +218,7 @@ class Metodos {
                         style: Metodos.alertDialogTextStyle(context, Theme.of(context).focusColor, FontWeight.normal)
                       ),
                       onPressed: () async {
-                        actionBtn(context, accionbtn2);
+                        await actionBtn(context, accionbtn2);
                       }
                     ),
                   ),
@@ -309,9 +310,16 @@ class Metodos {
     return MediaQuery.of(context).size.height;
   }
 
-  static TextStyle appBartextStyle( BuildContext context, [Color? color, double? fontSize, FontWeight? fontWeight, double? letterSpacing]) {
+  static TextStyle appBartextStyle(
+    BuildContext context, [
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+  ]) {
+    final scheme = Theme.of(context).colorScheme;
     return TextStyle(
-      color: (color != null) ? color :  Theme.of(context).scaffoldBackgroundColor,
+      color: color ?? scheme.onSurface,
       fontSize: fontSize,
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,
@@ -512,7 +520,7 @@ class Metodos {
                       maxLines: 2,
                       style: Metodos.textStyle(
                         context,
-                        Theme.of(context).indicatorColor,
+                        Theme.of(context).scaffoldBackgroundColor,
                         14,
                         FontWeight.bold,
                         1
@@ -552,7 +560,7 @@ class Metodos {
                     Icons.swap_horiz_rounded,
                     size: 30.0,
                   ),
-                  color: Theme.of(context).indicatorColor,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   tooltip: "Transferido Hoy",
                   onPressed: () async {
                     Navigator.push(context,MaterialPageRoute(builder: (context) => const BolsaScreen()));
@@ -568,7 +576,7 @@ class Metodos {
                       "50 kWh - \$ 14.300",
                       style: TextStyle(
                         fontSize: 12.0,
-                        color: Theme.of(context).indicatorColor,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         fontWeight: FontWeight.bold
                       ),
                     )
@@ -594,7 +602,7 @@ class Metodos {
             Icons.arrow_back_ios,
             size: 28.0,
           ),
-          color: Theme.of(context).canvasColor,
+          color: Theme.of(context).scaffoldBackgroundColor,
           tooltip: "Volver",
           onPressed: () async {
             Navigator.pop(context);
@@ -606,7 +614,7 @@ class Metodos {
             textAlign: TextAlign.center,
             style: Metodos.textStyle(
               context,
-              Metodos.colorInverso(context),
+              color ?? Theme.of(context).scaffoldBackgroundColor,
               20,
               FontWeight.w600,
               2.5
@@ -631,7 +639,7 @@ class Metodos {
                 Icons.donut_large_rounded,
                 size: 30.0,
               ),
-              color: Theme.of(context).canvasColor,
+              color: Theme.of(context).colorScheme.primary,
               tooltip: "Mis estadisticas",
               onPressed: () async {
                 Navigator.pop(context);
@@ -680,9 +688,16 @@ class Metodos {
     return textStyle(context, color, 15, fontWeight, 1.5);
   }
 
-  static TextStyle textStyle( BuildContext context, [Color? color, double? fontSize, FontWeight? fontWeight, double? letterSpacing]) {
+  static TextStyle textStyle(
+    BuildContext context, [
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+  ]) {
+    final scheme = Theme.of(context).colorScheme;
     return TextStyle(
-      color: (color != null) ? color :  Theme.of(context).scaffoldBackgroundColor,
+      color: color ?? scheme.onSurface,
       fontSize: fontSize,
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,
@@ -720,8 +735,9 @@ class Metodos {
   }
 
   static TextStyle subtitulosInformativosFondoNegro(BuildContext context){
+    final scheme = Theme.of(context).colorScheme;
     return TextStyle(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: scheme.onPrimary,
       fontSize: 15.0,
       fontFamily:"SEGOEUI",
       fontWeight: FontWeight.bold,
@@ -730,8 +746,9 @@ class Metodos {
   }
 
   static TextStyle textofromEditingFondoNegro(BuildContext context){
+    final scheme = Theme.of(context).colorScheme;
     return TextStyle(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: scheme.onPrimary,
       fontSize: 15.0,
       fontFamily:"SEGOEUI",
       fontWeight: FontWeight.w100,
@@ -751,8 +768,9 @@ class Metodos {
   }
 
   static TextStyle subtitulosInformativosW(BuildContext context){
+    final scheme = Theme.of(context).colorScheme;
     return TextStyle(
-      color: Theme.of(context).scaffoldBackgroundColor,
+      color: scheme.onPrimary,
       fontSize: 15.0,
       fontFamily:"SEGOEUI",
       fontWeight: FontWeight.bold,

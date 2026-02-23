@@ -176,6 +176,21 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
             case 6:
               context.push(TutorialScreen(myUser: widget.myUser));
             break;
+            case 7:
+              context.push(ConsumptionScreen(userId: widget.myUser.idUser));
+            break;
+            case 8:
+              context.push(AlertsScreen(userId: widget.myUser.idUser));
+            break;
+            case 9:
+              context.push(AuditLogsScreen(myUser: widget.myUser));
+            break;
+            case 10:
+              context.push(AuditReportsScreen(myUser: widget.myUser));
+            break;
+            case 11:
+              context.push(const ChangeRoleScreen());
+            break;
             default:
             break;
           }
@@ -273,9 +288,16 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           _optionButton("Editar Perfil", Icons.person_outline, 1),
           _optionButton("Cambiar Clave", Icons.lock_outline, 2),
           _optionButton("Notificaciones", Icons.notifications_outlined, 3),
+          _optionButton("Consumo en tiempo real", Icons.speed, 7),
+          _optionButton("Alertas de consumo", Icons.warning_amber_outlined, 8),
           _optionButton("Tutorial", Icons.help_outline, 4),
           _optionButton("Aprende sobre DERs", Icons.school_outlined, 5),
           _optionButton("Política De Privacidad", Icons.privacy_tip_outlined, 6),
+          if (widget.myUser.isAdmin) ...[
+            _optionButton("Registros de auditoría", Icons.assignment, 9),
+            _optionButton("Reportes de auditoría", Icons.summarize, 10),
+            _optionButton("Cambiar rol de usuario", Icons.admin_panel_settings, 11),
+          ],
           SizedBox(height: AppTokens.space24),
         ],
       ),

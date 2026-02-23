@@ -3,8 +3,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../api/api_client.dart';
+import '../api/api_exceptions.dart';
+import '../constants/api_endpoints.dart';
+import '../constants/microservice_config.dart';
+import '../../repositories/auth_repository.dart';
+
 /// Interceptor personalizado para manejar requests y responses del API
-/// Agrega headers comunes y maneja errores de forma centralizada
+/// Agrega headers comunes, maneja errores 401 con renovación de token
 class ApiInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -17,7 +23,8 @@ class ApiInterceptor extends Interceptor {
       options.headers['codCiudad'] = dotenv.env['DEFAULT_CITY_CODE'] ?? '4110';
     }
 
-    print('⬆️ REQUEST[${options.method}] => PATH: ${options.path}');
+    final uri = options.uri;
+    print('⬆️ REQUEST[${options.method}] => ${uri.toString()}');
     print('⬆️ Headers: ${options.headers}');
     if (options.data != null) {
       print('⬆️ Data: ${options.data}');
@@ -45,17 +52,43 @@ class ApiInterceptor extends Interceptor {
       print('❌ Response: ${err.response?.data}');
     }
 
-    // Aquí puedes manejar errores específicos como:
-    // - 401: Token expirado -> Refrescar token o redirigir a login
-    // - 403: Sin permisos
-    // - 500: Error del servidor
-
+    // Ante 401, intentar renovar token y repetir la petición
     if (err.response?.statusCode == 401) {
-      // Manejar token expirado
-      print('🔐 Token expirado o no autorizado');
-      // TODO: Implementar lógica de refresh token o redirigir a login
+      _handle401(err, handler);
+      return;
     }
 
     super.onError(err, handler);
+  }
+
+  Future<void> _handle401(DioException err, ErrorInterceptorHandler handler) async {
+    final uri = err.requestOptions.uri.toString();
+    // No intentar refresh si la petición fallida es la de refresh
+    if (uri.contains('refresh') || uri.contains(ApiEndpoints.refreshToken)) {
+      super.onError(err, handler);
+      return;
+    }
+
+    final token = ApiClient.instance.getAuthToken();
+    if (token == null || token.isEmpty) {
+      super.onError(err, handler);
+      return;
+    }
+
+    try {
+      final resp = await AuthRepository().refreshAuthToken(refreshToken: token);
+      if (!resp.success || ApiClient.instance.getAuthToken() == null) {
+        super.onError(err, handler);
+        return;
+      }
+      final newToken = ApiClient.instance.getAuthToken()!;
+      err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+      final response = await ApiClient.instance.dio.fetch(err.requestOptions);
+      handler.resolve(response);
+    } on ApiException {
+      super.onError(err, handler);
+    } catch (_) {
+      super.onError(err, handler);
+    }
   }
 }

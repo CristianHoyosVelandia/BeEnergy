@@ -1,8 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:be_energy/utils/metodos.dart';
-import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/repositories/auth_repository.dart';
+import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
@@ -17,10 +19,15 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   //creo el formulario y los controladores del mismo
   final form = GlobalKey<FormState>();
-  final TextEditingController _email   = TextEditingController();
-  final TextEditingController _nombre  = TextEditingController();
-  final TextEditingController _pass    = TextEditingController();
-  bool existeUsuario = false;
+  final TextEditingController _email    = TextEditingController();
+  final TextEditingController _nombre   = TextEditingController();
+  final TextEditingController _apellido = TextEditingController();
+  final TextEditingController _telefono = TextEditingController();
+  final TextEditingController _pass     = TextEditingController();
+  int _tipoPerfil = 1; // 1=consumidor, 2=prosumidor
+  bool _isLoading = false;
+
+  final AuthRepository _authRepository = AuthRepository();
 
   //Objetos de clase
   DatabaseHelper dbHelper = DatabaseHelper();
@@ -60,9 +67,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
-    required String? Function(String?) validator,
+    String? Function(String?)? validator,
     bool obscureText = false,
     IconData? icon,
+    TextInputType? keyboardType,
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -72,22 +80,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        keyboardType: keyboardType,
         onChanged: _validador(),
         style: context.textStyles.bodyLarge?.copyWith(
-          color: Colors.grey[800],
+          color: context.colors.onSurface,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           labelStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[600],
+            color: context.colors.onSurfaceVariant,
             fontWeight: AppTokens.fontWeightMedium,
           ),
           hintStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[400],
+            color: context.colors.outline,
           ),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.95),
+          fillColor: context.colors.surface,
           contentPadding: EdgeInsets.symmetric(
             horizontal: AppTokens.space20,
             vertical: AppTokens.space16,
@@ -108,21 +117,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             icon ?? (obscureText ? Icons.lock_outline : Icons.person_outline),
-            color: Colors.red,
+            color: context.colors.primary,
           ),
         ),
         validator: validator,
@@ -139,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Text(
             "¿Ya tienes cuenta?",
             style: context.textStyles.bodyLarge?.copyWith(
-              color: Colors.grey[600],
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           SizedBox(width: AppTokens.space8),
@@ -152,10 +161,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Text(
               "Volver a login",
               style: context.textStyles.titleMedium?.copyWith(
-                color: Colors.red,
+                color: context.colors.primary,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
-                decorationColor: Colors.red,
+                decorationColor: context.colors.primary,
                 decorationThickness: 2,
               ),
             ),
@@ -230,13 +239,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Stack(
       alignment: Alignment.center,
       children: <Widget>[
-        
+
         const SingleChildScrollView(
           child: GradientBack()
         ),
 
-        ListView(
-          children: <Widget>[
+        Form(
+          key: form,
+          child: ListView(
+            children: <Widget>[
             
             imagenLogin(),
 
@@ -246,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             _modernInput(
               label: 'Nombre',
-              hint: 'Ingresa tu nombre completo',
+              hint: 'Ingresa tu nombre',
               controller: _nombre,
               icon: Icons.person_outline,
               validator: (value) {
@@ -258,13 +269,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             _modernInput(
+              label: 'Apellido',
+              hint: 'Ingresa tu apellido',
+              controller: _apellido,
+              icon: Icons.person_outline,
+              validator: (value) {
+                if (value!.length < 2) {
+                  return 'Ingrese un apellido válido';
+                }
+                return null;
+              },
+            ),
+
+            _modernInput(
+              label: 'Celular',
+              hint: '10 dígitos (ej: 3001234567)',
+              controller: _telefono,
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) return null;
+                final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+                if (digits.length != 10) {
+                  return 'El celular debe tener exactamente 10 números';
+                }
+                return null;
+              },
+            ),
+
+            _modernInput(
               label: 'Email',
               hint: 'Ingresa tu correo electrónico',
               controller: _email,
               icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
               validator: (value) {
-                if (!Metodos.validateEmail(value!)) {
-                  return 'Ingrese un email válido';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Ingrese un correo electrónico';
+                }
+                if (!Metodos.validateEmail(value.trim())) {
+                  return 'El correo debe ser válido';
                 }
                 return null;
               },
@@ -284,47 +328,100 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
 
             Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppTokens.space32, vertical: AppTokens.space8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Tipo de perfil', style: context.textStyles.bodyMedium?.copyWith(color: context.colors.onSurfaceVariant)),
+                  Row(
+                    children: [
+                      Radio<int>(value: 1, groupValue: _tipoPerfil, onChanged: (v) => setState(() => _tipoPerfil = v!)),
+                      Text('Consumidor'),
+                      Radio<int>(value: 2, groupValue: _tipoPerfil, onChanged: (v) => setState(() => _tipoPerfil = v!)),
+                      Text('Prosumidor'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: AppTokens.space32,
                 vertical: AppTokens.space16,
               ),
               child: ElevatedButton(
-                onPressed: () async {
-                  _validador();
+                onPressed: _isLoading ? null : () async {
+                  if (_tipoPerfil != 1 && _tipoPerfil != 2) {
+                    Metodos.flushbarNegativo(context, 'Perfil inválido');
+                    return;
+                  }
+                  if (!(form.currentState?.validate() ?? false)) return;
 
-                  if(val) {
-                    var au = await dbHelper.getUsers();
-                    List usuariosList = (au.usuarios != null) ? au.usuarios! : [];
-                    existeUsuario = false;
+                  setState(() => _isLoading = true);
+                  try {
+                    final response = await _authRepository.register(
+                      nombre: _nombre.value.text.trim(),
+                      apellido: _apellido.value.text.trim(),
+                      email: _email.value.text.trim(),
+                      password: _pass.value.text,
+                      telefono: () {
+                        final t = _telefono.text.trim();
+                        if (t.isEmpty) return null;
+                        return t.replaceAll(RegExp(r'\D'), '');
+                      }(),
+                      role: _tipoPerfil,
+                    );
 
-                    for (var i = 0; i < usuariosList.length; i++) {
-                      if(_email.value.text == usuariosList[i].correo){
-                        existeUsuario = true;
-                        break;
+                    if (response.success) {
+                      if (context.mounted) {
+                        await Metodos.flushbarPositivo(context, 'Registro exitoso');
+                        context.pop();
+                      }
+                    } else {
+                      if (context.mounted) {
+                        final msg = (response.message ?? '').toLowerCase();
+                        String show = response.message ?? 'Error al registrarse';
+                        if (msg.contains('email') || msg.contains('correo')) {
+                          if (msg.contains('existe') || msg.contains('registrado')) {
+                            show = 'Ya existe un usuario Registrado con ese email';
+                          }
+                        } else if (msg.contains('perfil')) {
+                          show = 'Perfil inválido';
+                        }
+                        Metodos.flushbarNegativo(context, show);
                       }
                     }
-
-                    if(existeUsuario == true) {
-                      await Metodos.flushbarNegativo(context, 'Ya existe una cuenta con este correo');
-                    } else {
-                      MyUser usuariolocal = MyUser(
-                        idUser    : usuariosList.length,
-                        nombre    : _nombre.value.text,
-                        telefono  : '',
-                        correo    : _email.value.text,
-                        clave     : _pass.value.text,
-                        energia   : '90',
-                        dinero    : '100000',
-                        idCiudad  : 0
-                      );
-                      dbHelper.addUsertbUsuarios(usuariolocal);
-                      await Metodos.flushbarPositivoLargo(context, 'Usuario creado exitosamente');
+                  } on ApiException catch (e) {
+                    if (context.mounted) {
+                      final m = e.message.toLowerCase();
+                      String show = 'Error al registrarse';
+                      if (m.contains('email') || m.contains('correo')) {
+                        if (m.contains('existe') || m.contains('registrado') || m.contains('ya')) {
+                          show = 'Ya existe un usuario registrado con este email';
+                        } else {
+                          show = e.message;
+                        }
+                      } else if (m.contains('perfil')) {
+                        show = 'Perfil inválido';
+                      } else if (m.contains('documento')) {
+                        show = e.message;
+                      } else {
+                        show = e.message;
+                      }
+                      Metodos.flushbarNegativo(context, show);
                     }
+                  } catch (e) {
+                    if (context.mounted) {
+                      Metodos.flushbarNegativo(context, 'Error de conexión. Verifica tu configuración.');
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isLoading = false);
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: context.colors.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -332,9 +429,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   elevation: 4,
                 ),
                 child: Text(
-                  'Crear Cuenta',
+                  _isLoading ? 'Registrando...' : 'Crear Cuenta',
                   style: context.textStyles.titleMedium?.copyWith(
-                    color: Colors.white,
+                    color: context.colors.onPrimary,
                     fontWeight: AppTokens.fontWeightBold,
                     letterSpacing: 0.5,
                   ),
@@ -346,7 +443,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             
             _volveraLogin()
           
-          ]
+          ],
+          ),
         )
        
       ],

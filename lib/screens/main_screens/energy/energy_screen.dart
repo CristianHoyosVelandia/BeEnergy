@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/repositories/credits_repository.dart';
 import '../../../data/constants.dart';
 import '../../../models/my_user.dart';
 import '../../../utils/metodos.dart';
@@ -20,6 +21,31 @@ class _EnergyScreenState extends State<EnergyScreen> {
   
   Metodos metodos = Metodos();
   bool casaVal = true;
+  final CreditsRepository _creditsRepository = CreditsRepository();
+  double _balance = 0.0;
+  bool _loadingBalance = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBalance();
+  }
+
+  Future<void> _loadBalance() async {
+    final userId = widget.myUser?.idUser ?? 0;
+    if (userId <= 0) return;
+    setState(() => _loadingBalance = true);
+    try {
+      final response = await _creditsRepository.getBalance(userId);
+      if (response.success && response.data != null) {
+        final balance = response.data!['balance'];
+        if (balance != null) {
+          setState(() => _balance = (balance is num) ? balance.toDouble() : 0.0);
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingBalance = false);
+  }
 
 
   Widget _imagen(){
@@ -48,6 +74,7 @@ class _EnergyScreenState extends State<EnergyScreen> {
               Text(
                 Formatters.formatPower(10),
                 style: context.textStyles.headlineMedium?.copyWith(
+                  color: context.colors.onSurface,
                   fontWeight: AppTokens.fontWeightBold,
                 ),
               ),
@@ -60,14 +87,15 @@ class _EnergyScreenState extends State<EnergyScreen> {
               ),
               SizedBox(height: AppTokens.space24),
               Text(
-                Formatters.formatEnergy(5.5),
+                _loadingBalance ? '...' : Formatters.formatEnergy(_balance),
                 style: context.textStyles.headlineMedium?.copyWith(
+                  color: context.colors.onSurface,
                   fontWeight: AppTokens.fontWeightBold,
                 ),
               ),
               SizedBox(height: AppTokens.space4),
               Text(
-                "Consumo",
+                "Saldo kWh",
                 style: context.textStyles.bodySmall?.copyWith(
                   color: context.colors.onSurfaceVariant,
                 ),

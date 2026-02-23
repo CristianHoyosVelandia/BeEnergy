@@ -4,97 +4,41 @@ import '../core/api/api_client.dart';
 import '../core/api/api_response.dart';
 import '../core/api/api_exceptions.dart';
 import '../core/constants/api_endpoints.dart';
+import '../core/constants/microservice_config.dart';
 
-/// Repositorio de ejemplo para manejar operaciones relacionadas con energía
-/// Este es un patrón de diseño que separa la lógica de acceso a datos
+/// Repositorio de energía - usa transaction_service para registros
+/// Para saldo (kWh) usar CreditsRepository
 class EnergyRepository {
   final ApiClient _apiClient = ApiClient.instance;
 
-  /// Obtiene los datos de energía del usuario
-  ///
-  /// Retorna un [ApiResponse] con los datos de energía o un error
-  ///
-  /// Ejemplo de uso:
-  /// ```dart
-  /// final repository = EnergyRepository();
-  /// try {
-  ///   final response = await repository.getEnergyData();
-  ///   if (response.success) {
-  ///     print('Datos de energía: ${response.data}');
-  ///   }
-  /// } on ApiException catch (e) {
-  ///   print('Error: ${e.message}');
-  /// }
-  /// ```
-  Future<ApiResponse<Map<String, dynamic>>> getEnergyData() async {
-    try {
-      final response = await _apiClient.get(ApiEndpoints.energyData);
-
-      return ApiResponse.fromJson(
-        response.data,
-        (data) => data as Map<String, dynamic>,
-      );
-    } on ApiException catch (e) {
-      print('Error obteniendo datos de energía: ${e.message}');
-      rethrow;
-    }
-  }
-
-  /// Obtiene el historial de energía del usuario
-  ///
-  /// [startDate] - Fecha de inicio (opcional)
-  /// [endDate] - Fecha de fin (opcional)
-  ///
-  /// Retorna un [ApiResponse] con la lista del historial
+  /// Obtiene el historial de registros de energía del usuario
+  /// Usa transaction_service POST /transactions/energy/query
   Future<ApiResponse<List<dynamic>>> getEnergyHistory({
-    DateTime? startDate,
-    DateTime? endDate,
+    required int userId,
+    required DateTime startDate,
+    required DateTime endDate,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-
-      if (startDate != null) {
-        queryParams['start_date'] = startDate.toIso8601String();
-      }
-      if (endDate != null) {
-        queryParams['end_date'] = endDate.toIso8601String();
-      }
-
-      final response = await _apiClient.get(
-        ApiEndpoints.energyHistory,
-        queryParameters: queryParams,
+      final response = await _apiClient.postFromService(
+        Microservice.trading,
+        ApiEndpoints.queryEnergyRecords,
+        data: {
+          'user_id': userId,
+          'start': startDate.toIso8601String(),
+          'end': endDate.toIso8601String(),
+        },
       );
-
-      return ApiResponse.fromJsonList(
-        response.data,
-        (data) => data,
-      );
+      final body = response.data as Map<String, dynamic>;
+      final list = body['data'];
+      if (list is List) {
+        return ApiResponse.success(
+          data: list,
+          message: body['message'] ?? 'Historial obtenido',
+        );
+      }
+      return ApiResponse.success(data: [], message: 'Sin historial');
     } on ApiException catch (e) {
       print('Error obteniendo historial de energía: ${e.message}');
-      rethrow;
-    }
-  }
-
-  /// Obtiene las estadísticas de energía del usuario
-  ///
-  /// [period] - Período de estadísticas ('day', 'week', 'month', 'year')
-  ///
-  /// Retorna un [ApiResponse] con las estadísticas
-  Future<ApiResponse<Map<String, dynamic>>> getEnergyStats({
-    String period = 'month',
-  }) async {
-    try {
-      final response = await _apiClient.get(
-        ApiEndpoints.energyStats,
-        queryParameters: {'period': period},
-      );
-
-      return ApiResponse.fromJson(
-        response.data,
-        (data) => data as Map<String, dynamic>,
-      );
-    } on ApiException catch (e) {
-      print('Error obteniendo estadísticas de energía: ${e.message}');
       rethrow;
     }
   }

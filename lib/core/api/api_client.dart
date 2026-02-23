@@ -2,6 +2,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../constants/microservice_config.dart';
 import '../network/api_interceptor.dart';
 import 'api_exceptions.dart';
 
@@ -13,9 +14,12 @@ class ApiClient {
 
   // Constructor privado para patrón Singleton
   ApiClient._internal() {
+    final baseUrl = dotenv.env['BASE_URL']?.trim().isNotEmpty == true
+        ? dotenv.env['BASE_URL']!
+        : MicroserviceConfig.getBaseUrl(Microservice.auth);
     _dio = Dio(
       BaseOptions(
-        baseUrl: dotenv.env['BASE_URL'] ?? '',
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
@@ -28,15 +32,7 @@ class ApiClient {
     // Agregar interceptor personalizado
     _dio.interceptors.add(ApiInterceptor());
 
-    // Agregar interceptor de logs en modo debug
-    _dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-      error: true,
-    ));
+    // Logs desactivados para reducir ruido; usar ApiInterceptor en debug
   }
 
   /// Obtiene la instancia única del ApiClient
@@ -50,7 +46,7 @@ class ApiClient {
 
   /// Realiza una petición GET
   ///
-  /// [endpoint] - Ruta del endpoint (sin incluir base URL)
+  /// [endpoint] - Ruta del endpoint o URL completa (si empieza con http)
   /// [queryParameters] - Parámetros de consulta opcionales
   /// [headers] - Headers adicionales opcionales
   ///
@@ -72,9 +68,73 @@ class ApiClient {
     }
   }
 
+  /// Realiza una petición GET a un microservicio específico
+  ///
+  /// [service] - El microservicio destino (auth, energy, trading, etc.)
+  /// [endpoint] - Ruta del endpoint (ej: /auth/login)
+  /// [queryParameters] - Parámetros de consulta opcionales
+  /// [headers] - Headers adicionales opcionales
+  Future<Response> getFromService(
+    Microservice service,
+    String endpoint, {
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) async {
+    final url = MicroserviceConfig.buildUrl(service, endpoint);
+    return get(url, queryParameters: queryParameters, headers: headers);
+  }
+
+  /// Realiza una petición POST a un microservicio específico
+  Future<Response> postFromService(
+    Microservice service,
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) async {
+    final url = MicroserviceConfig.buildUrl(service, endpoint);
+    return post(url, data: data, queryParameters: queryParameters, headers: headers);
+  }
+
+  /// Realiza una petición PUT a un microservicio específico
+  Future<Response> putFromService(
+    Microservice service,
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) async {
+    final url = MicroserviceConfig.buildUrl(service, endpoint);
+    return put(url, data: data, queryParameters: queryParameters, headers: headers);
+  }
+
+  /// Realiza una petición PATCH a un microservicio específico
+  Future<Response> patchFromService(
+    Microservice service,
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) async {
+    final url = MicroserviceConfig.buildUrl(service, endpoint);
+    return patch(url, data: data, queryParameters: queryParameters, headers: headers);
+  }
+
+  /// Realiza una petición DELETE a un microservicio específico
+  Future<Response> deleteFromService(
+    Microservice service,
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Map<String, dynamic>? headers,
+  }) async {
+    final url = MicroserviceConfig.buildUrl(service, endpoint);
+    return delete(url, data: data, queryParameters: queryParameters, headers: headers);
+  }
+
   /// Realiza una petición POST
   ///
-  /// [endpoint] - Ruta del endpoint (sin incluir base URL)
+  /// [endpoint] - Ruta del endpoint o URL completa (si empieza con http)
   /// [data] - Datos a enviar en el body
   /// [queryParameters] - Parámetros de consulta opcionales
   /// [headers] - Headers adicionales opcionales
@@ -188,6 +248,15 @@ class ApiClient {
   /// Elimina el token de autenticación de los headers
   void removeAuthToken() {
     _dio.options.headers.remove('Authorization');
+  }
+
+  /// Obtiene el token actual (Bearer sin el prefijo) o null si no hay
+  String? getAuthToken() {
+    final auth = _dio.options.headers['Authorization'];
+    if (auth is String && auth.startsWith('Bearer ')) {
+      return auth.substring(7);
+    }
+    return null;
   }
 
   /// Actualiza la base URL (útil para cambios dinámicos de ambiente)

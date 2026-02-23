@@ -19,7 +19,7 @@ class ApiException implements Exception {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
         return ApiException(
-          message: 'Tiempo de conexión agotado. Por favor, verifica tu conexión a internet.',
+          message: 'No se pudo conectar al servidor (timeout). Comprueba: 1) Backend en marcha con uvicorn --host 0.0.0.0 --port 8000. 2) Firewall permite el puerto 8000. 3) Dispositivo y PC en la misma red.',
           statusCode: null,
         );
 
@@ -44,15 +44,25 @@ class ApiException implements Exception {
           statusCode: null,
         );
 
+      case DioExceptionType.connectionError:
+        return ApiException(
+          message: 'No se pudo conectar al servidor. Verifica que el servicio esté en marcha y que la URL en .env sea correcta (en emulador Android usa 10.0.2.2 en lugar de localhost).',
+          statusCode: null,
+        );
+
       case DioExceptionType.unknown:
-        if (error.message?.contains('SocketException') ?? false) {
+        final msg = error.message ?? '';
+        if (msg.contains('SocketException') ||
+            msg.contains('Connection refused') ||
+            msg.contains('Failed host lookup') ||
+            msg.contains('Network is unreachable')) {
           return ApiException(
-            message: 'No hay conexión a internet. Por favor, verifica tu conexión.',
+            message: 'No se pudo conectar al servidor. ¿Está el backend en marcha? Revisa la URL en .env (en Android emulador usa 10.0.2.2).',
             statusCode: null,
           );
         }
         return ApiException(
-          message: 'Error inesperado: ${error.message}',
+          message: msg.isNotEmpty ? 'Error: $msg' : 'Error inesperado. Verifica tu configuración.',
           statusCode: null,
         );
 

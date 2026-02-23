@@ -1,10 +1,14 @@
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/api/api_exceptions.dart';
+import 'package:be_energy/repositories/auth_repository.dart';
+import 'package:be_energy/repositories/user_repository.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
 import '../../../routes.dart';
+import 'verify_2fa_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +20,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
 
   Metodos metodos = Metodos();
+  final AuthRepository _authRepository = AuthRepository();
+  final UserRepository _userRepository = UserRepository();
+  bool _isLoading = false;
 
   //TextEditingController
   final TextEditingController _email = TextEditingController();
@@ -103,20 +110,20 @@ class _LoginScreenState extends State<LoginScreen> {
         obscureText: obscureText,
         onChanged: _validador(),
         style: context.textStyles.bodyLarge?.copyWith(
-          color: Colors.grey[800],
+          color: context.colors.onSurface,
         ),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           labelStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[600],
+            color: context.colors.onSurfaceVariant,
             fontWeight: AppTokens.fontWeightMedium,
           ),
           hintStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[400],
+            color: context.colors.outline,
           ),
           filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.95),
+          fillColor: context.colors.surfaceContainerHighest.withValues(alpha: 0.95),
           contentPadding: EdgeInsets.symmetric(
             horizontal: AppTokens.space20,
             vertical: AppTokens.space16,
@@ -124,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
           enabledBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: BorderSide(
-              color: context.colors.outline.withValues(alpha: 0.3),
+              color: context.colors.outline.withValues(alpha: 0.6),
               width: 1.5,
             ),
           ),
@@ -137,21 +144,21 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
-              color: Colors.red,
+            borderSide: BorderSide(
+              color: context.colors.error,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             obscureText ? Icons.lock_outline : Icons.email_outlined,
-            color: Colors.red,
+            color: context.colors.primary,
           ),
         ),
         validator: validator,
@@ -178,13 +185,13 @@ class _LoginScreenState extends State<LoginScreen> {
               vertical: AppTokens.space4,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.colors.surface,
               borderRadius: AppTokens.borderRadiusSmall,
             ),
             child: Text(
               '¿Olvidaste la contraseña?',
               style: context.textStyles.bodyMedium?.copyWith(
-                color: Colors.red,
+                color: context.colors.primary,
                 fontWeight: AppTokens.fontWeightMedium,
               ),
             ),
@@ -224,36 +231,118 @@ class _LoginScreenState extends State<LoginScreen> {
         vertical: AppTokens.space16,
       ),
       child: ElevatedButton(
-        onPressed: () async {
+        onPressed: _isLoading ? null : () async {
           _validador();
+          if (!val) {
+            Metodos.flushbarNegativo(context, 'Ingrese correo y contraseña válidos');
+            return;
+          }
 
-          if(val) {
-            DatabaseHelper dbHelper = DatabaseHelper();
-            final au = await dbHelper.getUsers();
-            List usuariosList = (au.usuarios != null) ? au.usuarios! : [];
-            for (var i = 0; i < usuariosList.length; i++) {
-              if(_email.value.text == usuariosList[i].correo){
-                if(_clave.value.text == usuariosList[i].clave){
-                  iniciarSesion(usuariosList[i]);
-                  await Metodos.flushbarPositivo(context, 'Ingresando a App');
-                  Navigator.of(context).pushAndRemoveUntil(
+          setState(() => _isLoading = true);
+          try {
+            final response = await _authRepository.login(
+              email: _email.value.text.trim(),
+              password: _clave.value.text,
+            );
+
+            if (response.success && response.data != null) {
+              final data = response.data!;
+
+              // Si el backend requiere 2FA, navegar a verificación OTP
+              final otpRequired = data['otp_required'] == true;
+              final tempSession = data['temp_session'] as String?;
+              if (otpRequired && tempSession != null && tempSession.isNotEmpty) {
+                final userId = data['user_id'] as int? ?? int.tryParse(data['id']?.toString() ?? '0') ?? 0;
+                final email = data['email'] as String? ?? _email.value.text;
+                if (context.mounted) {
+                  Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => NavPages(myUser: usuariosList[i],)
+                      builder: (context) => Verify2FAScreen(
+                        tempSession: tempSession,
+                        email: email,
+                        userId: userId,
+                      ),
                     ),
-                    (Route<dynamic> route) => false
                   );
-                } else {
-                  Metodos.flushbarNegativo(context, 'Contraseña incorrecta, intente nuevamente');
                 }
-              } else {
-                Metodos.flushbarNegativo(context, 'Usuario no encontrado, por favor regístrese.');
+                return;
+              }
+
+              final userId = data['user_id'] as int? ?? int.tryParse(data['id']?.toString() ?? '0') ?? 0;
+              final email = data['email'] as String? ?? _email.value.text;
+
+              MyUser usuariolocal = MyUser(
+                idUser: userId,
+                nombre: data['name'] as String? ?? '',
+                telefono: data['phone'] as String? ?? '',
+                correo: email,
+                clave: '',
+                energia: '0',
+                dinero: '0',
+                idCiudad: 0,
+              );
+
+              try {
+                final userResp = await _userRepository.getUser(userId);
+                if (userResp.success && userResp.data != null) {
+                  final u = userResp.data!;
+                  final roleVal = u['role'];
+                  final roleInt = roleVal is int ? roleVal : (roleVal != null ? int.tryParse(roleVal.toString()) : null);
+                  usuariolocal = MyUser(
+                    idUser: u['id'] ?? userId,
+                    nombre: u['name'] ?? u['nombre'] ?? '',
+                    telefono: u['phone'] ?? u['telefono'] ?? '',
+                    correo: u['email'] ?? u['correo'] ?? email,
+                    clave: '',
+                    energia: '0',
+                    dinero: '0',
+                    idCiudad: u['idCiudad'] ?? 0,
+                    role: roleInt,
+                  );
+                }
+              } catch (_) {}
+
+              iniciarSesion(usuariolocal);
+              if (context.mounted) {
+                Metodos.flushbarPositivo(context, 'Ingresando a App');
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => NavPages(myUser: usuariolocal)
+                      ),
+                      (Route<dynamic> route) => false
+                    );
+                  }
+                });
+              }
+            } else {
+              if (context.mounted) {
+                final msg = response.message ?? '';
+                String show = msg;
+                if (msg.toLowerCase().contains('correo') && (msg.contains('no') || msg.contains('registrado'))) show = 'El correo no está registrado';
+                else if (msg.toLowerCase().contains('contraseña') || msg.toLowerCase().contains('password') || msg.toLowerCase().contains('incorrect')) show = 'Contraseña incorrecta';
+                Metodos.flushbarNegativo(context, show.isNotEmpty ? show : 'Credenciales incorrectas');
               }
             }
+          } catch (e) {
+            if (context.mounted) {
+              String mensaje = 'Error de conexión. Verifica tu configuración.';
+              if (e is ApiException) {
+                final m = e.message.toLowerCase();
+                if (m.contains('correo') && (m.contains('no') || m.contains('registrado'))) mensaje = 'El correo no está registrado';
+                else if (m.contains('contraseña') || m.contains('password') || m.contains('incorrect')) mensaje = 'Contraseña incorrecta';
+                else mensaje = e.message;
+              }
+              Metodos.flushbarNegativo(context, mensaje);
+            }
+          } finally {
+            if (mounted) setState(() => _isLoading = false);
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
+          backgroundColor: context.colors.primary,
+          foregroundColor: context.colors.onPrimary,
           padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
@@ -261,9 +350,9 @@ class _LoginScreenState extends State<LoginScreen> {
           elevation: 4,
         ),
         child: Text(
-          'Iniciar Sesión',
+          _isLoading ? 'Conectando...' : 'Iniciar Sesión',
           style: context.textStyles.titleMedium?.copyWith(
-            color: Colors.white,
+            color: context.colors.onPrimary,
             fontWeight: AppTokens.fontWeightBold,
             letterSpacing: 0.5,
           ),
@@ -281,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Text(
             "¿No tienes cuenta?",
             style: context.textStyles.bodyLarge?.copyWith(
-              color: Colors.grey[600],
+              color: context.colors.onSurfaceVariant,
             ),
           ),
           SizedBox(width: AppTokens.space8),
@@ -294,10 +383,10 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               "Regístrate",
               style: context.textStyles.titleMedium?.copyWith(
-                color: Colors.red,
+                color: context.colors.primary,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
-                decorationColor: Colors.white,
+                decorationColor: context.colors.primary,
                 decorationThickness: 2,
               ),
             ),

@@ -6,24 +6,26 @@ class AppTokens {
   AppTokens._(); // Constructor privado para prevenir instanciación
 
   // ==================== COLORES ====================
+  /// Paleta actual: primario teal/verde energía, acento cálido. Textos con alto contraste.
 
-  /// Paleta de colores primarios - Energía y sostenibilidad
-  static const Color primaryBlue = Color(0xFF0070C0);
-  static const Color primaryPurple = Color(0xFF7E57C2);
-  static const Color primaryRed = Color(0xFF891427);
-  static const Color primaryYellow = Color(0xFFFFD966);
+  /// Primarios - Energía y sostenibilidad (teal + acento)
+  static const Color primaryBlue = Color(0xFF0D9488);
+  static const Color primaryPurple = Color(0xFF7C3AED);
+  static const Color primaryRed = Color(0xFFB91C1C);
+  static const Color primaryTeal = Color(0xFF0D9488);
+  static const Color primaryYellow = Color(0xFFF59E0B);
 
-  /// Escala de grises
-  static const Color black = Color(0xFF212D3D);
-  static const Color grey900 = Color(0xFF2C3E50);
-  static const Color grey800 = Color(0xFF34495E);
-  static const Color grey700 = Color(0xFF5D6D7E);
-  static const Color grey600 = Color(0xFF7B8794);
-  static const Color grey500 = Color(0xFF95A5A6);
-  static const Color grey400 = Color(0xFFB2BEC3);
-  static const Color grey300 = Color(0xFFDFE6E9);
-  static const Color grey200 = Color(0xFFECF0F1);
-  static const Color grey100 = Color(0xFFF5F6FA);
+  /// Escala de grises (texto legible: black/grey900 en fondos claros)
+  static const Color black = Color(0xFF1A1A1A);
+  static const Color grey900 = Color(0xFF262626);
+  static const Color grey800 = Color(0xFF404040);
+  static const Color grey700 = Color(0xFF525252);
+  static const Color grey600 = Color(0xFF737373);
+  static const Color grey500 = Color(0xFF737373);
+  static const Color grey400 = Color(0xFFA3A3A3);
+  static const Color grey300 = Color(0xFFD4D4D4);
+  static const Color grey200 = Color(0xFFE5E5E5);
+  static const Color grey100 = Color(0xFFF5F5F5);
   static const Color white = Color(0xFFFFFFFF);
 
   /// Colores semánticos
@@ -33,10 +35,10 @@ class AppTokens {
   static const Color info = Color(0xFF3498DB);
 
   /// Colores de energía (específicos de la app)
-  static const Color energyGreen = Color(0xFF2ECC71);
-  static const Color energySolar = Color(0xFFF39C12);
-  static const Color energyWind = Color(0xFF00BCD4);
-  static const Color energyBattery = Color(0xFF9C27B0);
+  static const Color energyGreen = Color(0xFF059669);
+  static const Color energySolar = Color(0xFFF59E0B);
+  static const Color energyWind = Color(0xFF0891B2);
+  static const Color energyBattery = Color(0xFF7C3AED);
 
   // ==================== ESPACIADO ====================
 
@@ -106,11 +108,11 @@ class AppTokens {
   static const FontWeight fontWeightExtraBold = FontWeight.w800;
 
   /// Familias de fuente
-  /// Inter: Fuente primaria para UI/UX, cuerpo de texto, datos, formularios
-  /// Manrope: Fuente display para títulos grandes, headlines, hero text
-  static const String fontFamilyPrimary = 'Inter';      // Body text, UI, forms
-  static const String fontFamilySecondary = 'Manrope';  // Titles, subtitles
-  static const String fontFamilyDisplay = 'Manrope';    // Headlines, hero
+  /// Fuentes: Inter/Manrope requieren descarga (ver Docs/FONT_SETUP.md)
+  /// Por ahora usa null = fuentes del sistema (Roboto en Android)
+  static const String? fontFamilyPrimary = null;   // Body text
+  static const String? fontFamilySecondary = null; // Titles
+  static const String? fontFamilyDisplay = null;   // Headlines
 
   // Legacy fonts (mantener para compatibilidad temporal)
   static const String fontFamilyLegacyGaret = 'Garet';
@@ -243,7 +245,7 @@ class AppTokens {
 
   /// Gradientes predefinidos
   static LinearGradient get gradientPrimary => const LinearGradient(
-        colors: [primaryRed, black],
+        colors: [primaryTeal, Color(0xFF115E59)],
         begin: AlignmentDirectional(0.94, -1),
         end: AlignmentDirectional(-0.94, 1),
       );
@@ -255,7 +257,7 @@ class AppTokens {
       );
 
   static LinearGradient get gradientCard => LinearGradient(
-        colors: [primaryRed, grey900],
+        colors: [primaryTeal, grey800],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );

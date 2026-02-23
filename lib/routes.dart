@@ -14,16 +14,24 @@ export 'package:be_energy/screens/main_screens/miCuenta/centroNotificacionesPerf
 
 export 'package:be_energy/screens/main_screens/miCuenta/miCuenta.dart';
 export 'package:be_energy/screens/main_screens/Login/noRecuerdomiClave_screen.dart';
+export 'package:be_energy/screens/main_screens/Login/reset_password_screen.dart';
 export 'package:be_energy/screens/main_screens/Login/register_screen.dart';
 export 'package:be_energy/screens/main_screen.dart';
 export 'package:be_energy/screens/main_screens/Trading/trading_screen.dart';
+export 'package:be_energy/screens/main_screens/Trading/ofertas_p2p_screen.dart';
 export 'package:be_energy/screens/main_screens/energy/energy_screen.dart';
 export 'package:be_energy/screens/main_screens/configuracion/configuracion_screen.dart';
 export 'package:be_energy/screens/main_screens/historial/historial_screen.dart';
 export 'package:be_energy/screens/main_screens/notificaciones/notificaciones_screen.dart';
 export 'package:be_energy/screens/main_screens/Login/login_screen.dart';
+export 'package:be_energy/screens/main_screens/Login/verify_2fa_screen.dart';
 export 'package:be_energy/screens/main_screens/home/home_screen.dart';
 export 'package:be_energy/screens/main_screens/Trading/envia_energy_screen.dart';
+export 'package:be_energy/screens/main_screens/admin/audit_logs_screen.dart';
+export 'package:be_energy/screens/main_screens/admin/audit_reports_screen.dart';
+export 'package:be_energy/screens/main_screens/admin/change_role_screen.dart';
+export 'package:be_energy/screens/main_screens/monitoring/consumption_screen.dart';
+export 'package:be_energy/screens/main_screens/monitoring/alerts_screen.dart';
 //navigation
 export 'package:be_energy/views/navigation.dart';
 //themes 

@@ -9,6 +9,8 @@ class MyUser {
   final String? energia; 
   final String? dinero;
   final int?    idCiudad;
+  /// Rol: 0=admin, 1=consumidor, 2=prosumidor
+  final int? role;
 
   //Constructor de la clase
   MyUser({
@@ -19,8 +21,11 @@ class MyUser {
     this.clave,
     this.energia,
     this.dinero,
-    this.idCiudad
+    this.idCiudad,
+    this.role,
   });
+
+  bool get isAdmin => role == 0;
 
   //Conversión a Map
   Map<String, dynamic> toMap() {
@@ -32,8 +37,23 @@ class MyUser {
       'clave': clave,
       'energia': energia,
       'dinero': dinero,
-      'idCiudad': idCiudad
+      'idCiudad': idCiudad,
+      'role': role,
     };
+  }
+
+  MyUser copyWith({int? idUser, String? nombre, String? telefono, String? correo, String? clave, String? energia, String? dinero, int? idCiudad, int? role}) {
+    return MyUser(
+      idUser: idUser ?? this.idUser,
+      nombre: nombre ?? this.nombre,
+      telefono: telefono ?? this.telefono,
+      correo: correo ?? this.correo,
+      clave: clave ?? this.clave,
+      energia: energia ?? this.energia,
+      dinero: dinero ?? this.dinero,
+      idCiudad: idCiudad ?? this.idCiudad,
+      role: role ?? this.role,
+    );
   }
 
 

@@ -4,34 +4,43 @@ class ApiEndpoints {
   // Constructor privado para prevenir instanciación
   ApiEndpoints._();
 
-  // ==================== AUTH ENDPOINTS ====================
-  /// Endpoint para login de usuario
-  static const String login = '/auth/login';
+  // ==================== AUTH ENDPOINTS (auth_service) ====================
+  /// Login con correo y contraseña
+  static const String login = '/auth/log-in';
 
-  /// Endpoint para registro de usuario
-  static const String register = '/auth/register';
+  /// Registro de usuario
+  static const String register = '/auth/sign-up';
 
-  /// Endpoint para logout
+  /// Logout (client-side)
   static const String logout = '/auth/logout';
 
-  /// Endpoint para refrescar token
+  /// Renovación de token
   static const String refreshToken = '/auth/refresh';
 
-  /// Endpoint para recuperar contraseña
+  /// Recuperación de contraseña por correo
   static const String forgotPassword = '/auth/forgot-password';
 
-  /// Endpoint para resetear contraseña
+  /// Resetear contraseña con OTP
   static const String resetPassword = '/auth/reset-password';
 
-  // ==================== USER ENDPOINTS ====================
-  /// Endpoint para obtener perfil de usuario
-  static const String userProfile = '/user/profile';
+  /// Verificar OTP para autenticación de dos factores
+  static const String verify2fa = '/auth/verify-2fa';
 
-  /// Endpoint para actualizar perfil de usuario
-  static const String updateProfile = '/user/update';
+  /// Verificar token
+  static const String verifyToken = '/auth/verify-token';
 
-  /// Endpoint para cambiar contraseña
-  static const String changePassword = '/user/change-password';
+  /// Ciudades (auth_service)
+  static const String cities = '/auth/cities';
+
+  // ==================== USER ENDPOINTS (user_service) ====================
+  /// Obtener perfil de usuario
+  static String userProfile(int userId) => '/users/$userId';
+
+  /// Actualizar datos personales
+  static String updateProfile(int userId) => '/users/$userId';
+
+  /// Cambiar rol (admin)
+  static String changeRole(int userId) => '/users/$userId/role';
 
   // ==================== EMPRESAS ENDPOINTS ====================
   /// Endpoint para obtener lista de empresas
@@ -40,28 +49,28 @@ class ApiEndpoints {
   /// Endpoint para obtener detalle de una empresa
   static String getEmpresaById(int id) => '/ws/getEmpresa/$id';
 
-  // ==================== ENERGY ENDPOINTS ====================
-  /// Endpoint para obtener datos de energía del usuario
-  static const String energyData = '/energy/data';
+  // ==================== CREDITS ENDPOINTS (energy_credits_service) ====================
+  /// Consulta de saldo energético en kWh
+  static String creditsBalance(int userId) => '/credits/$userId';
 
-  /// Endpoint para obtener historial de energía
-  static const String energyHistory = '/energy/history';
+  // ==================== ENERGY/TRANSACTIONS ENDPOINTS (transaction_service) ====================
+  /// Registrar energy record
+  static const String createEnergyRecord = '/transactions/energy';
+  /// Consultar registros de energía (POST con body)
+  static const String queryEnergyRecords = '/transactions/energy/query';
 
-  /// Endpoint para obtener estadísticas de energía
-  static const String energyStats = '/energy/stats';
+  // ==================== TRANSACTIONS ENDPOINTS (transaction_service) ====================
+  /// Crear contrato P2P (oferta)
+  static const String createContract = '/transactions/contracts';
 
-  // ==================== TRADING ENDPOINTS ====================
-  /// Endpoint para crear una transacción de energía
-  static const String createTransaction = '/trading/create';
+  /// Listar contratos/ofertas
+  static const String listContracts = '/transactions/contracts';
 
-  /// Endpoint para obtener transacciones del usuario
-  static const String userTransactions = '/trading/transactions';
+  /// Registrar transacción
+  static const String recordTransaction = '/transactions/record-transaction';
 
-  /// Endpoint para obtener detalle de una transacción
-  static String getTransactionById(String id) => '/trading/transaction/$id';
-
-  /// Endpoint para cancelar una transacción
-  static String cancelTransaction(String id) => '/trading/cancel/$id';
+  /// Liquidar periodo
+  static const String liquidate = '/transactions/liquidate';
 
   // ==================== INTERCAMBIO ENDPOINTS ====================
   /// Endpoint para obtener intercambios disponibles
@@ -86,12 +95,28 @@ class ApiEndpoints {
   /// Endpoint para marcar todas las notificaciones como leídas
   static const String markAllNotificationsAsRead = '/notifications/read-all';
 
-  // ==================== LOCATION ENDPOINTS ====================
-  /// Endpoint para obtener ciudades
-  static const String getCities = '/location/cities';
+  // ==================== AUDIT ENDPOINTS (audit_service) ====================
+  /// Consulta de registros de auditoría
+  static const String auditLogs = '/audit/logs';
 
-  /// Endpoint para obtener ciudad por ID
-  static String getCityById(int id) => '/location/city/$id';
+  /// Generar reporte de auditoría
+  static const String auditReports = '/audit/reports';
+
+  // ==================== MONITORING ENDPOINTS (monitoring_service) ====================
+  /// Última medición del dispositivo
+  static const String telemetryLatest = '/telemetry/latest';
+
+  /// Histórico de mediciones
+  static const String telemetryHistory = '/telemetry/history';
+
+  /// Listar reglas de alerta
+  static const String alertRules = '/alerts/rules';
+
+  /// Listar alertas (histórico por fechas)
+  static const String alerts = '/alerts';
+
+  /// Crear regla de alerta
+  static const String createAlertRule = '/alerts/rules';
 
   // ==================== PAYMENT ENDPOINTS ====================
   /// Endpoint para obtener métodos de pago

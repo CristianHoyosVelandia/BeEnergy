@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
 
+import 'package:be_energy/core/api/api_client.dart';
+import 'package:be_energy/data/database_Helper.dart';
 import 'package:be_energy/models/callmodels.dart';
 import 'package:be_energy/screens/bloc/bloc_main.dart';
 import 'package:flutter/material.dart';
@@ -19,14 +21,18 @@ class _BeenergyState extends State<Beenergy> {
   //Objetos de clases
   late  Future<MyUser> myUser;
   BlocBeenergy blockBeEnergy = BlocBeenergy();
-  
-  //se inicializa el estado y junto a el los futuros, 
-  //el futuro de usuario me trae los datos de ser el caso, de un usuario que ya se encuentre logueado dentro de la app
+
+  /// Al iniciar la app se limpia el último inicio de sesión para que siempre
+  /// se pidan email y contraseña.
   @override
   void initState() {
     super.initState();
-    myUser = blockBeEnergy.getUserFromDB();
-    // _checkVersion();
+    myUser = Future(() async {
+      final dbHelper = DatabaseHelper();
+      await dbHelper.clearLoginUser();
+      ApiClient.instance.removeAuthToken();
+      return blockBeEnergy.getUserFromDB();
+    });
   }
   @override
   void dispose(){
@@ -51,24 +57,13 @@ class _BeenergyState extends State<Beenergy> {
             //una vez se consumen ambos futuros, se procede a preguntar si hay un usuario logueado, 
             //de ser el caso cargamos los datos en el menu de codigo de usuario, codigo ciudad y nomCiudad y redirigimos.
             if (snapshotUser.hasData) {
-
-              print("data Snapshot: ${snapshotUser.data.toMap()}");
-
-              if (snapshotUser.data.idUser != 0) {
-                
-                print('Usuario ya logueado exitosamente');
-                print(snapshotUser.data);
-                return NavPages( myUser: snapshotUser.data);
-                
-              } else {
-                //de no encontrar un usuario logueado, procedemos a cargar pintar la pantall.
-                return const LoginScreen();
+              final idUser = snapshotUser.data.idUser;
+              final isLoggedIn = idUser != null && idUser != 0;
+              if (isLoggedIn) {
+                return NavPages(myUser: snapshotUser.data);
               }
             }
-
-            else {
-              return const LoginScreen();
-            } 
+            return const LoginScreen(); 
         }
       },
     );
