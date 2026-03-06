@@ -1,9 +1,12 @@
 /// Implementación fake del repositorio de comunidad
 library;
 
+import 'package:be_energy/data/fake_data.dart';
 import 'package:be_energy/data/fake_data_phase2.dart';
 import 'package:be_energy/data/fake_periods_data.dart';
 import 'package:be_energy/models/home_data_models.dart';
+import 'package:be_energy/models/community_models.dart';
+import 'package:be_energy/models/energy_models.dart';
 import 'package:be_energy/repositories/domain/community_repository.dart';
 
 /// Implementación con fake data para comunidad
@@ -88,5 +91,23 @@ class CommunityRepositoryFake implements CommunityRepository {
     await Future.delayed(const Duration(milliseconds: 50));
     // En fake data, consideramos admin al usuario con ID 1
     return userId == 1 || userId == 24; // Temporalmente ambos son admin
+  }
+
+  @override
+  Future<List<CommunityMember>> getCommunityMembers({
+    int communityId = 1,
+    String? period,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return FakeData.members;
+  }
+
+  @override
+  Future<List<EnergyRecord>> getEnergyRecords({
+    int communityId = 1,
+    String? period,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return FakeData.energyRecords;
   }
 }

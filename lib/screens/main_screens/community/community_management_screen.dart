@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/core/config/data_source_config.dart';
 import '../../../data/fake_data.dart';
 import '../../../models/community_models.dart';
+import '../../../models/energy_models.dart';
 import '../../../utils/metodos.dart';
 import 'user_detail_screen.dart';
 
@@ -21,9 +23,54 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
   String _filterRole = 'all'; // 'all', 'prosumer', 'consumer'
   String _searchQuery = '';
 
+  // Estado de carga
+  bool _isLoading = true;
+  List<CommunityMember> _members = [];
+  List<EnergyRecord> _energyRecords = [];
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final repository = RepositoryFactory.createCommunityRepository();
+
+      // Cargar miembros y energy records desde el repositorio
+      final members = await repository.getCommunityMembers(
+        communityId: 1,
+        period: '2026-01', // Enero 2026
+      );
+
+      final energyRecords = await repository.getEnergyRecords(
+        communityId: 1,
+        period: '2026-01',
+      );
+
+      setState(() {
+        _members = members;
+        _energyRecords = energyRecords;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error al cargar datos: $e';
+        _isLoading = false;
+      });
+    }
+  }
+
   // Obtener miembros filtrados
   List<CommunityMember> get filteredMembers {
-    var members = FakeData.members;
+    var members = _members;
 
     // Filtrar por rol
     if (_filterRole == 'prosumer') {
@@ -288,9 +335,19 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
 
   Widget _buildMemberCard(CommunityMember member) {
     // Obtener datos de energía del miembro
-    final energyRecord = FakeData.energyRecords.firstWhere(
+    final energyRecord = _energyRecords.firstWhere(
       (record) => record.userId == member.userId,
-      orElse: () => FakeData.energyRecords.first,
+      orElse: () => EnergyRecord(
+        id: 0,
+        userId: member.userId,
+        userName: member.fullName,
+        communityId: 1,
+        energyGenerated: 0,
+        energyConsumed: 0,
+        energyExported: 0,
+        energyImported: 0,
+        period: '2026-01',
+      ),
     );
 
     return InkWell(
@@ -610,23 +667,89 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
         title: const Text('Gestión de la Comunidad'),
         elevation: 0,
         backgroundColor: context.colors.surface,
-      ),
-      backgroundColor: context.colors.surfaceContainerLowest,
-      body: ListView(
-        padding: EdgeInsets.only(
-          top: AppTokens.space16,
-          bottom: AppTokens.space24,
-        ),
-        children: [
-          _buildStatsCard(),
-          SizedBox(height: AppTokens.space16),
-          _buildQuickAccessMenu(),
-          SizedBox(height: AppTokens.space24),
-          _buildFilters(),
-          SizedBox(height: AppTokens.space16),
-          _buildMembersList(),
+        actions: [
+          if (!_isLoading)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadData,
+              tooltip: 'Recargar datos',
+            ),
         ],
       ),
+      backgroundColor: context.colors.surfaceContainerLowest,
+      body: _isLoading
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: AppTokens.primaryRed),
+                  SizedBox(height: AppTokens.space16),
+                  Text(
+                    'Cargando miembros de la comunidad...',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : _errorMessage != null
+              ? Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppTokens.space32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: AppTokens.error,
+                        ),
+                        SizedBox(height: AppTokens.space16),
+                        Text(
+                          'Error al cargar datos',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: AppTokens.error,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space8),
+                        Text(
+                          _errorMessage!,
+                          style: context.textStyles.bodyMedium?.copyWith(
+                            color: context.colors.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: AppTokens.space24),
+                        ElevatedButton.icon(
+                          onPressed: _loadData,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reintentar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTokens.primaryRed,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView(
+                  padding: EdgeInsets.only(
+                    top: AppTokens.space16,
+                    bottom: AppTokens.space24,
+                  ),
+                  children: [
+                    _buildStatsCard(),
+                    SizedBox(height: AppTokens.space16),
+                    _buildQuickAccessMenu(),
+                    SizedBox(height: AppTokens.space24),
+                    _buildFilters(),
+                    SizedBox(height: AppTokens.space16),
+                    _buildMembersList(),
+                  ],
+                ),
     );
   }
 }

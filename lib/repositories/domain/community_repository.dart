@@ -3,6 +3,8 @@
 library;
 
 import 'package:be_energy/models/home_data_models.dart';
+import 'package:be_energy/models/community_models.dart';
+import 'package:be_energy/models/energy_models.dart';
 
 /// Interfaz abstracta para el repositorio de comunidad
 abstract class CommunityRepository {
@@ -36,5 +38,24 @@ abstract class CommunityRepository {
   /// [userId] - ID del usuario
   Future<bool> isAdmin({
     required int userId,
+  });
+
+  /// Obtiene los miembros de la comunidad con sus registros de energía
+  ///
+  /// [communityId] - ID de la comunidad (default: 1)
+  /// [period] - Período en formato 'YYYY-MM' (opcional)
+  /// Retorna una lista de miembros con sus energy records
+  Future<List<CommunityMember>> getCommunityMembers({
+    int communityId = 1,
+    String? period,
+  });
+
+  /// Obtiene los registros de energía para un período
+  ///
+  /// [communityId] - ID de la comunidad
+  /// [period] - Período en formato 'YYYY-MM' (opcional)
+  Future<List<EnergyRecord>> getEnergyRecords({
+    int communityId = 1,
+    String? period,
   });
 }
