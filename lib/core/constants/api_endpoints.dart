@@ -15,11 +15,17 @@ class ApiEndpoints {
   /// Endpoint para registro de usuario (sign up)
   static const String signUp = '/auth/sign-up';
 
+  /// Endpoint para registro de usuario (alias)
+  static const String register = '/auth/sign-up';
+
   /// Endpoint para logout
   static const String logout = '/auth/logout';
 
   /// Endpoint para verificar token
   static const String verifyToken = '/auth/verify-token';
+
+  /// Endpoint para refrescar token
+  static const String refreshToken = '/auth/refresh-token';
 
   /// Endpoint para recuperar contraseña (forgot password)
   static const String forgotPassword = '/auth/forgot-password';
@@ -45,6 +51,22 @@ class ApiEndpoints {
 
   /// Endpoint para obtener detalle de una empresa
   static String getEmpresaById(int id) => '/ws/getEmpresa/$id';
+
+  // ==================== COMMUNITY ENDPOINTS ====================
+  /// Endpoint para obtener información de la comunidad
+  static const String community = '/community';
+
+  /// Endpoint para obtener miembros de la comunidad
+  static const String communityMembers = '/community/members';
+
+  /// Endpoint para obtener estadísticas de la comunidad
+  static const String communityStats = '/community/stats';
+
+  /// Endpoint para crear una comunidad
+  static const String createCommunity = '/community/create';
+
+  /// Endpoint para actualizar comunidad
+  static String updateCommunity(int id) => '/community/update/$id';
 
   // ==================== ENERGY ENDPOINTS ====================
   /// Endpoint para obtener datos de energía del usuario
@@ -81,6 +103,91 @@ class ApiEndpoints {
 
   /// Endpoint para rechazar un intercambio
   static String rejectExchange(String id) => '/exchange/reject/$id';
+
+  // ==================== P2P MARKET ENDPOINTS ====================
+  /// Endpoint para obtener ofertas P2P disponibles
+  static const String p2pOffers = '/p2p/offers';
+
+  /// Endpoint para crear oferta P2P
+  static const String createP2POffer = '/p2p/offers/create';
+
+  /// Endpoint para aceptar oferta P2P
+  static String acceptP2POffer(String id) => '/p2p/offers/$id/accept';
+
+  /// Endpoint para cancelar oferta P2P
+  static String cancelP2POffer(String id) => '/p2p/offers/$id/cancel';
+
+  /// Endpoint para obtener contratos P2P
+  static const String p2pContracts = '/p2p/contracts';
+
+  /// Endpoint para obtener detalle de contrato P2P
+  static String getP2PContract(String id) => '/p2p/contracts/$id';
+
+  // ==================== PDE ENDPOINTS ====================
+  /// Endpoint para obtener asignaciones PDE
+  static const String pdeAllocations = '/pde/allocations';
+
+  /// Endpoint para calcular asignaciones PDE
+  static const String calculatePDE = '/pde/calculate';
+
+  /// Endpoint para obtener detalle de asignación PDE
+  static String getPDEAllocation(String id) => '/pde/allocation/$id';
+
+  // ==================== BILLING ENDPOINTS ====================
+  /// Endpoint para obtener facturación de usuario
+  static String userBilling(int userId) => '/billing/user/$userId';
+
+  /// Endpoint para obtener facturación de comunidad
+  static const String communityBilling = '/billing/community';
+
+  /// Endpoint para obtener costos regulados
+  static const String regulatedCosts = '/billing/costs';
+
+  /// Endpoint para obtener ahorros de comunidad
+  static const String communitySavings = '/billing/savings';
+
+  // ==================== LIQUIDATION ENDPOINTS ====================
+  /// Endpoint para obtener sesiones de liquidación
+  static const String liquidationSessions = '/liquidation/sessions';
+
+  /// Endpoint para crear sesión de liquidación
+  static const String createLiquidation = '/liquidation/create';
+
+  /// Endpoint para finalizar liquidación
+  static String finalizeLiquidation(String id) => '/liquidation/$id/finalize';
+
+  /// Endpoint para obtener matches de liquidación
+  static String liquidationMatches(String sessionId) => '/liquidation/$sessionId/matches';
+
+  // ==================== CONSUMER OFFERS ENDPOINTS ====================
+  /// Endpoint para obtener ofertas de consumidores
+  static const String consumerOffers = '/consumer-offers';
+
+  /// Endpoint para crear oferta de consumidor
+  static const String createConsumerOffer = '/consumer-offers/create';
+
+  /// Endpoint para aceptar oferta de consumidor
+  static String acceptConsumerOffer(String id) => '/consumer-offers/$id/accept';
+
+  // ==================== CREDITS ENDPOINTS ====================
+  /// Endpoint para obtener créditos de energía
+  static const String energyCredits = '/credits';
+
+  /// Endpoint para obtener transacciones de créditos
+  static const String creditTransactions = '/credits/transactions';
+
+  /// Endpoint para crear transacción de crédito
+  static const String createCreditTransaction = '/credits/transactions/create';
+
+  // ==================== REPORTS ENDPOINTS ====================
+  /// Endpoint para obtener reportes
+  static const String reports = '/reports';
+
+  /// Endpoint para generar reporte
+  static const String generateReport = '/reports/generate';
+
+  /// Endpoint para obtener reporte por tipo
+  static String getReportByType(String type) => '/reports/$type';
 
   // ==================== NOTIFICATIONS ENDPOINTS ====================
   /// Endpoint para obtener notificaciones del usuario

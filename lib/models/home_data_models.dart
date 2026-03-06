@@ -1,9 +1,9 @@
 /// Modelos tipo-seguro para Home Screen
 /// Encapsula todos los datos necesarios para el home screen
 /// Facilita el cambio entre fake data y web services
+library;
 
-import 'package:be_energy/models/community_models.dart';
-import 'package:be_energy/models/p2p_models.dart';
+import 'package:be_energy/data/fake_periods_data.dart' show PeriodStatus;
 
 /// Datos completos para renderizar el home screen
 class HomeScreenData {
@@ -121,12 +121,6 @@ class PeriodInfo {
   }
 }
 
-/// Estado del período
-enum PeriodStatus {
-  current,
-  historical,
-  future,
-}
 
 /// Perfil del usuario
 class UserProfile {

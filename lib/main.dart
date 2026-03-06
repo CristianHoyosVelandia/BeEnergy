@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'routes.dart';
 import 'core/theme/app_theme.dart';
+import 'core/config/data_source_config.dart';
 
 void main() async {
   // Inicialización de Flutter
@@ -14,6 +15,9 @@ void main() async {
     // Si no existe el .env, continuar sin él
     debugPrint('⚠️ No se pudo cargar .env: $e');
   }
+
+  // Inicializar configuración de data source (mocks vs API)
+  await DataSourceConfig.initFromEnvironment();
 
   runApp(const MyApp());
 }

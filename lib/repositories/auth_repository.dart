@@ -15,25 +15,6 @@ class AuthRepository {
   /// [password] - Contraseña del usuario
   ///
   /// Retorna un [ApiResponse] con los datos del usuario y token
-  ///
-  /// Ejemplo de uso:
-  /// ```dart
-  /// final repository = AuthRepository();
-  /// try {
-  ///   final response = await repository.login(
-  ///     email: 'user@example.com',
-  ///     password: 'password123',
-  ///   );
-  ///   if (response.success) {
-  ///     final token = response.data['token'];
-  ///     // Guardar token y redirigir
-  ///   }
-  /// } on UnauthorizedException catch (e) {
-  ///   print('Credenciales incorrectas: ${e.message}');
-  /// } on ApiException catch (e) {
-  ///   print('Error: ${e.message}');
-  /// }
-  /// ```
   Future<ApiResponse<Map<String, dynamic>>> login({
     required String email,
     required String password,
@@ -42,8 +23,8 @@ class AuthRepository {
       final response = await _apiClient.post(
         ApiEndpoints.login,
         data: {
-          'correo': email,
-          'clave': password,
+          'email': email,
+          'password': password,
         },
       );
 
@@ -64,30 +45,42 @@ class AuthRepository {
 
   /// Registra un nuevo usuario
   ///
-  /// [nombre] - Nombre completo del usuario
+  /// [document] - Documento de identidad del usuario
+  /// [name] - Nombre del usuario
+  /// [lastname] - Apellido del usuario
   /// [email] - Correo electrónico
   /// [password] - Contraseña
-  /// [telefono] - Número de teléfono
-  /// [idCiudad] - ID de la ciudad
+  /// [phone] - Número de teléfono (opcional)
+  /// [role] - Rol del usuario (0=admin, 1=user, 2=moderator)
   ///
   /// Retorna un [ApiResponse] con los datos del usuario registrado
   Future<ApiResponse<Map<String, dynamic>>> register({
-    required String nombre,
+    required String document,
+    required String name,
+    required String lastname,
     required String email,
     required String password,
-    required String telefono,
-    required int idCiudad,
+    String? phone,
+    int role = 1,
   }) async {
     try {
+      final data = {
+        'document': document,
+        'name': name,
+        'lastname': lastname,
+        'email': email,
+        'password': password,
+        'role': role,
+      };
+
+      // Agregar phone solo si no es null
+      if (phone != null && phone.isNotEmpty) {
+        data['phone'] = phone;
+      }
+
       final response = await _apiClient.post(
         ApiEndpoints.register,
-        data: {
-          'nombre': nombre,
-          'correo': email,
-          'clave': password,
-          'telefono': telefono,
-          'idCiudad': idCiudad,
-        },
+        data: data,
       );
 
       return ApiResponse.fromJson(
@@ -122,16 +115,16 @@ class AuthRepository {
 
   /// Solicita recuperación de contraseña
   ///
-  /// [email] - Correo electrónico del usuario
+  /// [document] - Documento de identidad del usuario
   ///
   /// Retorna un [ApiResponse] indicando el resultado
   Future<ApiResponse<Map<String, dynamic>>> forgotPassword({
-    required String email,
+    required String document,
   }) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.forgotPassword,
-        data: {'correo': email},
+        data: {'document': document},
       );
 
       return ApiResponse.fromJson(
@@ -146,20 +139,23 @@ class AuthRepository {
 
   /// Resetea la contraseña del usuario
   ///
-  /// [token] - Token de reseteo recibido por correo
+  /// [document] - Documento de identidad del usuario
+  /// [otp] - Código OTP recibido por correo
   /// [newPassword] - Nueva contraseña
   ///
   /// Retorna un [ApiResponse] indicando el resultado
   Future<ApiResponse<Map<String, dynamic>>> resetPassword({
-    required String token,
+    required String document,
+    required String otp,
     required String newPassword,
   }) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.resetPassword,
         data: {
-          'token': token,
-          'nuevaClave': newPassword,
+          'document': document,
+          'otp': otp,
+          'new_password': newPassword,
         },
       );
 
