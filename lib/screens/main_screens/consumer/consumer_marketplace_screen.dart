@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
@@ -108,7 +109,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
         actions: [
           if (_selectedPeriod == MarketPeriod.january2026)
             IconButton(
-              icon: const Icon(Icons.help_outline, color: Colors.white),
+              icon: const Icon(Icons.info_outline, color: Colors.white),
               tooltip: '¿Qué son los PDE?',
               onPressed: () => _showPDEHelpDialog(),
             ),
@@ -253,7 +254,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 ),
                 SizedBox(height: AppTokens.space4),
                 Text(
-                  'VE: \$${ve.totalVE.toStringAsFixed(0)} COP/kWh | Rango P2P: \$${ve.minAllowedPrice.toStringAsFixed(0)}-\$${ve.maxAllowedPrice.toStringAsFixed(0)}',
+                  'VE: ${Formatters.formatCurrency(ve.totalVE)} COP/kWh | Rango P2P: ${Formatters.formatCurrency(ve.minAllowedPrice)}-${Formatters.formatCurrency(ve.maxAllowedPrice)}',
                   style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
                 ),
               ],
@@ -314,11 +315,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
               ),
               const SizedBox(height: 8),
               Text(
-                'Mínimo: \$${minValue.toStringAsFixed(2)} COP/kWh',
+                'Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh',
                 style: const TextStyle(fontSize: 14),
               ),
               Text(
-                'Máximo: \$${maxValue.toStringAsFixed(2)} COP/kWh',
+                'Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh',
                 style: const TextStyle(fontSize: 14),
               ),
               const SizedBox(height: 12),
@@ -357,144 +358,144 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       padding: EdgeInsets.all(AppTokens.space24),
       child: Column(
         children: [
-          // Mostrar resumen de oferta existente si hay una
+          // Mostrar resumen compacto de oferta existente si hay una
           if (_hasExistingOffer && _existingOffer != null)
             _buildExistingOfferSummary(_existingOffer!),
 
           if (_hasExistingOffer && _existingOffer != null)
-            SizedBox(height: AppTokens.space32),
+            SizedBox(height: AppTokens.space24),
 
-          // Card de acción principal
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _hasExistingOffer ? Icons.edit : Icons.add_shopping_cart,
-                  size: 80,
-                  color: AppTokens.primaryRed.withValues(alpha: 0.7),
-                ),
-                SizedBox(height: AppTokens.space24),
-                Text(
-                  _hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta de Compra',
-                  style: context.textStyles.titleLarge?.copyWith(
-                    fontWeight: AppTokens.fontWeightBold,
+          // Card de acción principal (solo si NO hay oferta)
+          if (!_hasExistingOffer)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_shopping_cart,
+                    size: 80,
+                    color: AppTokens.primaryRed.withValues(alpha: 0.7),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: AppTokens.space12),
-                Text(
-                  _hasExistingOffer
-                      ? 'Puedes modificar tu oferta para ${_selectedPeriod.displayName}.'
-                      : 'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
-                  style: context.textStyles.bodyMedium?.copyWith(
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: AppTokens.space32),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ConsumerCreateOfferScreen(),
-                      ),
-                    );
-                    // Recargar estado al volver
-                    _checkExistingOffer();
-                  },
-                  icon: Icon(_hasExistingOffer ? Icons.edit : Icons.add),
-                  label: Text(_hasExistingOffer ? 'Modificar Oferta' : 'Crear Oferta'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTokens.primaryRed,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: AppTokens.space24,
-                      vertical: AppTokens.space16,
+                  SizedBox(height: AppTokens.space24),
+                  Text(
+                    'Crear Oferta de Compra',
+                    style: context.textStyles.titleLarge?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                SizedBox(height: AppTokens.space16),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
-                    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-                                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
-
-                    showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Row(
-                      children: [
-                        Icon(Icons.info_outline, color: AppTokens.primaryRed),
-                        SizedBox(width: 12),
-                        Text('¿Cómo funciona?'),
-                      ],
+                  SizedBox(height: AppTokens.space12),
+                  Text(
+                    'En Enero 2026, crea ofertas especificando qué % del PDE deseas comprar y a qué precio.',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: Colors.grey,
                     ),
-                    content: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Nuevo Modelo - Enero 2026',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '¿Qué cambió?',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('• Los consumidores ahora crean ofertas de compra'),
-                          const Text('• Las ofertas se basan en % del PDE disponible'),
-                          const Text('• Un administrador hace la liquidación'),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Rango de Precios:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          Text('Mínimo: \$${minValue.toStringAsFixed(2)} COP/kWh'),
-                          Text('Máximo: \$${maxValue.toStringAsFixed(2)} COP/kWh'),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Estos límites garantizan ahorro para consumidores y valor agregado para prosumidores.',
-                            style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Diferencia con Diciembre 2025:',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('• Antes: Prosumidores publicaban, consumidores aceptaban'),
-                          const Text('• Ahora: Consumidores ofertan, admin liquida'),
-                        ],
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: AppTokens.space32),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ConsumerCreateOfferScreen(),
+                        ),
+                      );
+                      _checkExistingOffer();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Crear Oferta'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTokens.primaryRed,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppTokens.space24,
+                        vertical: AppTokens.space16,
                       ),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Entendido'),
-                      ),
-                    ],
                   ),
-                );
-                  },
-                  icon: const Icon(Icons.info_outline),
-                  label: const Text('¿Cómo funciona?'),
-                ),
-              ],
+                  SizedBox(height: AppTokens.space16),
+                  OutlinedButton.icon(
+                    onPressed: () => _showHowItWorksDialog(),
+                    icon: const Icon(Icons.info_outline),
+                    label: const Text('¿Cómo funciona?'),
+                  ),
+                ],
+              ),
             ),
+        ],
+      ),
+    );
+  }
+
+  void _showHowItWorksDialog() {
+    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: AppTokens.primaryRed),
+            SizedBox(width: 12),
+            Text('¿Cómo funciona?'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Nuevo Modelo - Enero 2026',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '¿Qué cambió?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text('• Los consumidores ahora crean ofertas de compra'),
+              const Text('• Las ofertas se basan en % del PDE disponible'),
+              const Text('• Un administrador hace la liquidación'),
+              const SizedBox(height: 16),
+              const Text(
+                'Rango de Precios:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text('Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh'),
+              Text('Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh'),
+              const SizedBox(height: 12),
+              const Text(
+                'Estos límites garantizan ahorro para consumidores y valor agregado para prosumidores.',
+                style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Diferencia con Diciembre 2025:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text('• Antes: Prosumidores publicaban, consumidores aceptaban'),
+              const Text('• Ahora: Consumidores ofertan, admin liquida'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
           ),
         ],
       ),
     );
   }
 
-  /// Widget que muestra el resumen de la oferta existente
+  /// Widget compacto que muestra el resumen de la oferta existente con ícono de edición
   Widget _buildExistingOfferSummary(ConsumerOffer offer) {
     const double pdeMesAnterior = 720.0;
     final double tarifaTradicional = FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia;
@@ -526,7 +527,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header con ícono de edición
           Container(
             padding: EdgeInsets.all(AppTokens.space16),
             decoration: BoxDecoration(
@@ -538,11 +539,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 28,
-                ),
+                Icon(Icons.check_circle, color: Colors.white, size: 24),
                 SizedBox(width: AppTokens.space12),
                 Expanded(
                   child: Column(
@@ -552,7 +549,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                         'Tu Oferta Actual',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: AppTokens.fontWeightBold,
                         ),
                       ),
@@ -560,249 +557,136 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                         _selectedPeriod.displayName,
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 14,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppTokens.space12,
-                    vertical: AppTokens.space8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: AppTokens.borderRadiusMedium,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Text(
-                    'PENDIENTE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: AppTokens.fontWeightBold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                // Ícono de lápiz para editar
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  tooltip: 'Modificar Oferta',
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConsumerCreateOfferScreen(),
+                      ),
+                    );
+                    _checkExistingOffer();
+                  },
                 ),
               ],
             ),
           ),
 
-          // Contenido principal
+          // Contenido principal compacto
           Padding(
-            padding: EdgeInsets.all(AppTokens.space20),
+            padding: EdgeInsets.all(AppTokens.space16),
             child: Column(
               children: [
-                // PDE Solicitado y Precio
+                // PDE y Precio en fila
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PDE Solicitado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 13,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          '${(offer.pdePercentageRequested * 100).toStringAsFixed(2)}%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Precio Ofertado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 13,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          '\$${offer.pricePerKwh.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                        Text(
-                          'COP/kWh',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildMetricColumn('PDE Solicitado', '${Formatters.formatEnergy(pdePercentage, unit: '', decimals: 2)}%'),
+                    _buildMetricColumn('Precio', Formatters.formatCurrency(offer.pricePerKwh), subtitle: 'COP/kWh'),
                   ],
                 ),
 
-                SizedBox(height: AppTokens.space20),
+                SizedBox(height: AppTokens.space16),
 
-                // kWh Estimados (basado en 720 kWh del mes anterior)
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space12),
-                  decoration: BoxDecoration(
-                    color: AppTokens.energyGreen.withValues(alpha: 0.15),
-                    borderRadius: AppTokens.borderRadiusMedium,
-                    border: Border.all(
-                      color: AppTokens.energyGreen.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.electric_bolt,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          SizedBox(width: AppTokens.space8),
-                          Text(
-                            'Recibirás aprox.',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 13,
-                              fontWeight: AppTokens.fontWeightSemiBold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '${kwhEstimados.toStringAsFixed(2)} kWh',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                    ],
-                  ),
+                // Energía estimada
+                _buildInfoRow(
+                  Icons.electric_bolt,
+                  'Recibirás aprox.',
+                  Formatters.formatEnergy(kwhEstimados, decimals: 2),
+                  AppTokens.white,
                 ),
 
                 SizedBox(height: AppTokens.space12),
 
-                // Ahorro vs Tradicional (800 COP/kWh)
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: AppTokens.borderRadiusMedium,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.savings,
-                            color: Colors.white,
-                            size: 35,
-                          ),
-                          SizedBox(width: AppTokens.space8),
-                          Text(
-                            'Ahorro vs Tradicional',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 14,
-                              fontWeight: AppTokens.fontWeightSemiBold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppTokens.space12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '\$${ahorroTotal.toStringAsFixed(0)}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: AppTokens.fontWeightBold,
-                                height: 1.0,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            'COP',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 14,
-                              fontWeight: AppTokens.fontWeightMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: AppTokens.space8),
-                      // Row(
-                      //   children: [
-                      //     Text(
-                      //       '${kwhEstimados.toStringAsFixed(2)} kWh',
-                      //       style: TextStyle(
-                      //         color: Colors.white.withValues(alpha: 0.7),
-                      //         fontSize: 12,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
-                    
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: AppTokens.space12),
-
-                // Info adicional
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: AppTokens.borderRadiusMedium,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Colors.white.withValues(alpha: 0.7),
-                        size: 16,
-                      ),
-                      SizedBox(width: AppTokens.space8),
-                      Expanded(
-                        child: Text(
-                          'El administrador liquidará tu oferta al final del período',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                // Ahorro total
+                _buildInfoRow(
+                  Icons.savings,
+                  'Ahorro vs Tradicional',
+                  Formatters.formatCurrency(ahorroTotal),
+                  Colors.white,
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget reutilizable para mostrar métricas
+  Widget _buildMetricColumn(String label, String value, {String? subtitle}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 12,
+          ),
+        ),
+        SizedBox(height: AppTokens.space4),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: AppTokens.fontWeightBold,
+          ),
+        ),
+        if (subtitle != null)
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 11,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Widget reutilizable para filas de información
+  Widget _buildInfoRow(IconData icon, String label, String value, Color iconColor) {
+    return Container(
+      padding: EdgeInsets.all(AppTokens.space12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: iconColor, size: 18),
+              SizedBox(width: AppTokens.space8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 13,
+                  fontWeight: AppTokens.fontWeightSemiBold,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: AppTokens.fontWeightBold,
             ),
           ),
         ],
@@ -961,14 +845,14 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     child: _buildOfferDetail(
                       Icons.bolt,
                       'Energía',
-                      '${offer.energyAvailable.toStringAsFixed(1)} kWh',
+                      Formatters.formatEnergy(offer.energyAvailable, decimals: 1),
                     ),
                   ),
                   Expanded(
                     child: _buildOfferDetail(
                       Icons.attach_money,
                       'Precio',
-                      '\$${offer.pricePerKwh.toStringAsFixed(0)}',
+                      Formatters.formatCurrency(offer.pricePerKwh),
                     ),
                   ),
                 ],
@@ -989,7 +873,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     child: _buildOfferDetail(
                       Icons.payment,
                       'Total',
-                      '\$${offer.totalValue.toStringAsFixed(0)}',
+                      Formatters.formatCurrency(offer.totalValue),
                     ),
                   ),
                 ],
@@ -1030,7 +914,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                       ],
                     ),
                     Text(
-                      '${savingsPerKwh > 0 ? '-' : '+'}\$${totalSavings.abs().toStringAsFixed(0)} (${savingsPercentage.abs().toStringAsFixed(1)}%)',
+                      '${savingsPerKwh > 0 ? '-' : '+'}${Formatters.formatCurrency(totalSavings.abs())} (${savingsPercentage.abs().toStringAsFixed(1)}%)',
                       style: context.textStyles.bodyMedium?.copyWith(
                         color: savingsPerKwh > 0 ? AppTokens.energyGreen : AppTokens.primaryRed,
                         fontWeight: AppTokens.fontWeightBold,
@@ -1221,9 +1105,9 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
             ),
             Divider(height: AppTokens.space16),
             _buildContractRow('Vendedor', contract.sellerName),
-            _buildContractRow('Energía', '${contract.energyCommitted.toStringAsFixed(2)} kWh'),
-            _buildContractRow('Precio', '\$${contract.agreedPrice.toStringAsFixed(0)} COP/kWh'),
-            _buildContractRow('Total', '\$${contract.totalValue.toStringAsFixed(0)}', isBold: true),
+            _buildContractRow('Energía', Formatters.formatEnergy(contract.energyCommitted, decimals: 2)),
+            _buildContractRow('Precio', '${Formatters.formatCurrency(contract.agreedPrice)} COP/kWh'),
+            _buildContractRow('Total', Formatters.formatCurrency(contract.totalValue), isBold: true),
             SizedBox(height: AppTokens.space8),
             Text(
               'Fecha: ${contract.createdAt.day}/${contract.createdAt.month}/${contract.createdAt.year}',
