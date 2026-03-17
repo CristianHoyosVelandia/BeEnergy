@@ -13,7 +13,7 @@ import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../data/fake_periods_data.dart';
 import '../consumer/consumer_marketplace_screen.dart';
-import 'transaction_detail_screen.dart';
+// import 'transaction_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
@@ -1145,37 +1145,37 @@ class _HomeScreenState extends State<HomeScreen> {
             // Info footer
             Row(
               children: [
-                // Expanded(
-                //   child: Container(
-                //     padding: EdgeInsets.all(AppTokens.space12),
-                //     decoration: BoxDecoration(
-                //       color: Colors.white.withValues(alpha: 0.1),
-                //       borderRadius: AppTokens.borderRadiusSmall,
-                //     ),
-                //     child: Column(
-                //       crossAxisAlignment: CrossAxisAlignment.start,
-                //       children: [
-                //         Text(
-                //           'Prosumidor',
-                //           style: TextStyle(
-                //             color: Colors.white.withValues(alpha: 0.7),
-                //             fontSize: 11,
-                //           ),
-                //         ),
-                //         SizedBox(height: AppTokens.space4),
-                //         Text(
-                //           prosumerName,
-                //           style: const TextStyle(
-                //             color: Colors.white,
-                //             fontSize: 13,
-                //             fontWeight: FontWeight.bold,
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-                // SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(AppTokens.space12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Precio Mercado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 11,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          '${FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia.toStringAsFixed(2)} COP',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: AppTokens.space12),
                 Expanded(
                   child: Container(
                     padding: EdgeInsets.all(AppTokens.space12),
@@ -1425,46 +1425,47 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       actions: [
-        // Botón de cambio de vista Admin/Usuario
-        Container(
-          width: 45.0,
-          height: 45.0,
-          decoration: BoxDecoration(
-            color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryBlue,
-            border: Border.all(width: 2.0, color: Colors.white),
-            borderRadius: BorderRadius.circular(25.0),
-          ),
-          margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 10.0),
-          child: IconButton(
-            icon: Icon(
-              _isAdminView ? Icons.admin_panel_settings : Icons.person,
-              size: 22.0,
+        // Botón de cambio de vista Admin/Usuario (solo para role 3 - Admin)
+        if (widget.myUser?.role != null && widget.myUser!.role == 3)
+          Container(
+            width: 45.0,
+            height: 45.0,
+            decoration: BoxDecoration(
+              color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryBlue,
+              border: Border.all(width: 2.0, color: Colors.white),
+              borderRadius: BorderRadius.circular(25.0),
             ),
-            color: Colors.white,
-            tooltip: _isAdminView ? "Vista Administrador" : "Vista Usuario",
-            onPressed: () {
-              setState(() {
-                _isAdminView = !_isAdminView;
-              });
-              context.showInfoSnackbar(
-                _isAdminView ? 'Vista: Administrador Comunitario' : 'Vista: Usuario'
-              );
-            },
+            margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 10.0),
+            child: IconButton(
+              icon: Icon(
+                _isAdminView ? Icons.admin_panel_settings : Icons.person,
+                size: 22.0,
+              ),
+              color: Colors.white,
+              tooltip: _isAdminView ? "Vista Administrador" : "Vista Usuario",
+              onPressed: () {
+                setState(() {
+                  _isAdminView = !_isAdminView;
+                });
+                context.showInfoSnackbar(
+                  _isAdminView ? 'Vista: Administrador Comunitario' : 'Vista: Usuario'
+                );
+              },
+            ),
           ),
-        ),
         // Botón de notificaciones
         Container(
           width: 45.0,
           height: 45.0,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTokens.primaryRed,
             border: Border.all(width: 2.0, color: Colors.white),
             borderRadius: BorderRadius.circular(25.0),
           ),
           margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 15.0),
           child: IconButton(
             icon: const Icon(Icons.notifications, size: 25.0),
-            color: AppTokens.primaryBlue,
+            color: Colors.white,
             tooltip: "Notificaciones",
             onPressed: () {
               context.push(const NotificacionesScreen());

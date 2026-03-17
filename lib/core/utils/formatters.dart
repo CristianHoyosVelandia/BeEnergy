@@ -57,12 +57,12 @@ class Formatters {
 
   /// Formatea un valor de energía
   /// Ejemplo: 1500 -> "1.500 kWh"
-  static String formatEnergy(
-    num value, {
-    String unit = 'kWh',
-    int decimals = 0,
-  }) {
-    final formatted = formatNumber(value, decimals: decimals);
+  static String formatEnergy(num value, {String unit = 'kWh', int decimals = 0}) {
+    final formatter = NumberFormat.decimalPattern('es_CO')
+      ..minimumFractionDigits = decimals
+      ..maximumFractionDigits = decimals;
+
+    final formatted = formatter.format(value);
     return '$formatted $unit';
   }
 
