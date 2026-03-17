@@ -1,25 +1,31 @@
 
 class MyUser {
 
-  final int?  idUser; 
+  final int?  idUser;
   final String? nombre;
+  final String? lastname;
   final String? telefono;
-  final String? correo; 
+  final String? correo;
   final String? clave;
-  final String? energia; 
+  final String? energia;
   final String? dinero;
   final int?    idCiudad;
+  final int?    role;
+  final String? roleName;
 
   //Constructor de la clase
   MyUser({
     this.idUser,
     this.nombre,
+    this.lastname,
     this.telefono,
     this.correo,
     this.clave,
     this.energia,
     this.dinero,
-    this.idCiudad
+    this.idCiudad,
+    this.role,
+    this.roleName,
   });
 
   //Conversión a Map
@@ -27,12 +33,15 @@ class MyUser {
     return {
       'idUser': idUser,
       'nombre': nombre,
+      'lastname': lastname,
       'telefono': telefono,
       'correo': correo,
       'clave': clave,
       'energia': energia,
       'dinero': dinero,
-      'idCiudad': idCiudad
+      'idCiudad': idCiudad,
+      'role': role,
+      'roleName': roleName,
     };
   }
 

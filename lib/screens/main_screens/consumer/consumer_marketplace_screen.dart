@@ -496,6 +496,13 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
   /// Widget que muestra el resumen de la oferta existente
   Widget _buildExistingOfferSummary(ConsumerOffer offer) {
+    const double pdeMesAnterior = 720.0;
+    final double tarifaTradicional = FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia;
+    final double pdePercentage = offer.pdePercentageRequested * 100;
+    final double kwhEstimados = (pdePercentage * pdeMesAnterior) / 100;
+    final double ahorroPorKwh = tarifaTradicional - offer.pricePerKwh;
+    final double ahorroTotal = ahorroPorKwh * kwhEstimados;
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
       decoration: BoxDecoration(
@@ -647,6 +654,126 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 ),
 
                 SizedBox(height: AppTokens.space20),
+
+                // kWh Estimados (basado en 720 kWh del mes anterior)
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space12),
+                  decoration: BoxDecoration(
+                    color: AppTokens.energyGreen.withValues(alpha: 0.15),
+                    borderRadius: AppTokens.borderRadiusMedium,
+                    border: Border.all(
+                      color: AppTokens.energyGreen.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.electric_bolt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          SizedBox(width: AppTokens.space8),
+                          Text(
+                            'Recibirás aprox.',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 13,
+                              fontWeight: AppTokens.fontWeightSemiBold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '${kwhEstimados.toStringAsFixed(2)} kWh',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: AppTokens.space12),
+
+                // Ahorro vs Tradicional (800 COP/kWh)
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: AppTokens.borderRadiusMedium,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.savings,
+                            color: Colors.white,
+                            size: 35,
+                          ),
+                          SizedBox(width: AppTokens.space8),
+                          Text(
+                            'Ahorro vs Tradicional',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                              fontWeight: AppTokens.fontWeightSemiBold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: AppTokens.space12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '\$${ahorroTotal.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: AppTokens.fontWeightBold,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'COP',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 14,
+                              fontWeight: AppTokens.fontWeightMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: AppTokens.space8),
+                      // Row(
+                      //   children: [
+                      //     Text(
+                      //       '${kwhEstimados.toStringAsFixed(2)} kWh',
+                      //       style: TextStyle(
+                      //         color: Colors.white.withValues(alpha: 0.7),
+                      //         fontSize: 12,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
+                    
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: AppTokens.space12),
 
                 // Info adicional
                 Container(
