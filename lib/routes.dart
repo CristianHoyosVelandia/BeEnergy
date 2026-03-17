@@ -12,7 +12,7 @@ export 'package:be_energy/screens/main_screens/miCuenta/tutorial.dart';
 export 'package:be_energy/screens/main_screens/miCuenta/aprende.dart';
 export 'package:be_energy/screens/main_screens/miCuenta/centroNotificacionesPerfil.dart';
 
-export 'package:be_energy/screens/main_screens/miCuenta/miCuenta.dart';
+export 'package:be_energy/screens/main_screens/miCuenta/mi_cuenta.dart';
 export 'package:be_energy/screens/main_screens/Login/noRecuerdomiClave_screen.dart';
 export 'package:be_energy/screens/main_screens/Login/register_screen.dart';
 export 'package:be_energy/screens/main_screen.dart';

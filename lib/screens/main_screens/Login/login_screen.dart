@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
   
-  //comparador para iniciar session en la App de Kupi. si hay un error por medio de 
+  //comparador para iniciar session en la App de Kupi. si hay un error por medio de
   // un flus bar indica el error al usuario (usuario no existente, password incorrecta). entre otros.
   // de ser el caso al iniciar la sesión por primera vez, desplega el tutorial.
   void iniciarSesion(MyUser usuario) async {
@@ -215,12 +215,15 @@ class _LoginScreenState extends State<LoginScreen> {
     MyUser usuariolocal = MyUser(
       idUser    : usuario.idUser,
       nombre    : usuario.nombre,
+      lastname  : usuario.lastname,
       telefono  : usuario.telefono,
       correo    : usuario.correo,
       clave     : usuario.clave,
       energia   : usuario.energia,
       dinero    : usuario.dinero,
-      idCiudad  : usuario.idCiudad
+      idCiudad  : usuario.idCiudad,
+      role      : usuario.role,
+      roleName  : usuario.roleName,
     );
 
 
@@ -260,14 +263,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Crear usuario local con los datos del API
                 MyUser usuario = MyUser(
                   idUser: userData['user_id'] ?? 0,
-                  nombre: userData['name'] ?? 'Cristian Hoyos' ?? userData['email'],
-                  telefono: userData['phone'] ?? '3176703596',
+                  nombre: userData['name'] ?? userData['email'],
+                  lastname: userData['lastname'] ?? '',
+                  telefono: userData['phone'] ?? '',
                   correo: userData['email'] ?? _email.text,
                   clave: _clave.text,
                   energia: userData['energy'] ?? '0',
                   dinero: userData['balance'] ?? '0',
                   idCiudad: userData['city_id'] ?? 0,
+                  role: userData['role'],
+                  roleName: userData['role_name'],
                 );
+
+                // Debug: imprimir datos del usuario
+                debugPrint('Login - Usuario creado:');
+                debugPrint('  ID: ${usuario.idUser}');
+                debugPrint('  Nombre: ${usuario.nombre}');
+                debugPrint('  Role: ${usuario.role}');
+                debugPrint('  Role Name: ${usuario.roleName}');
 
                 // Guardar en base de datos local
                 iniciarSesion(usuario);
