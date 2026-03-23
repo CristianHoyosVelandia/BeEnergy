@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 export 'package:be_energy/data/iconos.dart';
@@ -263,7 +263,7 @@ class Metodos {
   static Future flushbarNegativo(context, mensaje) { 
     return Flushbar(
       message: mensaje,
-      backgroundColor: Colors.red,
+      backgroundColor: AppTokens.primaryRed,
       messageColor: Colors.white,
       duration: const Duration(seconds: 3),
       icon: const Icon(
@@ -798,7 +798,7 @@ class Metodos {
           color: colApp1
         )
       ),
-      errorStyle: descripcionTextStyle(context, Colors.red, 15),
+      errorStyle: descripcionTextStyle(context, AppTokens.primaryRed, 15),
       focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(
           color: colApp1

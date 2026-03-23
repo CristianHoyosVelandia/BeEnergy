@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
-import '../../../services/consumer_offer_service.dart';
+import '../../../services/consumer_offer_api_service.dart';
 import '../../../widgets/pde_indicator.dart';
 import '../../../models/regulatory_models.dart';
+import '../../../models/consumer_offer.dart';
 
-/// Pantalla de Creación de Oferta P2P - CONSUMIDOR
-/// Permite al consumidor crear ofertas basadas en % del PDE
+/// Pantalla de Creación/Edición de Oferta P2P - CONSUMIDOR
+/// Permite al consumidor crear o actualizar ofertas basadas en % del PDE
 /// ENERO 2026+ - Nuevo modelo de mercado
 class ConsumerCreateOfferScreen extends StatefulWidget {
-  const ConsumerCreateOfferScreen({super.key});
+  /// Oferta existente para editar (null si es creación)
+  final ConsumerOffer? existingOffer;
+
+  const ConsumerCreateOfferScreen({
+    super.key,
+    this.existingOffer,
+  });
 
   @override
   State<ConsumerCreateOfferScreen> createState() => _ConsumerCreateOfferScreenState();
 }
 
 class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
-  final ConsumerOfferService _offerService = ConsumerOfferService();
+  final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
 
   // Datos del consumidor (Ana López)
   final _consumer = FakeDataJanuary2026.anaLopez;
@@ -43,11 +51,22 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  /// Indica si estamos en modo edición
+  bool get _isEditMode => widget.existingOffer != null;
+
   @override
   void initState() {
     super.initState();
-    // Inicializar con precio mínimo (MC_m × 1.1 = 330 COP)
-    _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor;
+
+    // Si existe oferta, pre-llenar el formulario
+    if (_isEditMode) {
+      final offer = widget.existingOffer!;
+      _pdePercentageRequested = offer.pdePercentageRequested * 100; // Convertir decimal a porcentaje
+      _pricePerKwh = offer.pricePerKwh;
+    } else {
+      // Inicializar con precio mínimo (MC_m × 1.1 = 330 COP)
+      _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor;
+    }
   }
 
   /// Verifica si el precio está en rango válido (330 a 693.5 COP/kWh)
@@ -65,22 +84,21 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     return energyKwh * _pricePerKwh;
   }
 
-  /// Crea la oferta de consumidor
-  Future<void> _createOffer() async {
+  /// Crea o actualiza la oferta de consumidor
+  Future<void> _submitOffer() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      print('Creando oferta de consumidor... pdePercentageRequested: $_pdePercentageRequested%, pricePerKwh: $_pricePerKwh');
       // Validaciones
-      if (_pdePercentageRequested <= 0.0) {
-        throw Exception('Debe solicitar más de 0% del PDE');
+      if (_pdePercentageRequested <= 0.01) {
+        throw Exception('Debe solicitar al menos 0.01% del PDE');
       }
 
-      if (_pdePercentageRequested > 9.99) {
-        throw Exception('No puede solicitar más del 9.99% del PDE (máximo 10% por usuario)');
+      if (_pdePercentageRequested > 99.99) {
+        throw Exception('No puede solicitar más del 99.99% del PDE');
       }
 
       if (!_isPriceValid) {
@@ -91,29 +109,37 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         );
       }
 
-      // Convertir porcentaje (1-100) a decimal (0.01-1.0)
-      final pdePercentage = _pdePercentageRequested / 100.0;
+      ConsumerOffer offer;
 
-      // Crear oferta usando el servicio
-      final offer = await _offerService.createConsumerOffer(
-        buyerId: _consumer.userId,
-        buyerName: _consumer.fullName,
-        communityId: _consumer.communityId,
-        period: '2026-01',
-        pdePercentageRequested: pdePercentage,
-        pricePerKwh: _pricePerKwh,
-        ve: _ve,
-        tarifaMax: FakeDataJanuary2026.precioMaximoConsumidor,
-        buyerNIU: _consumer.niu,
-      );
+      if (_isEditMode) {
+        // Actualizar oferta existente
+        offer = await _apiService.updateOffer(
+          offerId: widget.existingOffer!.id,
+          pdePercentageRequested: _pdePercentageRequested,
+          pricePerKwh: _pricePerKwh,
+        );
+      } else {
+        // Crear nueva oferta
+        offer = await _apiService.createOffer(
+          buyerId: _consumer.userId,
+          communityId: _consumer.communityId,
+          period: '2026-01',
+          pdePercentageRequested: _pdePercentageRequested,
+          pricePerKwh: _pricePerKwh,
+        );
+      }
 
       // Mostrar éxito
       if (mounted) {
         _showSuccessDialog(offer.id);
       }
+    } on ApiException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = 'Error inesperado: $e';
       });
     } finally {
       setState(() {
@@ -131,7 +157,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           children: [
             const Icon(Icons.check_circle, color: AppTokens.energyGreen, size: 32),
             SizedBox(width: AppTokens.space12),
-            const Text('Oferta Publicada'),
+            Text(_isEditMode ? 'Oferta Actualizada' : 'Oferta Publicada'),
           ],
         ),
         content: Column(
@@ -139,9 +165,12 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: AppTokens.space12),
-            const Text(
-              'Tu oferta de compra ha sido publicada exitosamente. '
-              'El administrador revisará las ofertas durante la liquidación mensual.',
+            Text(
+              _isEditMode
+                  ? 'Tu oferta de compra ha sido actualizada exitosamente. '
+                      'El administrador revisará las ofertas durante la liquidación mensual.'
+                  : 'Tu oferta de compra ha sido publicada exitosamente. '
+                      'El administrador revisará las ofertas durante la liquidación mensual.',
             ),
             SizedBox(height: AppTokens.space32),
             _buildInfoRow('Oferta #', '$offerId'),
@@ -211,9 +240,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Crear Oferta de PDE',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          _isEditMode ? 'Actualizar Oferta de PDE' : 'Crear Oferta de PDE',
+          style: const TextStyle(color: Colors.white),
         ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -254,12 +283,12 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
             ? null
-            : _createOffer,
+            : _submitOffer,
         backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
             ? AppTokens.primaryRed
             : Colors.grey,
-        icon: const Icon(Icons.publish),
-        label: const Text('+'),
+        icon: Icon(_isEditMode ? Icons.save : Icons.publish),
+        label: Text(_isEditMode ? 'Actualizar' : 'Publicar'),
       ),
     );
   }

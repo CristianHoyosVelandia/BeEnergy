@@ -115,7 +115,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? AppTokens.primaryRed : Colors.green,
       ),
     );
   }

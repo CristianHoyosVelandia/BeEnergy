@@ -164,10 +164,29 @@ class ApiEndpoints {
   static const String consumerOffers = '/consumer-offers';
 
   /// Endpoint para crear oferta de consumidor
-  static const String createConsumerOffer = '/consumer-offers/create';
+  static const String createConsumerOffer = '/consumer-offers';
 
-  /// Endpoint para aceptar oferta de consumidor
-  static String acceptConsumerOffer(String id) => '/consumer-offers/$id/accept';
+  /// Endpoint para obtener ofertas por comprador
+  static String getConsumerOffersByBuyer(int buyerId) => '/consumer-offers/buyer/$buyerId';
+
+  /// Endpoint para obtener oferta por ID
+  static String getConsumerOfferById(int offerId) => '/consumer-offers/$offerId';
+
+  /// Endpoint para actualizar oferta de consumidor
+  static String updateConsumerOffer(int offerId) => '/consumer-offers/$offerId';
+
+  /// Endpoint para cancelar oferta de consumidor
+  static String cancelConsumerOffer(int offerId) => '/consumer-offers/$offerId/cancel';
+
+  /// Endpoint para liquidar oferta de consumidor
+  static String liquidateConsumerOffer(int offerId) => '/consumer-offers/$offerId/liquidate';
+
+  /// Endpoint para obtener ofertas por período
+  static String getConsumerOffersByPeriod(String period) => '/consumer-offers/period/$period';
+
+  /// Endpoint para obtener ofertas por comunidad y período
+  static String getConsumerOffersByCommunityAndPeriod(int communityId, String period) =>
+      '/consumer-offers/community/$communityId/period/$period';
 
   // ==================== CREDITS ENDPOINTS ====================
   /// Endpoint para obtener créditos de energía

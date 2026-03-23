@@ -142,7 +142,7 @@ class _EnergyCreditsScreenState extends State<EnergyCreditsScreen> {
                     ),
                     Column(
                       children: [
-                        Icon(Icons.arrow_circle_up_outlined, color: Colors.red, size: 28),
+                        Icon(Icons.arrow_circle_up_outlined, color: AppTokens.primaryRed, size: 28),
                         SizedBox(height: AppTokens.space8),
                         Text(
                           Formatters.formatCurrency(totalDebits),

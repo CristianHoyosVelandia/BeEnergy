@@ -1,3 +1,4 @@
+import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/screens/main_screens/Dinero/pausecard_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -267,7 +268,7 @@ class _CardscreenState extends State<Cardscreen> {
                     '-\$8,392',
                     textAlign: TextAlign.start,
                     style: TextStyle(
-                      color: Colors.red,
+                      color: AppTokens.primaryRed,
                       fontSize: 25.0,
                       fontFamily:"SEGOEUI",
                       fontWeight: FontWeight.w600,
@@ -293,7 +294,7 @@ class _CardscreenState extends State<Cardscreen> {
                       ),
                       const Icon(
                         Icons.trending_up_rounded,
-                        color: Colors.red,
+                        color: AppTokens.primaryRed,
                         size: 24,
                       ),
                     ],

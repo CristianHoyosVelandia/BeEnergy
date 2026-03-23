@@ -179,14 +179,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 1,
             ),
             borderRadius: AppTokens.borderRadiusSmall,
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 2,
             ),
             borderRadius: AppTokens.borderRadiusSmall,

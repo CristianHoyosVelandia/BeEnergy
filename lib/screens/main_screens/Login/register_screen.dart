@@ -113,20 +113,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             icon ?? (obscureText ? Icons.lock_outline : Icons.person_outline),
-            color: Colors.red,
+            color: AppTokens.primaryRed,
           ),
         ),
         validator: validator,
@@ -156,10 +156,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Text(
               "Volver a login",
               style: context.textStyles.titleMedium?.copyWith(
-                color: Colors.red,
+                color: AppTokens.primaryRed,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
-                decorationColor: Colors.red,
+                decorationColor: AppTokens.primaryRed,
                 decorationThickness: 2,
               ),
             ),
@@ -374,7 +374,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: AppTokens.primaryRed,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
                   shape: RoundedRectangleBorder(

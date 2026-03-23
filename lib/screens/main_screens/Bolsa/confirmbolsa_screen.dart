@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+
 import 'package:flutter/material.dart';
 import '../../../models/my_intercambio.dart';
 import '../../../routes.dart';
@@ -229,7 +231,7 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 0.25,
             ),
             borderRadius: BorderRadius.circular(8),

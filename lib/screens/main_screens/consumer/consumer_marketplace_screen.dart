@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../models/p2p_offer.dart';
 import '../../../models/consumer_offer.dart';
-import '../../../services/consumer_offer_service.dart';
+import '../../../services/consumer_offer_api_service.dart';
 import '../../../widgets/pde_indicator.dart';
 import 'offer_detail_acceptance_screen.dart';
 import 'consumer_create_offer_screen.dart';
@@ -37,7 +38,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   late TabController _tabController;
 
   final _consumer = FakeDataPhase2.cristianHoyos;
-  final _offerService = ConsumerOfferService();
+  final _apiService = ConsumerOfferApiService();
 
   // Período seleccionado (por defecto Enero 2026)
   MarketPeriod _selectedPeriod = MarketPeriod.january2026;
@@ -46,6 +47,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   bool _hasExistingOffer = false;
   bool _isCheckingOffer = true;
   ConsumerOffer? _existingOffer;
+  String? _loadError;
 
   @override
   void initState() {
@@ -56,18 +58,140 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
   /// Verifica si existe una oferta para el período actual
   Future<void> _checkExistingOffer() async {
-    final offer = await _offerService.getBuyerOfferForPeriod(
-      _consumer.userId,
-      _selectedPeriod.period,
+    if (!mounted) return;
+
+    setState(() {
+      _isCheckingOffer = true;
+      _loadError = null;
+    });
+
+    try {
+      final offer = await _apiService.getBuyerOfferForPeriod(
+        _consumer.userId,
+        _selectedPeriod.period,
+      );
+
+      if (mounted) {
+        setState(() {
+          _existingOffer = offer;
+          _hasExistingOffer = offer != null && offer.status == ConsumerOfferStatus.pending;
+          _isCheckingOffer = false;
+          _loadError = null;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _existingOffer = null;
+          _hasExistingOffer = false;
+          _isCheckingOffer = false;
+          _loadError = e.message;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _existingOffer = null;
+          _hasExistingOffer = false;
+          _isCheckingOffer = false;
+          _loadError = 'Error al cargar oferta: $e';
+        });
+      }
+    }
+  }
+
+  /// Cancela la oferta existente
+  Future<void> _cancelOffer() async {
+    if (_existingOffer == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancelar Oferta'),
+        content: const Text('¿Estás seguro de que deseas cancelar esta oferta?\n\nEsta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTokens.primaryRed,
+            ),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      ),
     );
 
-    if (mounted) {
-      setState(() {
-        _existingOffer = offer;
-        _hasExistingOffer = offer != null && offer.status == ConsumerOfferStatus.pending;
-        _isCheckingOffer = false;
-      });
+    if (confirmed != true || !mounted) return;
+
+    // Mostrar loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await _apiService.cancelOffer(_existingOffer!.id);
+
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Oferta cancelada exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Recargar ofertas
+        await _checkExistingOffer();
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cancelar: ${e.message}'),
+            backgroundColor: AppTokens.primaryRed,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error inesperado: $e'),
+            backgroundColor: AppTokens.primaryRed,
+          ),
+        );
+      }
     }
+  }
+
+  /// Navega a la pantalla de editar oferta
+  Future<void> _editOffer() async {
+    if (_existingOffer == null) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConsumerCreateOfferScreen(
+          existingOffer: _existingOffer,
+        ),
+      ),
+    );
+
+    // Recargar ofertas después de editar
+    _checkExistingOffer();
   }
 
   @override
@@ -175,6 +299,10 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 setState(() {
                   _selectedPeriod = period;
                 });
+                // Recargar ofertas al cambiar de período
+                if (period == MarketPeriod.january2026) {
+                  _checkExistingOffer();
+                }
               },
               child: Container(
                 padding: EdgeInsets.symmetric(
@@ -350,6 +478,55 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       return const Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+        ),
+      );
+    }
+
+    // Mostrar error si hubo problema al cargar
+    if (_loadError != null) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppTokens.space24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppTokens.primaryRed.withValues(alpha: 0.7),
+              ),
+              SizedBox(height: AppTokens.space16),
+              Text(
+                'Error al cargar ofertas',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: AppTokens.space8),
+              Text(
+                _loadError!,
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: AppTokens.space24),
+              ElevatedButton.icon(
+                onPressed: _checkExistingOffer,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTokens.primaryRed,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppTokens.space24,
+                    vertical: AppTokens.space12,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -567,15 +744,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.white),
                   tooltip: 'Modificar Oferta',
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ConsumerCreateOfferScreen(),
-                      ),
-                    );
-                    _checkExistingOffer();
-                  },
+                  onPressed: _editOffer,
                 ),
               ],
             ),
@@ -613,6 +782,24 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                   'Ahorro vs Tradicional',
                   Formatters.formatCurrency(ahorroTotal),
                   Colors.white,
+                ),
+
+                SizedBox(height: AppTokens.space16),
+
+                // Botón de cancelar oferta
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _cancelOffer,
+                    icon: const Icon(Icons.cancel, size: 18),
+                    label: const Text('Cancelar Oferta'),
+                    style: OutlinedButton.styleFrom(
+                      
+                      foregroundColor: AppTokens.white,
+                      side: const BorderSide(color: Colors.white, width: 1.5),
+                      padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+                    ),
+                  ),
                 ),
               ],
             ),

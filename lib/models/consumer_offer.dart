@@ -148,7 +148,7 @@ class ConsumerOffer {
     };
   }
 
-  /// Crea una instancia desde Map
+  /// Crea una instancia desde Map (almacenamiento local)
   factory ConsumerOffer.fromJson(Map<String, dynamic> json) {
     return ConsumerOffer(
       id: json['id'] as int,
@@ -174,6 +174,60 @@ class ConsumerOffer {
       matchedProsumerId: json['matchedProsumerId'] as int?,
       buyerNIU: json['buyerNIU'] as String?,
     );
+  }
+
+  /// Crea una instancia desde respuesta del backend (snake_case)
+  ///
+  /// El backend retorna:
+  /// - pde_percentage_requested como porcentaje (0.01-99.99)
+  /// - status como int (0-4)
+  /// - created_at en formato ISO 8601
+  factory ConsumerOffer.fromBackendJson(Map<String, dynamic> json) {
+    // Calcular validUntil basado en el período
+    DateTime validUntil;
+    try {
+      final parts = (json['period'] as String).split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final lastDay = DateTime(year, month + 1, 0);
+      validUntil = DateTime(year, month, lastDay.day, 23, 59, 59);
+    } catch (e) {
+      validUntil = DateTime.now();
+    }
+
+    return ConsumerOffer(
+      id: json['id'] as int,
+      buyerId: json['buyer_id'] as int,
+      buyerName: 'Usuario ${json['buyer_id']}', // El backend no retorna nombre
+      communityId: json['community_id'] as int,
+      period: json['period'] as String,
+      // Backend retorna como porcentaje (0.01-99.99), convertir a decimal (0.0001-0.9999)
+      pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble() / 100,
+      pricePerKwh: (json['price_per_kwh'] as num).toDouble(),
+      energyKwhCalculated: null, // Backend no retorna este campo
+      // Backend retorna status como int (0-4)
+      status: ConsumerOfferStatus.values[(json['status'] as int).clamp(0, 4)],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      validUntil: validUntil,
+      liquidationSessionId: json['liquidation_session_id'] as int?,
+      liquidatedAt: json['liquidated_at'] != null
+          ? DateTime.parse(json['liquidated_at'] as String)
+          : null,
+      matchedProsumerId: null, // Backend no retorna este campo
+      buyerNIU: null, // Backend no retorna este campo
+    );
+  }
+
+  /// Convierte el modelo a formato backend (snake_case)
+  Map<String, dynamic> toBackendJson() {
+    return {
+      'buyer_id': buyerId,
+      'community_id': communityId,
+      'period': period,
+      // Convertir de decimal (0.0001-0.9999) a porcentaje (0.01-99.99)
+      'pde_percentage_requested': pdePercentageRequested * 100,
+      'price_per_kwh': pricePerKwh,
+    };
   }
 
   @override

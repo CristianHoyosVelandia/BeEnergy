@@ -134,26 +134,26 @@ class _LoginScreenState extends State<LoginScreen> {
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             obscureText ? Icons.lock_outline : Icons.email_outlined,
-            color: Colors.red,
+            color: AppTokens.primaryRed,
           ),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     showpassword ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.red,
+                    color: AppTokens.primaryRed,
                   ),
                   onPressed: () {
                     if (!mounted) return;
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               '¿Olvidaste la contraseña?',
               style: context.textStyles.bodyMedium?.copyWith(
-                color: Colors.red,
+                color: AppTokens.primaryRed,
                 fontWeight: AppTokens.fontWeightMedium,
               ),
             ),
@@ -320,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: AppTokens.primaryRed,
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
           shape: RoundedRectangleBorder(
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               "Regístrate",
               style: context.textStyles.titleMedium?.copyWith(
-                color: Colors.red,
+                color: AppTokens.primaryRed,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
                 decorationColor: Colors.white,

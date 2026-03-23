@@ -551,17 +551,17 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               decoration: BoxDecoration(
                 color: isCompliant
                     ? Colors.green.withValues(alpha: 0.1)
-                    : Colors.red.withValues(alpha: 0.1),
+                    : AppTokens.primaryRed.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
                 border: Border.all(
-                  color: isCompliant ? Colors.green : Colors.red,
+                  color: isCompliant ? Colors.green : AppTokens.primaryRed,
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     isCompliant ? Icons.verified : Icons.warning,
-                    color: isCompliant ? Colors.green : Colors.red,
+                    color: isCompliant ? Colors.green : AppTokens.primaryRed,
                   ),
                   SizedBox(width: AppTokens.space12),
                   Expanded(
@@ -571,14 +571,14 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                         Text(
                           isCompliant ? 'CUMPLE CREG 101 072' : 'NO CUMPLE',
                           style: context.textStyles.bodyMedium?.copyWith(
-                            color: isCompliant ? Colors.green : Colors.red,
+                            color: isCompliant ? Colors.green : AppTokens.primaryRed,
                             fontWeight: AppTokens.fontWeightBold,
                           ),
                         ),
                         Text(
                           'Desviación: ${deviation.toStringAsFixed(1)}% del VE',
                           style: context.textStyles.bodySmall?.copyWith(
-                            color: isCompliant ? Colors.green : Colors.red,
+                            color: isCompliant ? Colors.green : AppTokens.primaryRed,
                           ),
                         ),
                       ],
@@ -671,18 +671,18 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
       margin: EdgeInsets.all(AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
+        color: AppTokens.primaryRed.withValues(alpha: 0.1),
         borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(color: Colors.red),
+        border: Border.all(color: AppTokens.primaryRed),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: Colors.red),
+          const Icon(Icons.error, color: AppTokens.primaryRed),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: context.textStyles.bodyMedium?.copyWith(color: Colors.red),
+              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryRed),
             ),
           ),
         ],

@@ -297,7 +297,7 @@ class _IntercambiosEnergyScreenState extends State<IntercambiosEnergyScreen> {
     );
 
     final bool isIncome = data['entrada'] == true;
-    final Color borderColor = isIncome ? context.colors.primary : Colors.red;
+    final Color borderColor = isIncome ? context.colors.primary : AppTokens.primaryRed;
 
     return InkWell(
       highlightColor: Colors.transparent,

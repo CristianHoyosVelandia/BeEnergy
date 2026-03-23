@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
 import '../../../routes.dart';
+
 
 class EEscreen extends StatefulWidget {
   const EEscreen({super.key});
@@ -228,7 +230,7 @@ class _EEscreenState extends State<EEscreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: Colors.red,
+              color: AppTokens.primaryRed,
               width: 0.25,
             ),
             borderRadius: BorderRadius.circular(8),

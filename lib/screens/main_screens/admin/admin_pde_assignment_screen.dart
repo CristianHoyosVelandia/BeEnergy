@@ -360,7 +360,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                     '${_pdeToAssign.toStringAsFixed(1)} kWh',
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: AppTokens.primaryBlue,
+                      color: AppTokens.primaryRed,
                     ),
                   ),
                 ),
@@ -389,7 +389,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      color: isCompliant ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+      color: isCompliant ? Colors.green.withValues(alpha: 0.1) : AppTokens.primaryRed.withValues(alpha: 0.1),
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space16),
         child: Column(
@@ -398,7 +398,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
               children: [
                 Icon(
                   isCompliant ? Icons.check_circle : Icons.warning,
-                  color: isCompliant ? Colors.green : Colors.red,
+                  color: isCompliant ? Colors.green : AppTokens.primaryRed,
                   size: 32,
                 ),
                 SizedBox(width: AppTokens.space12),
@@ -409,7 +409,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                       Text(
                         isCompliant ? 'Cumple Regulación' : 'Excede Límite',
                         style: context.textStyles.titleMedium?.copyWith(
-                          color: isCompliant ? Colors.green : Colors.red,
+                          color: isCompliant ? Colors.green : AppTokens.primaryRed,
                           fontWeight: AppTokens.fontWeightBold,
                         ),
                       ),
@@ -417,7 +417,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                       Text(
                         'CREG 101 072 Art 3.4',
                         style: context.textStyles.bodySmall?.copyWith(
-                          color: isCompliant ? Colors.green : Colors.red,
+                          color: isCompliant ? Colors.green : AppTokens.primaryRed,
                         ),
                       ),
                     ],
@@ -426,7 +426,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                 Text(
                   '${percentage.toStringAsFixed(1)}%',
                   style: context.textStyles.headlineMedium?.copyWith(
-                    color: isCompliant ? Colors.green : Colors.red,
+                    color: isCompliant ? Colors.green : AppTokens.primaryRed,
                     fontWeight: AppTokens.fontWeightBold,
                   ),
                 ),
@@ -437,7 +437,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
               value: percentage / 10.0,
               backgroundColor: Colors.grey.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isCompliant ? Colors.green : Colors.red,
+                isCompliant ? Colors.green : AppTokens.primaryRed,
               ),
             ),
             SizedBox(height: AppTokens.space8),
@@ -517,18 +517,18 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
       margin: EdgeInsets.all(AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
+        color: AppTokens.primaryRed.withValues(alpha: 0.1),
         borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(color: Colors.red),
+        border: Border.all(color: AppTokens.primaryRed),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: Colors.red),
+          const Icon(Icons.error, color: AppTokens.primaryRed),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: context.textStyles.bodyMedium?.copyWith(color: Colors.red),
+              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryRed),
             ),
           ),
         ],
