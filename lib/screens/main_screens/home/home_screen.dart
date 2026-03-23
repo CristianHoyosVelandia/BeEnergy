@@ -6,12 +6,13 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-import '../../../models/callmodels.dart';
-import '../../../models/community_models.dart';
+import '../../../models/models.dart';
 import '../../../data/fake_data.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../data/fake_periods_data.dart';
+import '../../../repositories/domain/pde_period_repository.dart';
+import '../../../repositories/impl/pde_period_repository_api.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 // import 'transaction_detail_screen.dart';
 
@@ -26,6 +27,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Metodos metodos = Metodos();
   String _selectedPeriod = FakePeriodsData.currentPeriod; // Período actual por defecto
   bool _isAdminView = false; // Vista de usuario por defecto
+
+  // PDE Period Status (API data)
+  PDEPeriodStatus? _pdePeriodStatus;
+  bool _isLoadingPDEStatus = true;
+  final PDEPeriodRepository _pdePeriodRepository = PDEPeriodRepositoryApi();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPDEPeriodStatus();
+  }
+
+  /// Carga el estado del periodo PDE desde la API
+  Future<void> _loadPDEPeriodStatus() async {
+    setState(() => _isLoadingPDEStatus = true);
+
+    try {
+      print('🔍 Cargando estado PDE para periodo: $_selectedPeriod');
+
+      final status = await _pdePeriodRepository.getPeriodStatus(
+        communityId: 1, // UAO community
+        period: _selectedPeriod,
+      );
+
+      print('✅ Estado PDE recibido: ${status.statusName} (code: ${status.statusCode})');
+      print('   Puede crear ofertas: ${status.canCreateOffers}');
+      print('   isPDEAvailable: ${status.isPDEAvailable}');
+
+      setState(() {
+        _pdePeriodStatus = status;
+        _isLoadingPDEStatus = false;
+      });
+    } catch (e, stackTrace) {
+      print('❌ Error cargando estado PDE: $e');
+      print('📍 StackTrace: $stackTrace');
+      setState(() => _isLoadingPDEStatus = false);
+    }
+  }
 
   /// Obtiene el período seleccionado como objeto MonthPeriod
   MonthPeriod get _currentPeriodData {
@@ -594,6 +633,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _selectedPeriod = period;
         });
         Navigator.pop(context);
+
+        // Recargar estado PDE para el nuevo periodo
+        _loadPDEPeriodStatus();
+
         context.showInfoSnackbar('Período cambiado a $title');
       } : null,
       child: Container(
@@ -1005,8 +1048,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Widget destacado del PDE - Solo para Enero 2026
+  /// Widget destacado del PDE - Controlado por API
   Widget _buildPDEHighlightCard() {
+    // Mostrar loading mientras carga
+    if (_isLoadingPDEStatus) {
+      return Container(
+        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+        padding: EdgeInsets.all(AppTokens.space20),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Si no hay estado o no está disponible, ocultar el card
+    if (_pdePeriodStatus == null || !_pdePeriodStatus!.isPDEAvailable) {
+      return const SizedBox.shrink();
+    }
+
     final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
     final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia - FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
     return GestureDetector(
@@ -1064,7 +1121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '⚡ Nuevo: PDE Disponible',
+                        _pdePeriodStatus!.getDisplayMessage(),
                         style: context.textStyles.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: AppTokens.fontWeightBold,
@@ -1072,7 +1129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: AppTokens.space4),
                       Text(
-                        'Enero 2026 - Modelo de Ofertas',
+                        '${_currentPeriodData.displayName} - Modelo de Ofertas',
                         style: context.textStyles.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
@@ -1089,58 +1146,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: AppTokens.space20),
 
-            // PDE Amount
-            // Container(
-            //   padding: EdgeInsets.all(AppTokens.space16),
-            //   decoration: BoxDecoration(
-            //     color: Colors.white.withValues(alpha: 0.15),
-            //     borderRadius: AppTokens.borderRadiusMedium,
-            //     border: Border.all(
-            //       color: Colors.white.withValues(alpha: 0.3),
-            //       width: 1,
-            //     ),
-            //   ),
-            //   child: Column(
-            //     children: [
-            //       Row(
-            //         mainAxisAlignment: MainAxisAlignment.center,
-            //         crossAxisAlignment: CrossAxisAlignment.end,
-            //         children: [
-            //           Text(
-            //             totalPDEAvailable.toStringAsFixed(1),
-            //             style: const TextStyle(
-            //               color: Colors.white,
-            //               fontSize: 48,
-            //               fontWeight: FontWeight.bold,
-            //             ),
-            //           ),
-            //           SizedBox(width: AppTokens.space8),
-            //           Padding(
-            //             padding: EdgeInsets.only(bottom: AppTokens.space12),
-            //             child: Text(
-            //               'kWh',
-            //               style: TextStyle(
-            //                 color: Colors.white.withValues(alpha: 0.9),
-            //                 fontSize: 20,
-            //                 fontWeight: AppTokens.fontWeightSemiBold,
-            //               ),
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //       SizedBox(height: AppTokens.space8),
-            //       Text(
-            //         'Programa de Distribución de Excedentes',
-            //         style: TextStyle(
-            //           color: Colors.white.withValues(alpha: 0.8),
-            //           fontSize: 12,
-            //         ),
-            //         textAlign: TextAlign.center,
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            // SizedBox(height: AppTokens.space16),
 
             // Info footer
             Row(
@@ -1325,11 +1330,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Indicador visual de estado mensual con selector de período
         _buildMonthlyStatusIndicator(),
         SizedBox(height: AppTokens.space16),
-        // Widget destacado del PDE (solo para período actual que es Enero 2026)
-        if (_isCurrentPeriod) ...[
-          _buildPDEHighlightCard(),
-          SizedBox(height: AppTokens.space16),
-        ],
+        // Widget destacado del PDE (controlado por API - se muestra solo si está disponible)
+        _buildPDEHighlightCard(),
+        SizedBox(height: AppTokens.space16),
         _indicadores(),
         SizedBox(height: AppTokens.space24),
         // Precios de referencia del mes (solo admin, período actual)
