@@ -13,6 +13,7 @@ import '../../../data/fake_data_january_2026.dart';
 import '../../../data/fake_periods_data.dart';
 import '../../../repositories/domain/pde_period_repository.dart';
 import '../../../repositories/impl/pde_period_repository_api.dart';
+import '../../../core/config/data_source_config.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 // import 'transaction_detail_screen.dart';
 
@@ -33,10 +34,53 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingPDEStatus = true;
   final PDEPeriodRepository _pdePeriodRepository = PDEPeriodRepositoryApi();
 
+  // User Period History (API data)
+  UserPeriodHistory? _userPeriodHistory;
+  bool _isLoadingPeriods = true;
+
   @override
   void initState() {
     super.initState();
+    _loadUserPeriods();
     _loadPDEPeriodStatus();
+  }
+
+  /// Carga el historial de períodos del usuario desde la API o usa mock data
+  Future<void> _loadUserPeriods() async {
+    // Si ENABLE_MOCKS=true, no llamar al backend
+    if (DataSourceConfig.isFake) {
+      setState(() {
+        _isLoadingPeriods = false;
+      });
+      return;
+    }
+
+    setState(() => _isLoadingPeriods = true);
+
+    try {
+      final userId = widget.myUser?.idUser ?? 1;
+
+      print('🔍 [HomeScreen] Cargando historial de períodos para usuario: $userId');
+
+      final history = await _pdePeriodRepository.getUserPeriodHistory(
+        userId: userId,
+        communityId: 1,
+        limit: 4,
+      );
+
+      print('✅ [HomeScreen] Historial recibido: ${history.totalPeriods} períodos');
+      print('   Período actual del sistema: ${history.currentPeriod}');
+
+      setState(() {
+        _userPeriodHistory = history;
+        // SIEMPRE seleccionar el período actual del sistema (viene del backend)
+        _selectedPeriod = history.currentPeriod;
+        _isLoadingPeriods = false;
+      });
+    } catch (e) {
+      print('❌ [HomeScreen] Error cargando historial de períodos: $e');
+      setState(() => _isLoadingPeriods = false);
+    }
   }
 
   /// Carga el estado del periodo PDE desde la API
@@ -74,7 +118,52 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Verifica si el período seleccionado es el actual
   bool get _isCurrentPeriod {
+    // Si estamos usando datos del backend
+    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
+      return _selectedPeriod == _userPeriodHistory!.currentPeriod;
+    }
+    // Si estamos usando mock data
     return _currentPeriodData.status == PeriodStatus.current;
+  }
+
+  /// Obtiene los datos energéticos del período seleccionado (desde backend o mock)
+  Map<String, double> get _selectedPeriodEnergyData {
+    // Si ENABLE_MOCKS=false, buscar datos en UserPeriodHistory
+    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
+      // Buscar el período seleccionado en la lista de períodos con datos
+      final periodData = _userPeriodHistory!.periods.firstWhere(
+        (p) => p.period == _selectedPeriod,
+        orElse: () => UserPeriodItem(
+          period: _selectedPeriod,
+          displayName: '',
+          status: 'current',
+          hasData: false,
+          pdeStatusCode: 0,
+          pdeAvailable: false,
+          energyRecord: EnergyRecordSummary(
+            energyGenerated: 0,
+            energyConsumed: 0,
+            energyExported: 0,
+            energyImported: 0,
+          ),
+        ),
+      );
+
+      return {
+        'generated': periodData.energyRecord.energyGenerated,
+        'consumed': periodData.energyRecord.energyConsumed,
+        'exported': periodData.energyRecord.energyExported,
+        'imported': periodData.energyRecord.energyImported,
+      };
+    }
+
+    // Si ENABLE_MOCKS=true, retornar datos mock (lógica existente)
+    return {
+      'generated': 0,
+      'consumed': 0,
+      'exported': 0,
+      'imported': 0,
+    };
   }
 
   // Transacciones P2P según período seleccionado
@@ -213,7 +302,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _trData() {
-    // Seleccionar datos según vista y período
+    // Si ENABLE_MOCKS=false, usar datos del backend
+    if (!DataSourceConfig.isFake) {
+      final energyData = _selectedPeriodEnergyData;
+      const costPerKwh = 300.0; // Precio promedio COP/kWh
+
+      return Column(
+        children: [
+          _energyCard(
+            title: "Importe",
+            energy: energyData['imported']!,
+            amount: energyData['imported']! * costPerKwh,
+            icon: Icons.trending_down_rounded,
+            color: AppTokens.error,
+          ),
+          SizedBox(height: AppTokens.space8),
+          _energyCard(
+            title: "Exportada",
+            energy: energyData['exported']!,
+            amount: energyData['exported']! * costPerKwh,
+            icon: Icons.trending_up_rounded,
+            color: AppTokens.primaryRed,
+          ),
+        ],
+      );
+    }
+
+    // Si ENABLE_MOCKS=true, usar datos mock (lógica existente)
     late CommunityStats stats;
     late double costPerKwh;
 
@@ -417,15 +532,101 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Indicador visual compacto de estado mensual con botón para cambiar período
   Widget _buildMonthlyStatusIndicator() {
-    // Obtener datos del período desde FakePeriodsData
-    final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
-                       FakePeriodsData.currentPeriodData;
+    // Si ENABLE_MOCKS=true, usar FakePeriodsData
+    if (DataSourceConfig.isFake) {
+      final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
+                         FakePeriodsData.currentPeriodData;
 
-    final statusColor = periodData.getStatusColor();
-    final statusIcon = periodData.getStatusIcon();
-    final statusText = periodData.getStatusText();
-    final periodLabel = periodData.displayName;
-    final isCurrentMonth = periodData.status == PeriodStatus.current;
+      return _buildStatusIndicatorWidget(
+        statusColor: periodData.getStatusColor(),
+        statusIcon: periodData.getStatusIcon(),
+        statusText: periodData.getStatusText(),
+        periodLabel: periodData.displayName,
+        isCurrentMonth: periodData.status == PeriodStatus.current,
+      );
+    }
+
+    // Si ENABLE_MOCKS=false, verificar si el período seleccionado tiene datos
+    if (_userPeriodHistory != null) {
+      // Buscar si el período seleccionado está en la lista de períodos con datos
+      final periodIndex = _userPeriodHistory!.periods.indexWhere(
+        (p) => p.period == _selectedPeriod,
+      );
+
+      if (periodIndex != -1) {
+        // El período seleccionado tiene datos históricos
+        final periodItem = _userPeriodHistory!.periods[periodIndex];
+        return _buildStatusIndicatorWidget(
+          statusColor: periodItem.getStatusColor(),
+          statusIcon: periodItem.getStatusIcon(),
+          statusText: periodItem.getStatusText(),
+          periodLabel: periodItem.displayName,
+          isCurrentMonth: periodItem.isCurrentPeriod,
+        );
+      } else {
+        // El período seleccionado NO tiene datos (ej: período actual sin registros)
+        // Verificar si es el período actual del sistema
+        final isCurrentPeriod = _selectedPeriod == _userPeriodHistory!.currentPeriod;
+
+        return _buildStatusIndicatorWidget(
+          statusColor: isCurrentPeriod ? AppTokens.primaryRed : context.colors.onSurfaceVariant,
+          statusIcon: isCurrentPeriod ? Icons.auto_awesome : Icons.calendar_month_outlined,
+          statusText: isCurrentPeriod ? 'NUEVO MODELO' : 'MES CERRADO',
+          periodLabel: _formatPeriodLabel(_selectedPeriod),
+          isCurrentMonth: isCurrentPeriod,
+        );
+      }
+    }
+
+    // Si ENABLE_MOCKS=false PERO _userPeriodHistory es null (error de carga)
+    return _buildStatusIndicatorWidget(
+      statusColor: context.colors.onSurfaceVariant,
+      statusIcon: Icons.calendar_month_outlined,
+      statusText: 'SIN DATOS',
+      periodLabel: _formatCurrentPeriod(),
+      isCurrentMonth: false,
+    );
+  }
+
+  /// Formatea el período actual en español
+  String _formatCurrentPeriod() {
+    final now = DateTime.now();
+    final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return '${months[now.month - 1]} ${now.year}';
+  }
+
+  /// Formatea un período YYYY-MM a formato legible (ej: "Marzo 2026")
+  String _formatPeriodLabel(String period) {
+    final months = {
+      '01': 'Enero', '02': 'Febrero', '03': 'Marzo',
+      '04': 'Abril', '05': 'Mayo', '06': 'Junio',
+      '07': 'Julio', '08': 'Agosto', '09': 'Septiembre',
+      '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+    };
+
+    try {
+      final parts = period.split('-');
+      if (parts.length == 2) {
+        final year = parts[0];
+        final month = parts[1];
+        return '${months[month] ?? month} $year';
+      }
+    } catch (e) {
+      print('Error formateando período $period: $e');
+    }
+
+    return period; // Fallback: retornar el período original
+  }
+
+  /// Widget del indicador de estado (extraído para reutilización)
+  Widget _buildStatusIndicatorWidget({
+    required Color statusColor,
+    required IconData statusIcon,
+    required String statusText,
+    required String periodLabel,
+    required bool isCurrentMonth,
+  }) {
 
     return InkWell(
       onTap: _showPeriodSelectorModal,
@@ -566,52 +767,181 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: AppTokens.space20),
               // Lista de períodos con scroll
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      ...FakePeriodsData.availablePeriods.map((period) {
-                        final metadata = FakePeriodsData.getPeriodMetadata(period.period);
-                        final subtitle = metadata?['description'] ?? 'Datos de comunidad energética';
-
-                        // Determinar badge según estado
-                        String badge;
-                        switch (period.status) {
-                          case PeriodStatus.current:
-                            badge = '✨';
-                            break;
-                          case PeriodStatus.historical:
-                            badge = period.hasData ? '🔄' : '📊';
-                            break;
-                          case PeriodStatus.future:
-                            badge = '🔒';
-                            break;
-                        }
-
-                        return Column(
-                          children: [
-                            if (FakePeriodsData.availablePeriods.indexOf(period) > 0)
-                              Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
-                            _buildModalPeriodOption(
-                              period: period.period,
-                              title: period.displayName,
-                              subtitle: subtitle,
-                              icon: period.getStatusIcon(),
-                              iconColor: period.getStatusColor(),
-                              badge: badge,
-                              enabled: period.hasData,
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                ),
+                child: _isLoadingPeriods
+                    ? Center(child: CircularProgressIndicator())
+                    : _buildPeriodsList(),
               ),
               SizedBox(height: AppTokens.space20),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Construye la lista de períodos según la fuente de datos (API o Mock)
+  Widget _buildPeriodsList() {
+    // Si ENABLE_MOCKS=true, SIEMPRE usar FakePeriodsData
+    if (DataSourceConfig.isFake) {
+      return _buildFakePeriodsListView();
+    }
+
+    // Si ENABLE_MOCKS=false, SIEMPRE usar datos del backend (aunque estén vacíos)
+    return _buildApiPeriodsListView();
+  }
+
+  /// Lista de períodos desde FakePeriodsData (ENABLE_MOCKS=true)
+  Widget _buildFakePeriodsListView() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          ...FakePeriodsData.availablePeriods.map((period) {
+            final metadata = FakePeriodsData.getPeriodMetadata(period.period);
+            final subtitle = metadata?['description'] ?? 'Datos de comunidad energética';
+
+            // Determinar badge según estado
+            String badge;
+            switch (period.status) {
+              case PeriodStatus.current:
+                badge = '✨';
+                break;
+              case PeriodStatus.historical:
+                badge = period.hasData ? '🔄' : '📊';
+                break;
+              case PeriodStatus.future:
+                badge = '🔒';
+                break;
+            }
+
+            return Column(
+              children: [
+                if (FakePeriodsData.availablePeriods.indexOf(period) > 0)
+                  Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
+                _buildModalPeriodOption(
+                  period: period.period,
+                  title: period.displayName,
+                  subtitle: subtitle,
+                  icon: period.getStatusIcon(),
+                  iconColor: period.getStatusColor(),
+                  badge: badge,
+                  enabled: period.hasData,
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// Lista de períodos desde API (ENABLE_MOCKS=false)
+  Widget _buildApiPeriodsListView() {
+    // Construir lista de widgets de períodos
+    final List<Widget> periodWidgets = [];
+
+    // 1. SIEMPRE agregar el período actual primero (si no tiene datos históricos)
+    if (_userPeriodHistory != null) {
+      final currentPeriod = _userPeriodHistory!.currentPeriod;
+
+      // Verificar si el período actual ya está en la lista de períodos con datos
+      final hasCurrentPeriodData = _userPeriodHistory!.periods.any(
+        (p) => p.period == currentPeriod,
+      );
+
+      // Si el período actual NO tiene datos históricos, agregarlo manualmente
+      if (!hasCurrentPeriodData && _pdePeriodStatus != null) {
+        // Verificar que el _pdePeriodStatus corresponde al período actual
+        final isCurrentPeriodStatus = _pdePeriodStatus!.period == currentPeriod;
+
+        final subtitle = isCurrentPeriodStatus && _pdePeriodStatus!.canCreateOffers
+            ? 'PDE Disponible - Puedes crear ofertas'
+            : isCurrentPeriodStatus
+                ? 'Estado: ${_pdePeriodStatus!.statusName}'
+                : 'Sin datos disponibles';
+
+        periodWidgets.add(
+          _buildModalPeriodOption(
+            period: currentPeriod,  // Usar currentPeriod, NO _pdePeriodStatus.period
+            title: _formatPeriodLabel(currentPeriod),
+            subtitle: subtitle,
+            icon: Icons.auto_awesome,
+            iconColor: AppTokens.primaryRed,
+            badge: '✨',
+            enabled: true,
+          ),
+        );
+      }
+    }
+
+    // 2. Agregar períodos históricos (desde _userPeriodHistory)
+    if (_userPeriodHistory != null && _userPeriodHistory!.periods.isNotEmpty) {
+      for (var i = 0; i < _userPeriodHistory!.periods.length; i++) {
+        final period = _userPeriodHistory!.periods[i];
+
+        // Construir subtitle con datos energéticos
+        final energyData = period.energyRecord;
+        final subtitle = 'Consumo: ${Formatters.formatEnergy(energyData.energyConsumed)} • '
+            'Generación: ${Formatters.formatEnergy(energyData.energyGenerated)}';
+
+        // Agregar divider si no es el primer elemento de la lista completa
+        if (periodWidgets.isNotEmpty || i > 0) {
+          periodWidgets.add(
+            Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
+          );
+        }
+
+        periodWidgets.add(
+          _buildModalPeriodOption(
+            period: period.period,
+            title: period.displayName,
+            subtitle: subtitle,
+            icon: period.getStatusIcon(),
+            iconColor: period.getStatusColor(),
+            badge: period.getStatusBadge(),
+            enabled: period.hasData,
+          ),
+        );
+      }
+    }
+
+    // 3. Si no hay ningún período (ni actual ni históricos), mostrar mensaje vacío
+    if (periodWidgets.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppTokens.space24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.inbox_outlined,
+                size: 64,
+                color: context.colors.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+              SizedBox(height: AppTokens.space16),
+              Text(
+                'Sin períodos disponibles',
+                style: context.textStyles.bodyLarge?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: AppTokens.space8),
+              Text(
+                'No tienes registros energéticos todavía',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Retornar lista de períodos
+    return SingleChildScrollView(
+      child: Column(
+        children: periodWidgets,
+      ),
     );
   }
 

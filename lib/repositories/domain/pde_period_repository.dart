@@ -1,4 +1,5 @@
 import '../../models/pde_period_status.dart';
+import '../../models/user_period_history.dart';
 
 /// Repositorio abstracto para operaciones de periodos PDE.
 ///
@@ -14,5 +15,21 @@ abstract class PDEPeriodRepository {
   Future<PDEPeriodStatus> getPeriodStatus({
     required int communityId,
     String? period,
+  });
+
+  /// Obtiene el historial de períodos disponibles para un usuario.
+  ///
+  /// Retorna los períodos donde el usuario tiene registros en energy_records,
+  /// combinados con el estado PDE de cada período.
+  ///
+  /// [userId]: ID del usuario
+  /// [communityId]: ID de la comunidad energética (default: 1)
+  /// [limit]: Número máximo de períodos a retornar (default: 4)
+  ///
+  /// Returns: [UserPeriodHistory] con la lista de períodos del usuario
+  Future<UserPeriodHistory> getUserPeriodHistory({
+    required int userId,
+    int communityId = 1,
+    int limit = 4,
   });
 }

@@ -10,6 +10,7 @@ export 'my_credentials.dart';
 // Community models
 export 'community_models.dart';
 export 'pde_period_status.dart';
+export 'user_period_history.dart';
 
 // Energy models
 export 'energy_models.dart';
