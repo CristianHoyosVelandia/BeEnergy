@@ -9,6 +9,7 @@ class ConsumerOffer {
   final int id;
   final int buyerId;
   final String buyerName;
+  final String? buyerType; // "Consumidor" | "Prosumidor" (opcional)
   final int communityId;
   final String period; // Formato: 'YYYY-MM'
 
@@ -40,6 +41,7 @@ class ConsumerOffer {
     required this.id,
     required this.buyerId,
     required this.buyerName,
+    this.buyerType,
     required this.communityId,
     required this.period,
     required this.pdePercentageRequested,
@@ -95,6 +97,7 @@ class ConsumerOffer {
     int? id,
     int? buyerId,
     String? buyerName,
+    String? buyerType,
     int? communityId,
     String? period,
     double? pdePercentageRequested,
@@ -112,6 +115,7 @@ class ConsumerOffer {
       id: id ?? this.id,
       buyerId: buyerId ?? this.buyerId,
       buyerName: buyerName ?? this.buyerName,
+      buyerType: buyerType ?? this.buyerType,
       communityId: communityId ?? this.communityId,
       period: period ?? this.period,
       pdePercentageRequested: pdePercentageRequested ?? this.pdePercentageRequested,
@@ -133,6 +137,7 @@ class ConsumerOffer {
       'id': id,
       'buyerId': buyerId,
       'buyerName': buyerName,
+      'buyerType': buyerType,
       'communityId': communityId,
       'period': period,
       'pdePercentageRequested': pdePercentageRequested,
@@ -154,6 +159,7 @@ class ConsumerOffer {
       id: json['id'] as int,
       buyerId: json['buyerId'] as int,
       buyerName: json['buyerName'] as String,
+      buyerType: json['buyerType'] as String?,
       communityId: json['communityId'] as int,
       period: json['period'] as String,
       pdePercentageRequested: (json['pdePercentageRequested'] as num).toDouble(),
@@ -173,6 +179,57 @@ class ConsumerOffer {
           : null,
       matchedProsumerId: json['matchedProsumerId'] as int?,
       buyerNIU: json['buyerNIU'] as String?,
+    );
+  }
+
+  /// Crea una instancia desde respuesta extendida del backend con info del comprador
+  ///
+  /// El backend retorna (con JOINs):
+  /// - buyer_name, buyer_lastname (desde users)
+  /// - buyer_type (desde roles: "Consumer" | "Prosumer")
+  /// - pde_estimated (calculado desde energy_records)
+  /// - energy_requested (pde_estimated * pde_percentage_requested)
+  /// - pde_percentage_requested como decimal (0.0-1.0)
+  /// - status como int (0-4)
+  factory ConsumerOffer.fromBackendJsonWithBuyerInfo(Map<String, dynamic> json) {
+    // Calcular validUntil basado en el período
+    DateTime validUntil;
+    try {
+      final parts = (json['period'] as String).split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final lastDay = DateTime(year, month + 1, 0);
+      validUntil = DateTime(year, month, lastDay.day, 23, 59, 59);
+    } catch (e) {
+      validUntil = DateTime.now();
+    }
+
+    // Mapear buyer_type a español
+    String buyerType = json['buyer_type'] as String;
+    String buyerTypeSpanish = buyerType == 'Consumer' ? 'Consumidor' : 'Prosumidor';
+
+    return ConsumerOffer(
+      id: json['id'] as int,
+      buyerId: json['buyer_id'] as int,
+      buyerName: '${json['buyer_name']} ${json['buyer_lastname']}',
+      buyerType: buyerTypeSpanish,
+      communityId: json['community_id'] as int,
+      period: json['period'] as String,
+      // Backend retorna como decimal (0.0-1.0)
+      pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble(),
+      pricePerKwh: (json['price_per_kwh'] as num).toDouble(),
+      // Usar energy_requested calculado por el backend
+      energyKwhCalculated: (json['energy_requested'] as num).toDouble(),
+      // Backend retorna status como int (0-4)
+      status: ConsumerOfferStatus.values[(json['status'] as int).clamp(0, 4)],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      validUntil: validUntil,
+      liquidationSessionId: json['liquidation_session_id'] as int?,
+      liquidatedAt: json['liquidated_at'] != null
+          ? DateTime.parse(json['liquidated_at'] as String)
+          : null,
+      matchedProsumerId: null,
+      buyerNIU: null,
     );
   }
 
@@ -199,6 +256,7 @@ class ConsumerOffer {
       id: json['id'] as int,
       buyerId: json['buyer_id'] as int,
       buyerName: 'Usuario ${json['buyer_id']}', // El backend no retorna nombre
+      buyerType: null, // Este método no incluye buyer_type
       communityId: json['community_id'] as int,
       period: json['period'] as String,
       // Backend retorna como porcentaje (0.01-99.99), convertir a decimal (0.0001-0.9999)

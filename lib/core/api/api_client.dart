@@ -28,12 +28,12 @@ class ApiClient {
 
     // Agregar interceptor de logs en modo debug
     _dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-      error: true,
+      request: false,
+      requestHeader: false, // Desactivar logs de headers para evitar información sensible
+      requestBody: false,
+      responseHeader: false,
+      responseBody: false,
+      error: false,
     ));
   }
 

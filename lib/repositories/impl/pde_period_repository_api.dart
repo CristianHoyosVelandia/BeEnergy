@@ -30,15 +30,10 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         queryParameters: queryParams,
       );
 
-      print('📡 [PDEPeriodRepositoryApi] Respuesta recibida:');
-      print('   Status code: ${response.statusCode}');
-      print('   Success: ${response.data['success']}');
-      print('   Data: ${response.data['data']}');
-
       // Validar respuesta exitosa
       if (response.statusCode == 200 && response.data['success'] == true) {
         final pdeStatus = PDEPeriodStatus.fromJson(response.data['data']);
-        print('✅ [PDEPeriodRepositoryApi] PDEPeriodStatus parseado correctamente');
+        // print('✅ [PDEPeriodRepositoryApi] PDEPeriodStatus parseado correctamente');
         return pdeStatus;
       } else {
         throw Exception(

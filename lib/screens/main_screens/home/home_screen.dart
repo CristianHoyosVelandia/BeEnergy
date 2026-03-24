@@ -15,6 +15,7 @@ import '../../../repositories/domain/pde_period_repository.dart';
 import '../../../repositories/impl/pde_period_repository_api.dart';
 import '../../../core/config/data_source_config.dart';
 import '../consumer/consumer_marketplace_screen.dart';
+import '../admin/admin_community_offers_screen.dart';
 // import 'transaction_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -41,7 +42,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserPeriods();
+    _initializeData();
+  }
+
+  /// Inicializa los datos del HomeScreen de forma secuencial
+  Future<void> _initializeData() async {
+    // 1. Primero cargar el historial de períodos (para obtener currentPeriod)
+    await _loadUserPeriods();
+
+    // 2. Luego cargar el estado PDE del período actual (ya tenemos _selectedPeriod correcto)
     _loadPDEPeriodStatus();
   }
 
@@ -59,17 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final userId = widget.myUser?.idUser ?? 1;
-
-      print('🔍 [HomeScreen] Cargando historial de períodos para usuario: $userId');
-
       final history = await _pdePeriodRepository.getUserPeriodHistory(
         userId: userId,
         communityId: 1,
         limit: 4,
       );
-
-      print('✅ [HomeScreen] Historial recibido: ${history.totalPeriods} períodos');
-      print('   Período actual del sistema: ${history.currentPeriod}');
 
       setState(() {
         _userPeriodHistory = history;
@@ -78,7 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingPeriods = false;
       });
     } catch (e) {
-      print('❌ [HomeScreen] Error cargando historial de períodos: $e');
       setState(() => _isLoadingPeriods = false);
     }
   }
@@ -88,16 +90,15 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoadingPDEStatus = true);
 
     try {
-      print('🔍 Cargando estado PDE para periodo: $_selectedPeriod');
+      // print('🔍 Cargando estado PDE para periodo: $_selectedPeriod');
 
       final status = await _pdePeriodRepository.getPeriodStatus(
         communityId: 1, // UAO community
         period: _selectedPeriod,
       );
-
-      print('✅ Estado PDE recibido: ${status.statusName} (code: ${status.statusCode})');
-      print('   Puede crear ofertas: ${status.canCreateOffers}');
-      print('   isPDEAvailable: ${status.isPDEAvailable}');
+      // print('✅ Estado PDE recibido: ${status.statusName} (code: ${status.statusCode})');
+      // print('   Puede crear ofertas: ${status.canCreateOffers}');
+      // print('   isPDEAvailable: ${status.isPDEAvailable}');
 
       setState(() {
         _pdePeriodStatus = status;
@@ -217,46 +218,74 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<GGData> _getChartData() {
-    // Datos según vista (Admin/Usuario) y período seleccionado
+    // Si ENABLE_MOCKS=false, usar datos del backend
+    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
+      final energyData = _selectedPeriodEnergyData;
+
+      // Verificar si todos los valores son 0
+      final allZero = energyData['generated'] == 0 &&
+          energyData['consumed'] == 0 &&
+          energyData['exported'] == 0 &&
+          energyData['imported'] == 0;
+
+      // Si todos son 0, retornar datos con un valor mínimo para mostrar el gráfico
+      if (allZero) {
+        return [
+          GGData('Sin datos', 1),
+        ];
+      }
+
+      // Filtrar solo valores mayores a 0 para el gráfico
+      final List<GGData> chartData = [];
+
+      if (energyData['generated']! > 0) {
+        chartData.add(GGData('Generada', energyData['generated']!.toInt()));
+      }
+      if (energyData['consumed']! > 0) {
+        chartData.add(GGData('Consumida', energyData['consumed']!.toInt()));
+      }
+      if (energyData['exported']! > 0) {
+        chartData.add(GGData('Exportada', energyData['exported']!.toInt()));
+      }
+      if (energyData['imported']! > 0) {
+        chartData.add(GGData('Importada', energyData['imported']!.toInt()));
+      }
+
+      return chartData.isNotEmpty ? chartData : [GGData('Sin datos', 1)];
+    }
+
+    // Mock data logic - solo cuando ENABLE_MOCKS=true
     late dynamic stats;
     late int p2pEnergy;
-    // Para 2026-01: Red = solo importación real de la red (no autoconsumo solar)
     double? gridImportOverride;
 
     switch (_selectedPeriod) {
-      case '2026-01': // Enero 2026 – datos del caso de estudio
+      case '2026-01':
         stats = _isAdminView
-            ? FakeDataPhase2.communityStats          // Admin: comunidad agregada
-            : FakeDataPhase2.cristianIndividualStatsDec2025; // Usuario: prosumidor l₁
+            ? FakeDataPhase2.communityStats
+            : FakeDataPhase2.cristianIndividualStatsDec2025;
 
-        // P2P: energía del contrato activo (408.38 kWh)
         p2pEnergy = FakeDataPhase2.allContracts
             .fold<double>(0, (sum, c) => sum + c.energyCommitted)
             .toInt();
 
-        // Prosumidor l₁ no importa de red (su 107.7 es autoconsumo solar)
-        // Admin: solo el consumidor k₁ importa 120 kWh de red
         gridImportOverride = _isAdminView ? 120.0 : 0.0;
         break;
 
-      case '2025-12': // Diciembre 2025 – datos históricos Phase1
+      case '2025-12':
         stats = _isAdminView
             ? FakeData.communityStats
             : FakeData.cristianIndividualStatsNov2025;
 
-        p2pEnergy = _isAdminView
-            ? 650
-            : 30;
+        p2pEnergy = _isAdminView ? 650 : 30;
         break;
 
-      default: // Históricos anteriores
+      default:
         stats = _isAdminView
             ? FakeData.communityStats
             : FakeData.cristianIndividualStatsNov2025;
 
-        p2pEnergy = _isAdminView
-            ? 650
-            : 30;
+        p2pEnergy = _isAdminView ? 650 : 30;
     }
 
     final List<GGData> chartData = [
@@ -1398,13 +1427,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia - FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
     return GestureDetector(
       onTap: () {
-        // Navegar al marketplace con tab de Enero 2026
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ConsumerMarketplaceScreen(),
-          ),
-        );
+        // Navegación según el rol del usuario
+        if (_isAdminView) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminCommunityOffersScreen(
+                period: _selectedPeriod,
+              ),
+            ),
+          );
+        } else {
+          // Usuario: Navegar al marketplace para crear oferta
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ConsumerMarketplaceScreen(),
+            ),
+          );
+        }
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -1439,8 +1480,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: AppTokens.borderRadiusSmall,
                   ),
-                  child: const Icon(
-                    Icons.bolt,
+                  child: Icon(
+                    _isAdminView ? Icons.list_alt : Icons.bolt,
                     color: Colors.white,
                     size: 28,
                   ),
@@ -1451,7 +1492,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _pdePeriodStatus!.getDisplayMessage(),
+                        _isAdminView
+                          ? 'Revisar Ofertas'
+                          : _pdePeriodStatus!.getDisplayMessage(),
                         style: context.textStyles.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: AppTokens.fontWeightBold,
@@ -1459,7 +1502,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: AppTokens.space4),
                       Text(
-                        '${_currentPeriodData.displayName} - Modelo de Ofertas',
+                        _isAdminView
+                          ? '${_currentPeriodData.displayName} - Gestión Comunitaria'
+                          : '${_currentPeriodData.displayName} - Modelo de Ofertas',
                         style: context.textStyles.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
@@ -1545,7 +1590,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: AppTokens.space16),
 
-            // CTA Button
+            // CTA Button - Diferente según el rol
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(
@@ -1559,14 +1604,16 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.add_shopping_cart,
+                  Icon(
+                    _isAdminView ? Icons.manage_search : Icons.add_shopping_cart,
                     color: AppTokens.primaryRed,
                     size: 20,
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
-                    'Crear Oferta de PDE',
+                    _isAdminView
+                      ? 'Revisar Ofertas Comunitarias'
+                      : 'Crear Oferta de PDE',
                     style: context.textStyles.bodyMedium?.copyWith(
                       color: AppTokens.primaryRed,
                       fontWeight: AppTokens.fontWeightBold,
@@ -1764,18 +1811,18 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 45.0,
             height: 45.0,
             decoration: BoxDecoration(
-              color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryBlue,
+              color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryRed,
               border: Border.all(width: 2.0, color: Colors.white),
               borderRadius: BorderRadius.circular(25.0),
             ),
             margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 10.0),
             child: IconButton(
               icon: Icon(
-                _isAdminView ? Icons.admin_panel_settings : Icons.person,
+                _isAdminView ? Icons.person : Icons.admin_panel_settings,
                 size: 22.0,
               ),
               color: Colors.white,
-              tooltip: _isAdminView ? "Vista Administrador" : "Vista Usuario",
+              tooltip: _isAdminView ? "Vista Usuario" : "Vista Administrador",
               onPressed: () {
                 setState(() {
                   _isAdminView = !_isAdminView;

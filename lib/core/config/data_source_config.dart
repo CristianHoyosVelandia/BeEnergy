@@ -71,12 +71,12 @@ class DataSourceConfig {
       }
 
       // Log para debugging
-      print('🎭 [DataSourceConfig] ENABLE_MOCKS=$enableMocks');
-      print('🔧 [DataSourceConfig] Using: $_currentSource');
-      print('🌐 [DataSourceConfig] API Base URL: $_apiBaseUrl');
+      // print('🎭 [DataSourceConfig] ENABLE_MOCKS=$enableMocks');
+      // print('🔧 [DataSourceConfig] Using: $_currentSource');
+      // print('🌐 [DataSourceConfig] API Base URL: $_apiBaseUrl');
     } catch (e) {
       print('⚠️ [DataSourceConfig] Error loading .env: $e');
-      print('📌 [DataSourceConfig] Using default configuration (fake data)');
+      // print('📌 [DataSourceConfig] Using default configuration (fake data)');
       _currentSource = DataSourceType.fake;
       _apiBaseUrl = 'http://10.0.2.2:8000';
     }

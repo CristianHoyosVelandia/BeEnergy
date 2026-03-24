@@ -18,7 +18,7 @@ class ApiInterceptor extends Interceptor {
     }
 
     print('⬆️ REQUEST[${options.method}] => PATH: ${options.path}');
-    print('⬆️ Headers: ${options.headers}');
+    // print('⬆️ Headers: ${options.headers}');
     if (options.data != null) {
       print('⬆️ Data: ${options.data}');
     }

@@ -56,8 +56,8 @@ class _BeenergyState extends State<Beenergy> {
 
               if (snapshotUser.data.idUser != 0) {
                 
-                print('Usuario ya logueado exitosamente');
-                print(snapshotUser.data);
+                // print('Usuario ya logueado exitosamente');
+                // print(snapshotUser.data);
                 return NavPages( myUser: snapshotUser.data);
                 
               } else {
