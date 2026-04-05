@@ -20,20 +20,68 @@ class Formatters {
     if (number == null) return value;
     return formatNumber(number);
   }
+    /// Formatea el período YYYY-MM a nombre legible (ej: "2026-03" → "Marzo 2026")
+  static String formatPeriodToDisplayName(String _currentPeriod) {
+    try {
+      final parts = _currentPeriod.split('-');
+      if (parts.length != 2) return _currentPeriod;
 
+      final year = parts[0];
+      final month = int.parse(parts[1]);
+
+      const months = [
+        '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ];
+
+      if (month < 1 || month > 12) return _currentPeriod;
+
+      return '${months[month]} $year';
+    } catch (e) {
+      return _currentPeriod;
+    }
+  }
   // ==================== MONEDA ====================
+
+  /// Formatea un valor como moneda con formato español (miles: ., decimales: ,)
+  /// - Si NO tiene decimales: no los muestra (ej: $650)
+  /// - Si tiene decimales: los muestra con coma (ej: $650,50)
+  /// Ejemplo: 15000 -> "\$15.000", 15000.50 -> "\$15.000,50"
+  static String formatCurrencyES(
+    num value, {
+    String symbol = '\$',
+    bool showSymbol = true,
+  }) {
+    // Determinar si tiene decimales
+    final hasDecimals = value != value.truncate();
+
+    final formatter = NumberFormat.currency(
+      locale: 'es_ES',
+      symbol: '',
+      decimalDigits: hasDecimals ? 2 : 0,
+    );
+
+    String formatted = formatter.format(value);
+    // Asegurar formato español: separador miles = ".", decimales = ","
+    formatted = formatted.replaceAll('.', 'TEMP').replaceAll(',', '.').replaceAll('TEMP', ',');
+
+    // Remover espacios
+    formatted = formatted.trim();
+
+    return showSymbol ? '$symbol$formatted' : formatted;
+  }
 
   /// Formatea un valor como moneda (pesos colombianos por defecto)
   /// Ejemplo: 15000 -> "\$ 15.000"
-  static String formatCurrency(
-    num value, {
-    String symbol = '\$',
-    int decimals = 0,
-    bool showSymbol = true,
-  }) {
-    final formatted = formatNumber(value, decimals: decimals);
-    return showSymbol ? '$symbol $formatted' : formatted;
-  }
+    static String formatCurrency(
+      num value, {
+      String symbol = '\$',
+      int decimals = 0,
+      bool showSymbol = true,
+    }) {
+      final formatted = formatNumber(value, decimals: decimals);
+      return showSymbol ? '$symbol $formatted' : formatted;
+    }
 
   /// Formatea un valor de String como moneda
   /// Ejemplo: "15000" -> "\$ 15.000"
@@ -54,6 +102,16 @@ class Formatters {
   }
 
   // ==================== ENERGÍA ====================
+
+  /// Formatea un valor de energía con formato español (miles: ., decimales: ,)
+  /// Ejemplo: 1500 -> "1.500 kWh", 1500.50 -> "1.500,50 kWh"
+  static String formatEnergyES(num value, {String unit = 'kWh', int decimals = 2}) {
+    final formatter = NumberFormat('#,##0.${'0' * decimals}', 'es_ES');
+    String formatted = formatter.format(value);
+    // Asegurar formato español: separador miles = ".", decimales = ","
+    formatted = formatted.replaceAll('.', 'TEMP').replaceAll(',', '.').replaceAll('TEMP', ',');
+    return '$formatted $unit';
+  }
 
   /// Formatea un valor de energía
   /// Ejemplo: 1500 -> "1.500 kWh"
@@ -144,6 +202,16 @@ class Formatters {
   }
 
   // ==================== PORCENTAJES ====================
+
+  /// Formatea un porcentaje con formato español (siempre 2 decimales, separador: ,)
+  /// Ejemplo: 9.7 -> "9,70%", 5 -> "5,00%"
+  static String formatPercentageES(num value) {
+    final formatter = NumberFormat('0.00', 'es_ES');
+    String formatted = formatter.format(value);
+    // Asegurar que use coma como separador decimal
+    formatted = formatted.replaceAll('.', ',');
+    return '$formatted%';
+  }
 
   /// Formatea un porcentaje
   /// Ejemplo: 0.75 -> "75%"

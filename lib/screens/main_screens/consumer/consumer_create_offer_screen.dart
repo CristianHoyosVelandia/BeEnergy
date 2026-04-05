@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/api/api_exceptions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/consumer_offer_api_service.dart';
 import '../../../widgets/pde_indicator.dart';
 import '../../../models/regulatory_models.dart';
 import '../../../models/consumer_offer.dart';
+import '../../../models/my_user.dart';
 
 /// Pantalla de Creación/Edición de Oferta P2P - CONSUMIDOR
 /// Permite al consumidor crear o actualizar ofertas basadas en % del PDE
@@ -16,9 +18,22 @@ class ConsumerCreateOfferScreen extends StatefulWidget {
   /// Oferta existente para editar (null si es creación)
   final ConsumerOffer? existingOffer;
 
+  /// Período para la oferta (formato YYYY-MM)
+  /// Si no se especifica, usa '2026-01' por defecto
+  final String? period;
+
+  /// Usuario actual
+  final MyUser myUser;
+
+  /// ID de la comunidad (por defecto 1)
+  final int communityId;
+
   const ConsumerCreateOfferScreen({
     super.key,
     this.existingOffer,
+    this.period,
+    required this.myUser,
+    this.communityId = 1, // Default comunidad 1
   });
 
   @override
@@ -28,9 +43,7 @@ class ConsumerCreateOfferScreen extends StatefulWidget {
 class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
 
-  // Datos del consumidor (Ana López)
-  final _consumer = FakeDataJanuary2026.anaLopez;
-  final _totalPDEAvailable = FakeDataJanuary2026.pdeJan2026.allocatedEnergy; // 6.5 kWh
+  final _totalPDEAvailable = 1500.0; // kWh disponibles para PDE
 
   // MC_m - Valor de energía promedio (300 COP/kWh) para compatibilidad con validaciones
   final _ve = VECalculation(
@@ -54,6 +67,12 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   /// Indica si estamos en modo edición
   bool get _isEditMode => widget.existingOffer != null;
 
+  /// Obtiene el período actual (del widget o default)
+  String get _currentPeriod => widget.period ?? '2026-01';
+
+  /// Obtiene el nombre formateado del período actual
+  String get _currentPeriodDisplayName => Formatters.formatPeriodToDisplayName(_currentPeriod);
+
   @override
   void initState() {
     super.initState();
@@ -76,12 +95,16 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     return _pricePerKwh >= minPrice && _pricePerKwh <= maxPrice;
   }
 
-  /// Calcula el valor total estimado
-  double get _totalValue {
+  /// Calcula la energía total estimada en kWh
+  double get _totalEnergyKwh {
     // Convertir porcentaje (1-100) a decimal (0.01-1.0)
     final pdeDecimal = _pdePercentageRequested / 100.0;
-    final energyKwh = pdeDecimal * _totalPDEAvailable;
-    return energyKwh * _pricePerKwh;
+    return pdeDecimal * _totalPDEAvailable;
+  }
+
+  /// Calcula el valor total estimado en COP
+  double get _totalValue {
+    return _totalEnergyKwh * _pricePerKwh;
   }
 
   /// Crea o actualiza la oferta de consumidor
@@ -121,9 +144,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       } else {
         // Crear nueva oferta
         offer = await _apiService.createOffer(
-          buyerId: _consumer.userId,
-          communityId: _consumer.communityId,
-          period: '2026-01',
+          buyerId: widget.myUser.idUser!,
+          communityId: widget.communityId,
+          period: widget.period ?? '2026-01', // Usar período del widget o default
           pdePercentageRequested: _pdePercentageRequested,
           pricePerKwh: _pricePerKwh,
         );
@@ -174,6 +197,10 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             ),
             SizedBox(height: AppTokens.space32),
             _buildInfoRow('Oferta #', '$offerId'),
+            _buildInfoRow(
+              'Total Energía Comunitaria Estimada',
+              '${_totalPDEAvailable.toStringAsFixed(2)}%',
+            ),
             _buildInfoRow(
               'PDE Solicitado',
               '${_pdePercentageRequested.toStringAsFixed(2)}%',
@@ -280,15 +307,20 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
-            ? null
-            : _submitOffer,
-        backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
-            ? AppTokens.primaryRed
-            : Colors.grey,
-        icon: Icon(_isEditMode ? Icons.save : Icons.publish),
-        label: Text(_isEditMode ? 'Actualizar' : 'Publicar'),
+      floatingActionButton: Tooltip(
+        message: 'Publicar oferta',
+        child: FloatingActionButton(
+          onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
+              ? null
+              : _submitOffer,
+          backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
+              ? AppTokens.primaryRed
+              : Colors.grey,
+          child: Icon(
+            _isEditMode ? Icons.save : Icons.publish,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -298,7 +330,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
       child: PDEAvailabilitySummary(
         totalPDEAvailable: _totalPDEAvailable,
-        period: 'Enero 2026',
+        period: _currentPeriodDisplayName, // Usar período dinámico
         showHelp: true,
       ),
     );
@@ -608,16 +640,60 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                     fontWeight: AppTokens.fontWeightSemiBold,
                   ),
                 ),
-                SizedBox(height: AppTokens.space8),
-                Text(
-                  '\$${minValue.toStringAsFixed(2)} - \$${maxValue.toStringAsFixed(2)} COP/kWh',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                SizedBox(height: AppTokens.space12),
+                Row(
+                  children: [
+                    // Columna Precio Mínimo
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Precio Mínimo',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 11,
+                            ),
+                          ),
+                          SizedBox(height: AppTokens.space4),
+                          Text(
+                            '${Formatters.formatCurrencyES(minValue)} COP/kWh',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Columna Precio Máximo
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            'Precio Máximo',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 11,
+                            ),
+                          ),
+                          SizedBox(height: AppTokens.space4),
+                          Text(
+                            '${Formatters.formatCurrencyES(maxValue)} COP/kWh',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: AppTokens.space8),
+                SizedBox(height: AppTokens.space12),
                 Text(
                   'CREG 101 072 - Art 3.4',
                   style: TextStyle(
@@ -649,12 +725,17 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            _buildPreviewRow('PDE Solicitado', '${_pdePercentageRequested.toStringAsFixed(2)}%'),
-            _buildPreviewRow('Precio Ofertado', '\$${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildPreviewRow('PDE Solicitado', Formatters.formatPercentageES(_pdePercentageRequested)),
+            _buildPreviewRow('Precio Ofertado', '${Formatters.formatCurrencyES(_pricePerKwh)} COP/kWh'),
             Divider(height: AppTokens.space24),
             _buildPreviewRow(
+              'Energía estimada',
+              Formatters.formatEnergyES(_totalEnergyKwh),
+              isBold: true,
+            ),
+            _buildPreviewRow(
               'Valor Total Estimado',
-              '\$${_totalValue.toStringAsFixed(0)}',
+              Formatters.formatCurrencyES(_totalValue),
               isBold: true,
             ),
             SizedBox(height: AppTokens.space16),
@@ -674,7 +755,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
-                      'Oferta válida hasta: 31/01/2026 - Pendiente de liquidación',
+                      'Oferta válida hasta: 31/01/2026 - Pendiente de liquidación\n\nRecuerda que estos valores son un estimado',
                       style: context.textStyles.bodySmall?.copyWith(
                         color: Colors.amber[900],
                       ),

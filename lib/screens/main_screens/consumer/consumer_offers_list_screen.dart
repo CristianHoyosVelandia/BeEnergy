@@ -3,9 +3,9 @@ import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
-import '../../../data/fake_data_phase2.dart';
 import '../../../services/consumer_offer_service.dart';
 import '../../../models/consumer_offer.dart';
+import '../../../models/my_user.dart';
 import '../../../widgets/pde_indicator.dart';
 
 /// Pantalla de Listado de Ofertas - CONSUMIDOR
@@ -18,10 +18,12 @@ import '../../../widgets/pde_indicator.dart';
 /// ENERO 2026+ - Nuevo modelo de mercado
 class ConsumerOffersListScreen extends StatefulWidget {
   final String period;
+  final MyUser myUser;
 
   const ConsumerOffersListScreen({
     super.key,
     this.period = '2026-01',
+    required this.myUser,
   });
 
   @override
@@ -30,7 +32,6 @@ class ConsumerOffersListScreen extends StatefulWidget {
 
 class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
   final ConsumerOfferService _offerService = ConsumerOfferService();
-  final _consumer = FakeDataPhase2.cristianHoyos;
   final _totalPDEAvailable = FakeDataJanuary2026.pdeJan2026.allocatedEnergy;
 
   bool _isLoading = true;
@@ -47,7 +48,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
 
     // Cargar ofertas desde almacenamiento local
     final offers = await _offerService.getBuyerOfferForPeriod(
-      _consumer.userId,
+      widget.myUser.idUser!,
       widget.period,
     );
 
@@ -93,7 +94,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
     try {
       await _offerService.cancelOffer(
         offerId: offer.id,
-        buyerId: _consumer.userId,
+        buyerId: widget.myUser.idUser!,
         reason: 'Cancelada por el usuario',
       );
 

@@ -117,6 +117,35 @@ class _HomeScreenState extends State<HomeScreen> {
            FakePeriodsData.currentPeriodData;
   }
 
+  /// Obtiene el nombre formateado del período seleccionado
+  String get _selectedPeriodDisplayName {
+    // Si estamos usando datos del backend
+    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
+      final periodItem = _userPeriodHistory!.periods.firstWhere(
+        (p) => p.period == _selectedPeriod,
+        orElse: () => UserPeriodItem(
+          period: _selectedPeriod,
+          displayName: Formatters.formatPeriodToDisplayName(_selectedPeriod),
+          status: 'current',
+          hasData: false,
+          pdeStatusCode: 0,
+          pdeAvailable: false,
+          energyRecord: EnergyRecordSummary(
+            energyGenerated: 0,
+            energyConsumed: 0,
+            energyExported: 0,
+            energyImported: 0,
+          ),
+        ),
+      );
+      return periodItem.displayName;
+    }
+
+    // Si estamos usando mock data
+    return _currentPeriodData.displayName;
+  }
+
+
   /// Verifica si el período seleccionado es el actual
   bool get _isCurrentPeriod {
     // Si estamos usando datos del backend
@@ -1442,7 +1471,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const ConsumerMarketplaceScreen(),
+              builder: (context) => ConsumerMarketplaceScreen(
+                period: _selectedPeriod, // Pasar período seleccionado
+                myUser: widget.myUser!,
+                communityId: 1, // TODO: Obtener de backend o configuración
+              ),
             ),
           );
         }
@@ -1503,8 +1536,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: AppTokens.space4),
                       Text(
                         _isAdminView
-                          ? '${_currentPeriodData.displayName} - Gestión Comunitaria'
-                          : '${_currentPeriodData.displayName} - Modelo de Ofertas',
+                          ? '$_selectedPeriodDisplayName - Gestión Comunitaria'
+                          : '$_selectedPeriodDisplayName - Modelo de Ofertas',
                         style: context.textStyles.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),

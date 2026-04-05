@@ -6,6 +6,9 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/repositories/impl/consumer_offer_repository_api.dart';
 
+enum SortType { price, pde }
+enum SortOrder { asc, desc }
+
 /// Pantalla de gestión de ofertas comunitarias para administradores
 ///
 /// Muestra:
@@ -29,6 +32,10 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
   int _totalMembers = 0;
   double _totalEnergyOffered = 0.0;
   String _periodStatus = "Cargando...";
+
+  // Estado de ordenamiento
+  SortType _sortType = SortType.price;
+  SortOrder _sortOrder = SortOrder.desc;
 
   @override
   void initState() {
@@ -78,6 +85,49 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
   /// Número de miembros con ofertas (calculado)
   int get _membersWithOffers => _offers.length;
 
+  /// Ordena la lista de ofertas según el tipo y orden seleccionados
+  void _sortOffers() {
+    setState(() {
+      _offers.sort((a, b) {
+        double valueA, valueB;
+
+        if (_sortType == SortType.price) {
+          valueA = a.pricePerKwh;
+          valueB = b.pricePerKwh;
+        } else {
+          // SortType.pde
+          valueA = a.pdePercentageRequested;
+          valueB = b.pdePercentageRequested;
+        }
+
+        // Aplicar orden ASC o DESC
+        if (_sortOrder == SortOrder.asc) {
+          return valueA.compareTo(valueB);
+        } else {
+          return valueB.compareTo(valueA);
+        }
+      });
+    });
+  }
+
+  /// Cambia el tipo de ordenamiento (precio o PDE)
+  void _changeSortType(SortType newType) {
+    if (_sortType != newType) {
+      setState(() {
+        _sortType = newType;
+      });
+      _sortOffers();
+    }
+  }
+
+  /// Cambia el orden (ASC o DESC)
+  void _toggleSortOrder() {
+    setState(() {
+      _sortOrder = _sortOrder == SortOrder.asc ? SortOrder.desc : SortOrder.asc;
+    });
+    _sortOffers();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,6 +161,11 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                     ),
                   ),
 
+                  // Controles de ordenamiento
+                  SliverToBoxAdapter(
+                    child: _buildSortControls(),
+                  ),
+
                   // Lista de ofertas por miembro
                   SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -132,17 +187,11 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                 ],
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: _showClosePeriodDialog,
         backgroundColor: AppTokens.primaryRed,
-        icon: const Icon(Icons.lock_clock, color: Colors.white),
-        label: const Text(
-          'Cerrar Periodo',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        tooltip: 'Cerrar Periodo',
+        child: const Icon(Icons.lock_clock, color: Colors.white, size: 28),
       ),
     );
   }
@@ -206,7 +255,11 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
 
   /// Resumen de participación de la comunidad
   Widget _buildCommunitySummary() {
-    final participationRate = (_membersWithOffers / _totalMembers * 100).toStringAsFixed(1);
+    // Calcular suma total de porcentajes PDE ofertados
+    final totalPdePercentage = _offers.fold<double>(
+      0.0,
+      (sum, offer) => sum + (offer.pdePercentageRequested * 100),
+    );
 
     return Container(
       margin: EdgeInsets.all(AppTokens.space16),
@@ -279,7 +332,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                   borderRadius: AppTokens.borderRadiusSmall,
                 ),
                 child: Text(
-                  '$participationRate%',
+                  '${totalPdePercentage.toStringAsFixed(2).replaceAll('.', ',')} %',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -335,6 +388,165 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Controles de ordenamiento
+  Widget _buildSortControls() {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: AppTokens.space16,
+        vertical: AppTokens.space8,
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space12,
+        vertical: AppTokens.space8,
+      ),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest,
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: context.colors.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icono de ordenar
+          Icon(
+            Icons.sort,
+            size: 18,
+            color: context.colors.onSurfaceVariant,
+          ),
+          SizedBox(width: AppTokens.space8),
+
+          // Texto "Ordenar por:"
+          Text(
+            'Ordenar por:',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(width: AppTokens.space8),
+
+          // Chip: Precio
+          GestureDetector(
+            onTap: () => _changeSortType(SortType.price),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppTokens.space12,
+                vertical: AppTokens.space4,
+              ),
+              decoration: BoxDecoration(
+                color: _sortType == SortType.price
+                    ? AppTokens.primaryRed
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _sortType == SortType.price
+                      ? AppTokens.primaryRed
+                      : context.colors.outline,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.attach_money,
+                    size: 14,
+                    color: _sortType == SortType.price
+                        ? Colors.white
+                        : context.colors.onSurfaceVariant,
+                  ),
+                  SizedBox(width: AppTokens.space4),
+                  Text(
+                    'Precio',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: _sortType == SortType.price
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _sortType == SortType.price
+                          ? Colors.white
+                          : context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(width: AppTokens.space8),
+
+          // Chip: PDE %
+          GestureDetector(
+            onTap: () => _changeSortType(SortType.pde),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: AppTokens.space12,
+                vertical: AppTokens.space4,
+              ),
+              decoration: BoxDecoration(
+                color: _sortType == SortType.pde
+                    ? AppTokens.energyGreen
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _sortType == SortType.pde
+                      ? AppTokens.energyGreen
+                      : context.colors.outline,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.bolt,
+                    size: 14,
+                    color: _sortType == SortType.pde
+                        ? Colors.white
+                        : context.colors.onSurfaceVariant,
+                  ),
+                  SizedBox(width: AppTokens.space4),
+                  Text(
+                    'PDE %',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: _sortType == SortType.pde
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _sortType == SortType.pde
+                          ? Colors.white
+                          : context.colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          // Botón de orden ASC/DESC
+          IconButton(
+            onPressed: _toggleSortOrder,
+            icon: Icon(
+              _sortOrder == SortOrder.asc
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward,
+              size: 20,
+            ),
+            color: AppTokens.primaryRed,
+            tooltip: _sortOrder == SortOrder.asc
+                ? 'Orden ascendente'
+                : 'Orden descendente',
+            padding: EdgeInsets.all(AppTokens.space8),
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
@@ -495,25 +707,14 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                         ),
                       ),
                       SizedBox(height: AppTokens.space8),
-                      // Porcentaje del PDE (pde_percentage_requested) - SIN % duplicado
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.percent,
-                            size: 16,
-                            color: roleColor,
-                          ),
-                          SizedBox(width: AppTokens.space4),
-                          Text(
-                            (pdePercentage * 100).toStringAsFixed(0),
-                            style: context.textStyles.titleMedium?.copyWith(
-                              color: roleColor,
-                              fontWeight: AppTokens.fontWeightBold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
+                      // Porcentaje del PDE (pde_percentage_requested) - Formato español
+                      Text(
+                        '${(pdePercentage * 100).toStringAsFixed(2).replaceAll('.', ',')} %',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: roleColor,
+                          fontWeight: AppTokens.fontWeightBold,
+                          fontSize: 18,
+                        ),
                       ),
                       SizedBox(height: AppTokens.space8),
                       // Estado de la oferta (mejorado)
