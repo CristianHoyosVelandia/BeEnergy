@@ -457,7 +457,7 @@ class LineChartSample extends StatelessWidget {
               final colors = [_colorConsumo, _colorSolar, _colorAutoconsumo, _colorImportada, _colorExportada];
               final idx = spot.barIndex;
               return LineTooltipItem(
-                '${labels[idx]}: ${spot.y.toStringAsFixed(2)} kWh/h',
+                '${labels[idx]}: ${Formatters.formatNumber(spot.y, decimals: 2)} kWh/h',
                 TextStyle(color: colors[idx], fontWeight: FontWeight.bold, fontSize: 11),
               );
             }).toList();
@@ -511,7 +511,7 @@ class LineChartSample extends StatelessWidget {
                   fontSize: AppTokens.fontSize10,
                   color: context.colors.onSurfaceVariant,
                 );
-                return Text(value.toStringAsFixed(1), style: style, textAlign: TextAlign.right);
+                return Text(Formatters.formatNumber(value, decimals: 1), style: style, textAlign: TextAlign.right);
               }
               return const SizedBox();
             },

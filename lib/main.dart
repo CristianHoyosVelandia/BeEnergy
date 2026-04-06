@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/config/data_source_config.dart';
@@ -7,6 +8,9 @@ import 'core/config/data_source_config.dart';
 void main() async {
   // Inicialización de Flutter
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar locale español para formateo de fechas y números
+  await initializeDateFormatting('es_ES', null);
 
   // Cargar variables de entorno
   try {

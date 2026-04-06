@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../models/p2p_offer.dart';
 import '../../../services/p2p_service.dart';
@@ -115,10 +116,10 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
             SizedBox(height: AppTokens.space16),
             _buildInfoRow('Contrato #', '$contractId'),
             _buildInfoRow('Vendedor', widget.offer.sellerName),
-            _buildInfoRow('Energía', '${_energyToBuy.toStringAsFixed(2)} kWh'),
-            _buildInfoRow('Precio', '\$${widget.offer.pricePerKwh.toStringAsFixed(0)} COP/kWh'),
-            _buildInfoRow('Total', '\$${_totalCost.toStringAsFixed(0)}'),
-            _buildInfoRow('Ahorro', '\$${_savings.toStringAsFixed(0)} (${_savingsPercentage.toStringAsFixed(1)}%)'),
+            _buildInfoRow('Energía', '${Formatters.formatNumber(_energyToBuy, decimals: 2)} kWh'),
+            _buildInfoRow('Precio', '${Formatters.formatCurrency(widget.offer.pricePerKwh, decimals: 0)} COP/kWh'),
+            _buildInfoRow('Total', Formatters.formatCurrency(_totalCost, decimals: 0)),
+            _buildInfoRow('Ahorro', '${Formatters.formatCurrency(_savings, decimals: 0)} (${Formatters.formatNumber(_savingsPercentage, decimals: 1)}%)'),
             SizedBox(height: AppTokens.space16),
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
@@ -311,9 +312,9 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            _buildDetailRow('Energía disponible', '${widget.offer.energyRemaining.toStringAsFixed(2)} kWh'),
-            _buildDetailRow('Precio por kWh', '\$${widget.offer.pricePerKwh.toStringAsFixed(0)}'),
-            _buildDetailRow('Valor total', '\$${widget.offer.totalValue.toStringAsFixed(0)}'),
+            _buildDetailRow('Energía disponible', '${Formatters.formatNumber(widget.offer.energyRemaining, decimals: 2)} kWh'),
+            _buildDetailRow('Precio por kWh', Formatters.formatCurrency(widget.offer.pricePerKwh, decimals: 0)),
+            _buildDetailRow('Valor total', Formatters.formatCurrency(widget.offer.totalValue, decimals: 0)),
             _buildDetailRow('Vigencia', 'Hasta 31/12/2025'),
             SizedBox(height: AppTokens.space8),
             Container(
@@ -369,7 +370,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                   child: Text(
-                    '${_energyToBuy.toStringAsFixed(1)} kWh',
+                    '${Formatters.formatNumber(_energyToBuy, decimals: 1)} kWh',
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
                       color: AppTokens.energyGreen,
@@ -384,7 +385,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               min: 0,
               max: widget.offer.energyRemaining,
               divisions: (widget.offer.energyRemaining * 2).toInt(),
-              label: '${_energyToBuy.toStringAsFixed(1)} kWh',
+              label: '${Formatters.formatNumber(_energyToBuy, decimals: 1)} kWh',
               activeColor: AppTokens.energyGreen,
               onChanged: (value) {
                 setState(() {
@@ -396,7 +397,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('0 kWh', style: context.textStyles.bodySmall),
-                Text('${widget.offer.energyRemaining.toStringAsFixed(1)} kWh', style: context.textStyles.bodySmall),
+                Text('${Formatters.formatNumber(widget.offer.energyRemaining, decimals: 1)} kWh', style: context.textStyles.bodySmall),
               ],
             ),
           ],
@@ -442,7 +443,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                         ),
                         SizedBox(height: AppTokens.space8),
                         Text(
-                          '\$${traditionalPrice.toStringAsFixed(0)}',
+                          Formatters.formatCurrency(traditionalPrice, decimals: 0),
                           style: context.textStyles.titleLarge?.copyWith(
                             fontWeight: AppTokens.fontWeightBold,
                           ),
@@ -475,7 +476,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                         ),
                         SizedBox(height: AppTokens.space8),
                         Text(
-                          '\$${p2pPrice.toStringAsFixed(0)}',
+                          Formatters.formatCurrency(p2pPrice, decimals: 0),
                           style: context.textStyles.titleLarge?.copyWith(
                             fontWeight: AppTokens.fontWeightBold,
                             color: Colors.green,
@@ -509,7 +510,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
-                    '${difference > 0 ? '-' : '+'}\$${difference.abs().toStringAsFixed(0)} COP/kWh',
+                    '${difference > 0 ? '-' : '+'}${Formatters.formatCurrency(difference.abs(), decimals: 0)} COP/kWh',
                     style: context.textStyles.titleSmall?.copyWith(
                       color: difference > 0 ? Colors.green : Colors.orange,
                       fontWeight: AppTokens.fontWeightBold,
@@ -542,9 +543,9 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            _buildDetailRow('VE Diciembre 2025', '\$${_ve.totalVE.toStringAsFixed(0)} COP/kWh'),
-            _buildDetailRow('Rango permitido', '\$${_ve.minAllowedPrice.toStringAsFixed(0)}-\$${_ve.maxAllowedPrice.toStringAsFixed(0)}'),
-            _buildDetailRow('Precio oferta', '\$${widget.offer.pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildDetailRow('VE Diciembre 2025', '${Formatters.formatCurrency(_ve.totalVE, decimals: 0)} COP/kWh'),
+            _buildDetailRow('Rango permitido', '${Formatters.formatCurrency(_ve.minAllowedPrice, decimals: 0)}-${Formatters.formatCurrency(_ve.maxAllowedPrice, decimals: 0)}'),
+            _buildDetailRow('Precio oferta', '${Formatters.formatCurrency(widget.offer.pricePerKwh, decimals: 0)} COP/kWh'),
             SizedBox(height: AppTokens.space12),
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
@@ -576,7 +577,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
                           ),
                         ),
                         Text(
-                          'Desviación: ${deviation.toStringAsFixed(1)}% del VE',
+                          'Desviación: ${Formatters.formatNumber(deviation, decimals: 1)}% del VE',
                           style: context.textStyles.bodySmall?.copyWith(
                             color: isCompliant ? Colors.green : AppTokens.primaryRed,
                           ),
@@ -609,13 +610,13 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            _buildSummaryRow('Energía', '${_energyToBuy.toStringAsFixed(2)} kWh'),
-            _buildSummaryRow('Precio', '\$${widget.offer.pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildSummaryRow('Energía', '${Formatters.formatNumber(_energyToBuy, decimals: 2)} kWh'),
+            _buildSummaryRow('Precio', '${Formatters.formatCurrency(widget.offer.pricePerKwh, decimals: 0)} COP/kWh'),
             Divider(height: AppTokens.space24),
-            _buildSummaryRow('Total a pagar', '\$${_totalCost.toStringAsFixed(0)}', isBold: true),
+            _buildSummaryRow('Total a pagar', Formatters.formatCurrency(_totalCost, decimals: 0), isBold: true),
             _buildSummaryRow(
               'Ahorro',
-              '\$${_savings.toStringAsFixed(0)} (${_savingsPercentage.toStringAsFixed(1)}%)',
+              '${Formatters.formatCurrency(_savings, decimals: 0)} (${Formatters.formatNumber(_savingsPercentage, decimals: 1)}%)',
               isGreen: _savings > 0,
             ),
           ],

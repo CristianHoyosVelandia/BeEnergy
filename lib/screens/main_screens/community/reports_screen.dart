@@ -193,7 +193,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       reservedSize: 50,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '${(value / 1000).toStringAsFixed(1)}k',
+                          '${Formatters.formatNumber(value / 1000, decimals: 1)}k',
                           style: context.textStyles.bodySmall,
                         );
                       },
@@ -350,7 +350,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (savingsAmount > 0) ...[
                   SizedBox(width: AppTokens.space8),
                   Text(
-                    '(-${savingsPercent.toStringAsFixed(1)}%)',
+                    '(-${Formatters.formatNumber(savingsPercent, decimals: 1)}%)',
                     style: context.textStyles.bodySmall?.copyWith(
                       color: Colors.green,
                       fontWeight: AppTokens.fontWeightBold,
@@ -397,7 +397,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
               Expanded(
                 child: _buildMetricCard(
                   'Autosuficiencia',
-                  '${((stats.totalEnergyGenerated / stats.totalEnergyConsumed) * 100).toStringAsFixed(1)}%',
+                  '${Formatters.formatNumber((stats.totalEnergyGenerated / stats.totalEnergyConsumed) * 100, decimals: 1)}%',
                   Icons.solar_power_outlined,
                   Colors.orange,
                 ),

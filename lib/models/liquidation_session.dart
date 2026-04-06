@@ -8,6 +8,8 @@
 /// 2. Admin ve ofertas de consumidores y energía de prosumidores
 /// 3. Admin hace matching manual (puede ser parcial)
 /// 4. Admin finaliza sesión → se generan contratos P2P
+import '../core/utils/formatters.dart';
+
 class LiquidationSession {
   final int id;
   final String period; // Formato: 'YYYY-MM'
@@ -287,7 +289,7 @@ class LiquidationMatch {
 
   @override
   String toString() {
-    return 'LiquidationMatch($buyerName ← $prosumerName: ${energyKwh.toStringAsFixed(2)} kWh @ $pricePerKwh COP/kWh)';
+    return 'LiquidationMatch($buyerName ← $prosumerName: ${Formatters.formatNumber(energyKwh, decimals: 2)} kWh @ $pricePerKwh COP/kWh)';
   }
 }
 

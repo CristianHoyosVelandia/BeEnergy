@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_tokens.dart';
+import '../core/utils/formatters.dart';
 
 /// Widget indicador de PDE (Porcentaje de Distribución de Excedentes)
 ///
@@ -42,8 +43,8 @@ class PDEIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kwh = percentage * totalPDEAvailable;
-    final percentageText = '${(percentage * 100).toStringAsFixed(1)}%';
-    final kwhText = '≈ ${kwh.toStringAsFixed(2)} kWh';
+    final percentageText = '${Formatters.formatNumber(percentage * 100, decimals: 1)}%';
+    final kwhText = '≈ ${Formatters.formatNumber(kwh, decimals: 2)} kWh';
 
     final color = customColor ?? AppTokens.primaryRed;
 
@@ -275,7 +276,7 @@ class PDEAvailabilitySummary extends StatelessWidget {
           //     mainAxisAlignment: MainAxisAlignment.center,
           //     children: [
           //       Text(
-          //         '${totalPDEAvailable.toStringAsFixed(2)} kWh',
+          //         '${Formatters.formatNumber(totalPDEAvailable, decimals: 2)} kWh',
           //         style: const TextStyle(
           //           color: Colors.white,
           //           fontSize: 32,

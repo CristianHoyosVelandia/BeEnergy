@@ -49,7 +49,7 @@ class TransactionDetailScreen extends StatelessWidget {
                   SizedBox(height: AppTokens.space12),
                   _dataCard(context, [
                     _row(context, 'Participación en el PDE',
-                        (pde.sharePercentage * 100).toStringAsFixed(2), '%'),
+                        Formatters.formatNumber(pde.sharePercentage * 100, decimals: 2), '%'),
                     _row(context, 'Energía asignada por PDE',
                         Formatters.formatEnergy(pde.allocatedEnergy), ' kWh/mes'),
                     _row(context, 'Excedentes Tipo 1 por PDE',

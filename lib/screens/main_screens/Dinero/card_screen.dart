@@ -107,7 +107,7 @@ class _CardscreenState extends State<Cardscreen> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 Text(
-                  "\$ 333.333",
+                  "\$333.333",
                   style: TextStyle(
                     fontFamily: 'Lexend',
                     color: Theme.of(context).scaffoldBackgroundColor,
@@ -201,7 +201,7 @@ class _CardscreenState extends State<Cardscreen> {
                 Padding(
                   padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 12),
                   child: Text(
-                    "+\$12,402",
+                    "+\$12.402",
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       color: Theme.of(context).canvasColor,
@@ -224,7 +224,7 @@ class _CardscreenState extends State<Cardscreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        " 4.5% ",
+                        " 4,5% ",
                         textAlign: TextAlign.start,
                         style: Metodos.subtitulosInformativosFondoNegro(context),
                       ),
@@ -265,7 +265,7 @@ class _CardscreenState extends State<Cardscreen> {
                 const Padding(
                   padding: EdgeInsetsDirectional.fromSTEB(0, 8, 0, 12),
                   child: Text(
-                    '-\$8,392',
+                    '-\$8.392',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       color: AppTokens.primaryRed,
@@ -288,7 +288,7 @@ class _CardscreenState extends State<Cardscreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '4.5%',
+                        '4,5%',
                         textAlign: TextAlign.start,
                         style: Metodos.subtitulosInformativosFondoNegro(context)
                       ),

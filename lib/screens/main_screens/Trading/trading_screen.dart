@@ -140,7 +140,7 @@ class _TradingScreenState extends State<TradingScreen> {
           SizedBox(height: AppTokens.space20),
           // Amount
           Text(
-            "\$ 333.333",
+            "\$333.333",
             style: context.textStyles.displaySmall?.copyWith(
               color: Colors.white,
               fontWeight: AppTokens.fontWeightBold,

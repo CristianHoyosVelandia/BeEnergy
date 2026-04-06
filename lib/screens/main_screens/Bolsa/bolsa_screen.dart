@@ -197,7 +197,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
                     Icon(Icons.solar_power, size: 16, color: Colors.white),
                     SizedBox(width: AppTokens.space4),
                     Text(
-                      'Prosumidor • ${_prosumer.installedCapacity.toStringAsFixed(0)} kW',
+                      'Prosumidor • ${Formatters.formatPower(_prosumer.installedCapacity, decimals: 0)}',
                       style: context.textStyles.bodyMedium?.copyWith(
                         color: Colors.white.withValues(alpha: 0.9),
                       ),
@@ -247,7 +247,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
           // VE Base
           _buildPVERow(
             'VE Base (CREG 101 072)',
-            '${_ve.totalVE.toStringAsFixed(0)} COP/kWh',
+            '${Formatters.formatCurrency(_ve.totalVE, decimals: 0)} COP/kWh',
             Icons.bolt,
             AppTokens.info,
           ),
@@ -291,7 +291,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
                         ),
                         SizedBox(height: AppTokens.space4),
                         Text(
-                          '${_ve.minAllowedPrice.toStringAsFixed(0)} COP',
+                          '${Formatters.formatCurrency(_ve.minAllowedPrice, decimals: 0)} COP',
                           style: context.textStyles.titleMedium?.copyWith(
                             color: Colors.green,
                             fontWeight: AppTokens.fontWeightBold,
@@ -310,7 +310,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
                         ),
                         SizedBox(height: AppTokens.space4),
                         Text(
-                          '${_ve.maxAllowedPrice.toStringAsFixed(0)} COP',
+                          '${Formatters.formatCurrency(_ve.maxAllowedPrice, decimals: 0)} COP',
                           style: context.textStyles.titleMedium?.copyWith(
                             color: Colors.green,
                             fontWeight: AppTokens.fontWeightBold,
@@ -690,7 +690,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
                 child: _buildOfferMetric('Energía', Formatters.formatEnergy(offer.energyAvailable)),
               ),
               Expanded(
-                child: _buildOfferMetric('Precio', '\$${offer.pricePerKwh.toStringAsFixed(0)}'),
+                child: _buildOfferMetric('Precio', Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)),
               ),
             ],
           ),
@@ -852,7 +852,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
               Icon(Icons.bolt, size: 16, color: context.colors.onSurfaceVariant),
               SizedBox(width: AppTokens.space4),
               Text(
-                '${Formatters.formatEnergy(contract.energyCommitted)} @ \$${contract.agreedPrice.toStringAsFixed(0)}/kWh',
+                '${Formatters.formatEnergy(contract.energyCommitted)} @ ${Formatters.formatCurrency(contract.agreedPrice, decimals: 0)}/kWh',
                 style: context.textStyles.bodyMedium,
               ),
             ],

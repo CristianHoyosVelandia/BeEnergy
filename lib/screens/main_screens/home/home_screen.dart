@@ -1577,7 +1577,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: AppTokens.space4),
                         Text(
-                          '${FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia.toStringAsFixed(2)} COP',
+                          '${Formatters.formatCurrency(FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia, decimals: 2)} COP',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -1608,7 +1608,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: AppTokens.space4),
                         Text(
-                          '$minValue - $maxValue COP',
+                          '${Formatters.formatCurrency(minValue, decimals: 2, showSymbol: false)} - ${Formatters.formatCurrency(maxValue, decimals: 2, showSymbol: false)} COP',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -1709,7 +1709,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Text(
-                        '\$${Formatters.formatNumber((price['value'] as double).toInt())} COP/kWh',
+                        '${Formatters.formatCurrency(price['value'] as double, decimals: 0)} COP/kWh',
                         style: context.textStyles.bodyMedium?.copyWith(
                           fontWeight: AppTokens.fontWeightBold,
                           color: context.colors.onSurface,

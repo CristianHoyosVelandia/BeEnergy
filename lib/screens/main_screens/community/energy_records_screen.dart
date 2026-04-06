@@ -508,7 +508,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
               ),
             ),
             Text(
-              '${(percentage * 100).toStringAsFixed(0)}%',
+              '${Formatters.formatNumber(percentage * 100, decimals: 0)}%',
               style: context.textStyles.bodySmall?.copyWith(
                 color: AppTokens.primaryRed,
                 fontWeight: AppTokens.fontWeightBold,

@@ -332,7 +332,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                   borderRadius: AppTokens.borderRadiusSmall,
                 ),
                 child: Text(
-                  '${totalPdePercentage.toStringAsFixed(2).replaceAll('.', ',')} %',
+                  '${Formatters.formatNumber(totalPdePercentage, decimals: 2)} %',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -699,7 +699,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                     children: [
                       // Precio de oferta en dinero (price_per_kwh)
                       Text(
-                        '${offer.pricePerKwh.toStringAsFixed(0)} COP/kWh',
+                        '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)} COP/kWh',
                         style: context.textStyles.titleMedium?.copyWith(
                           color: AppTokens.primaryRed,
                           fontWeight: AppTokens.fontWeightBold,
@@ -709,7 +709,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                       SizedBox(height: AppTokens.space8),
                       // Porcentaje del PDE (pde_percentage_requested) - Formato español
                       Text(
-                        '${(pdePercentage * 100).toStringAsFixed(2).replaceAll('.', ',')} %',
+                        '${Formatters.formatNumber(pdePercentage * 100, decimals: 2)} %',
                         style: context.textStyles.titleMedium?.copyWith(
                           color: roleColor,
                           fontWeight: AppTokens.fontWeightBold,

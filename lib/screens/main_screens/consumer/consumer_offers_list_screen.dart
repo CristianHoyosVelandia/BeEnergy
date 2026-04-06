@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/consumer_offer_service.dart';
@@ -67,7 +68,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
         content: Text(
           '¿Estás seguro de que deseas cancelar esta oferta?\n\n'
           'Oferta #${offer.id}\n'
-          '${(offer.pdePercentageRequested * 100).toStringAsFixed(2)}% del PDE\n\n'
+          '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}% del PDE\n\n'
           'Esta acción no se puede revertir.',
         ),
         actions: [
@@ -356,8 +357,8 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
             SizedBox(height: AppTokens.space12),
 
             // Detalles
-            _buildDetailRow('Precio', '\$${offer.pricePerKwh.toStringAsFixed(0)} COP/kWh'),
-            _buildDetailRow('Valor', '\$${totalValue.toStringAsFixed(0)}'),
+            _buildDetailRow('Precio', '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)} COP/kWh'),
+            _buildDetailRow('Valor', Formatters.formatCurrency(totalValue, decimals: 0)),
 
             if (offer.status == ConsumerOfferStatus.matched ||
                 offer.status == ConsumerOfferStatus.partialMatch) ...[
@@ -388,7 +389,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                     if (offer.energyKwhCalculated != null) ...[
                       SizedBox(height: AppTokens.space8),
                       Text(
-                        'Energía asignada: ${offer.energyKwhCalculated!.toStringAsFixed(2)} kWh',
+                        'Energía asignada: ${Formatters.formatNumber(offer.energyKwhCalculated!, decimals: 2)} kWh',
                         style: context.textStyles.bodySmall,
                       ),
                     ],

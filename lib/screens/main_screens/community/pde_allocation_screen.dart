@@ -164,7 +164,7 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
 
                   return PieChartSectionData(
                     value: allocation.sharePercentage * 100,
-                    title: '${(allocation.sharePercentage * 100).toStringAsFixed(1)}%',
+                    title: '${Formatters.formatNumber(allocation.sharePercentage * 100, decimals: 1)}%',
                     color: color,
                     radius: 100,
                     titleStyle: context.textStyles.titleSmall?.copyWith(
@@ -325,7 +325,7 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
                     ),
                     SizedBox(height: AppTokens.space4),
                     Text(
-                      '${pdePercentage.toStringAsFixed(1)}%',
+                      '${Formatters.formatNumber(pdePercentage, decimals: 1)}%',
                       style: context.textStyles.titleMedium?.copyWith(
                         fontWeight: AppTokens.fontWeightBold,
                         color: isCompliant ? Colors.green : AppTokens.error,
@@ -358,7 +358,7 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
                   child: Text(
                     isCompliant
                         ? '✓ CUMPLE límite regulatorio (≤10%)'
-                        : '✗ EXCEDE límite regulatorio\nActual: ${pdePercentage.toStringAsFixed(1)}% | Máximo: 10.0%',
+                        : '✗ EXCEDE límite regulatorio\nActual: ${Formatters.formatNumber(pdePercentage, decimals: 1)}% | Máximo: 10,0%',
                     style: context.textStyles.bodyMedium?.copyWith(
                       color: isCompliant ? Colors.green : AppTokens.error,
                       fontWeight: AppTokens.fontWeightSemiBold,
@@ -593,7 +593,7 @@ class _PDEAllocationScreenState extends State<PDEAllocationScreen> {
               ),
             ),
             Text(
-              '${(percentage * 100).toStringAsFixed(0)}%',
+              '${Formatters.formatNumber(percentage * 100, decimals: 0)}%',
               style: context.textStyles.bodySmall?.copyWith(
                 color: Colors.orange,
                 fontWeight: AppTokens.fontWeightBold,

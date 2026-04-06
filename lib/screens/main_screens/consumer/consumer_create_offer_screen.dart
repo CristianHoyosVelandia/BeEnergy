@@ -128,7 +128,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         final minPrice = FakeDataJanuary2026.precioMinimoConsumidor;
         final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor;
         throw Exception(
-          'Precio fuera de rango permitido (${minPrice.toStringAsFixed(0)}-${maxPrice.toStringAsFixed(0)} COP/kWh)',
+          'Precio fuera de rango permitido (${Formatters.formatCurrency(minPrice, decimals: 0, showSymbol: false)}-${Formatters.formatCurrency(maxPrice, decimals: 0, showSymbol: false)} COP/kWh)',
         );
       }
 
@@ -198,14 +198,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             SizedBox(height: AppTokens.space32),
             _buildInfoRow('Oferta #', '$offerId'),
             _buildInfoRow(
-              'Total Energía Comunitaria Estimada',
-              '${_totalPDEAvailable.toStringAsFixed(2)}%',
+              'Energía Comunitaria Estimada',
+              '${Formatters.formatNumber(_totalPDEAvailable, decimals: 1)} kWh',
             ),
             _buildInfoRow(
               'PDE Solicitado',
-              '${_pdePercentageRequested.toStringAsFixed(2)}%',
+              '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
             ),
-            _buildInfoRow('Precio', '${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildInfoRow('Precio', '${Formatters.formatCurrency(_pricePerKwh, decimals: 0)} COP/kWh'),
             // _buildInfoRow('Valor estimado', '\$${_totalValue.toStringAsFixed(0)}'),
             SizedBox(height: AppTokens.space16),
             Container(
@@ -387,9 +387,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       ),
                     ),
                     controller: TextEditingController(
-                      text: _pdePercentageRequested.toStringAsFixed(2),
+                      text: Formatters.formatNumber(_pdePercentageRequested, decimals: 2),
                     )..selection = TextSelection.fromPosition(
-                        TextPosition(offset: _pdePercentageRequested.toStringAsFixed(2).length),
+                        TextPosition(offset: Formatters.formatNumber(_pdePercentageRequested, decimals: 2).length),
                       ),
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
@@ -409,7 +409,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               min: 0.01,
               max: 9.99,
               divisions: 998,
-              label: '${_pdePercentageRequested.toStringAsFixed(2)}%',
+              label: '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
               activeColor: AppTokens.primaryRed,
               onChanged: (value) {
                 setState(() {
@@ -420,8 +420,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('0.01%', style: context.textStyles.bodySmall),
-                Text('9.99%', style: context.textStyles.bodySmall),
+                Text('0,01%', style: context.textStyles.bodySmall),
+                Text('9,99%', style: context.textStyles.bodySmall),
               ],
             ),
             SizedBox(height: AppTokens.space12),
@@ -519,9 +519,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       ),
                     ),
                     controller: TextEditingController(
-                      text: _pricePerKwh.toStringAsFixed(0),
+                      text: Formatters.formatNumber(_pricePerKwh, decimals: 0),
                     )..selection = TextSelection.fromPosition(
-                        TextPosition(offset: _pricePerKwh.toStringAsFixed(0).length),
+                        TextPosition(offset: Formatters.formatNumber(_pricePerKwh, decimals: 0).length),
                       ),
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
@@ -537,7 +537,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             ),
             SizedBox(height: AppTokens.space8),
             Text(
-              'MCm (Precio Promedio): \$${FakeDataJanuary2026.mcmValorEnergiaPromedio.toStringAsFixed(0)} COP/kWh',
+              'MCm (Precio Promedio): ${Formatters.formatCurrency(FakeDataJanuary2026.mcmValorEnergiaPromedio, decimals: 0)} COP/kWh',
               style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
             ),
             SizedBox(height: AppTokens.space8),
@@ -553,7 +553,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               min: minPrice,
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
-              label: '\$${_pricePerKwh.toStringAsFixed(0)}',
+              label: Formatters.formatCurrency(_pricePerKwh, decimals: 0),
               activeColor: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
               onChanged: (value) {
                 setState(() {
@@ -564,9 +564,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\$${minPrice.toStringAsFixed(0)}', style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(minPrice, decimals: 0), style: context.textStyles.bodySmall),
                 // Text('MC_m×1.1', style: context.textStyles.bodySmall?.copyWith(color: Colors.grey)),
-                Text('\$${maxPrice.toStringAsFixed(1)}', style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(maxPrice, decimals: 0), style: context.textStyles.bodySmall),
               ],
             ),
           ],

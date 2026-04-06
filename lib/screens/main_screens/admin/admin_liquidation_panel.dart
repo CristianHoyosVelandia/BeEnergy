@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/liquidation_service.dart';
 import '../../../services/consumer_offer_service.dart';
@@ -232,7 +233,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
             SizedBox(height: AppTokens.space16),
             Text('• $contractsCreated contrato(s) P2P generado(s)'),
             Text('• ${_currentSession!.totalMatchesCreated} match(es) procesado(s)'),
-            Text('• Eficiencia: ${(_currentSession!.matchingEfficiency * 100).toStringAsFixed(1)}%'),
+            Text('• Eficiencia: ${Formatters.formatNumber(_currentSession!.matchingEfficiency * 100, decimals: 1)}%'),
           ],
         ),
         actions: [
@@ -464,7 +465,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
               children: [
                 Text('Precio ofertado:', style: context.textStyles.bodyMedium),
                 Text(
-                  '\$${offer.pricePerKwh.toStringAsFixed(0)} COP/kWh',
+                  '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)} COP/kWh',
                   style: context.textStyles.bodyMedium?.copyWith(
                     fontWeight: AppTokens.fontWeightBold,
                     color: AppTokens.primaryPurple,
@@ -478,7 +479,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
               children: [
                 Text('Valor estimado:', style: context.textStyles.bodyMedium),
                 Text(
-                  '\$${(energyKwh * offer.pricePerKwh).toStringAsFixed(0)}',
+                  Formatters.formatCurrency(energyKwh * offer.pricePerKwh, decimals: 0),
                   style: context.textStyles.bodyMedium?.copyWith(
                     fontWeight: AppTokens.fontWeightBold,
                   ),
@@ -568,7 +569,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
           ],
         ),
         Text(
-          '${value.toStringAsFixed(2)} kWh',
+          '${Formatters.formatNumber(value, decimals: 2)} kWh',
           style: context.textStyles.bodyMedium?.copyWith(
             fontWeight: isBold ? AppTokens.fontWeightBold : AppTokens.fontWeightSemiBold,
             color: color,
@@ -722,7 +723,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
                       ),
                     ),
                     Text(
-                      'Disponible: ${(prosumer['p2pAvailable'] as double).toStringAsFixed(2)} kWh',
+                      'Disponible: ${Formatters.formatNumber(prosumer['p2pAvailable'] as double, decimals: 2)} kWh',
                       style: context.textStyles.bodyMedium?.copyWith(color: Colors.grey),
                     ),
                   ],
@@ -755,7 +756,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
                   ),
                 ),
                 Text(
-                  '${_energyToAssign.toStringAsFixed(2)} kWh',
+                  '${Formatters.formatNumber(_energyToAssign, decimals: 2)} kWh',
                   style: context.textStyles.bodyLarge?.copyWith(
                     fontWeight: AppTokens.fontWeightBold,
                     color: AppTokens.primaryPurple,
@@ -769,14 +770,14 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
               min: 0,
               max: maxEnergy > 0 ? maxEnergy : 1.0,
               divisions: maxEnergy > 0 ? (maxEnergy * 10).toInt() : 10,
-              label: '${_energyToAssign.toStringAsFixed(2)} kWh',
+              label: '${Formatters.formatNumber(_energyToAssign, decimals: 2)} kWh',
               onChanged: (value) => setState(() => _energyToAssign = value),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('0 kWh', style: context.textStyles.bodySmall),
-                Text('${maxEnergy.toStringAsFixed(2)} kWh', style: context.textStyles.bodySmall),
+                Text('${Formatters.formatNumber(maxEnergy, decimals: 2)} kWh', style: context.textStyles.bodySmall),
               ],
             ),
             SizedBox(height: AppTokens.space16),
@@ -795,7 +796,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Solicitado por consumidor:', style: context.textStyles.bodySmall),
-                      Text('${requestedEnergy.toStringAsFixed(2)} kWh', style: context.textStyles.bodySmall),
+                      Text('${Formatters.formatNumber(requestedEnergy, decimals: 2)} kWh', style: context.textStyles.bodySmall),
                     ],
                   ),
                   SizedBox(height: AppTokens.space4),
@@ -803,7 +804,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Disponible por prosumidor:', style: context.textStyles.bodySmall),
-                      Text('${maxEnergy.toStringAsFixed(2)} kWh', style: context.textStyles.bodySmall),
+                      Text('${Formatters.formatNumber(maxEnergy, decimals: 2)} kWh', style: context.textStyles.bodySmall),
                     ],
                   ),
                 ],
@@ -833,7 +834,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
         _buildSummaryCard('Estado', summary['status'] as String, Icons.info_outline),
         _buildSummaryCard('Total Ofertas', '${summary['totalOffers']}', Icons.people),
         _buildSummaryCard('Matches Creados', '${summary['totalMatches']}', Icons.link),
-        _buildSummaryCard('Eficiencia', '${(summary['matchingEfficiency'] as double).toStringAsFixed(1)}%', Icons.analytics),
+        _buildSummaryCard('Eficiencia', '${Formatters.formatNumber(summary['matchingEfficiency'] as double, decimals: 1)}%', Icons.analytics),
 
         SizedBox(height: AppTokens.space24),
 
@@ -935,10 +936,10 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
               ],
             ),
             Divider(height: AppTokens.space16),
-            _buildMatchRow('Energía', '${match.energyKwh.toStringAsFixed(2)} kWh'),
-            _buildMatchRow('Precio', '\$${match.pricePerKwh.toStringAsFixed(0)} COP/kWh'),
-            _buildMatchRow('Valor Total', '\$${(match.energyKwh * match.pricePerKwh).toStringAsFixed(0)}'),
-            _buildMatchRow('% PDE cumplido', '${(match.pdePercentageFulfilled * 100).toStringAsFixed(1)}%'),
+            _buildMatchRow('Energía', '${Formatters.formatNumber(match.energyKwh, decimals: 2)} kWh'),
+            _buildMatchRow('Precio', '${Formatters.formatCurrency(match.pricePerKwh, decimals: 0)} COP/kWh'),
+            _buildMatchRow('Valor Total', Formatters.formatCurrency(match.energyKwh * match.pricePerKwh, decimals: 0)),
+            _buildMatchRow('% PDE cumplido', '${Formatters.formatNumber(match.pdePercentageFulfilled * 100, decimals: 1)}%'),
           ],
         ),
       ),

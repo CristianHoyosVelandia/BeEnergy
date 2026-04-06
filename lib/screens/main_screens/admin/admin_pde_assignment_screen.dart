@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/fake_data_phase2.dart';
 
 /// Pantalla de Asignación PDE - ADMINISTRADOR
@@ -86,7 +87,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
       await Future.delayed(const Duration(seconds: 1));
 
       setState(() {
-        _successMessage = 'PDE asignado correctamente (${_pdePercentage.toStringAsFixed(1)}%)';
+        _successMessage = 'PDE asignado correctamente (${Formatters.formatNumber(_pdePercentage, decimals: 1)}%)';
       });
 
       // Mostrar diálogo de confirmación
@@ -121,8 +122,8 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
           children: [
             const Text('El Porcentaje de Distribución de Excedentes ha sido asignado exitosamente.'),
             SizedBox(height: AppTokens.space16),
-            _buildInfoRow('Total PDE', '${_totalPDEAssigned.toStringAsFixed(2)} kWh'),
-            _buildInfoRow('Porcentaje', '${_pdePercentage.toStringAsFixed(1)}%'),
+            _buildInfoRow('Total PDE', '${Formatters.formatNumber(_totalPDEAssigned, decimals: 2)} kWh'),
+            _buildInfoRow('Porcentaje', '${Formatters.formatNumber(_pdePercentage, decimals: 1)}%'),
             _buildInfoRow('Consumidores', '${_consumerAllocations.length}'),
             SizedBox(height: AppTokens.space16),
             Container(
@@ -282,9 +283,9 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatColumn('Total Tipo 2', '${totalType2.toStringAsFixed(0)} kWh', Colors.white),
+                _buildStatColumn('Total Tipo 2', '${Formatters.formatNumber(totalType2, decimals: 0)} kWh', Colors.white),
                 Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.3)),
-                _buildStatColumn('PDE Máximo (10%)', '${maxPDE.toStringAsFixed(1)} kWh', Colors.white),
+                _buildStatColumn('PDE Máximo (10%)', '${Formatters.formatNumber(maxPDE, decimals: 1)} kWh', Colors.white),
               ],
             ),
           ),
@@ -337,7 +338,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                     min: 0,
                     max: maxPDE,
                     divisions: 20,
-                    label: '${_pdeToAssign.toStringAsFixed(1)} kWh',
+                    label: '${Formatters.formatNumber(_pdeToAssign, decimals: 1)} kWh',
                     onChanged: (value) {
                       setState(() {
                         _pdeToAssign = value;
@@ -357,7 +358,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                   child: Text(
-                    '${_pdeToAssign.toStringAsFixed(1)} kWh',
+                    '${Formatters.formatNumber(_pdeToAssign, decimals: 1)} kWh',
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
                       color: AppTokens.primaryRed,
@@ -424,7 +425,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                   ),
                 ),
                 Text(
-                  '${percentage.toStringAsFixed(1)}%',
+                  '${Formatters.formatNumber(percentage, decimals: 1)}%',
                   style: context.textStyles.headlineMedium?.copyWith(
                     color: isCompliant ? Colors.green : AppTokens.primaryRed,
                     fontWeight: AppTokens.fontWeightBold,
@@ -502,7 +503,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
           border: Border.all(color: Colors.green),
         ),
         child: Text(
-          '${allocation.toStringAsFixed(2)} kWh',
+          '${Formatters.formatNumber(allocation, decimals: 2)} kWh',
           style: context.textStyles.bodyMedium?.copyWith(
             color: Colors.green,
             fontWeight: AppTokens.fontWeightSemiBold,

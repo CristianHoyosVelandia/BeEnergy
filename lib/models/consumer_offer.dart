@@ -5,6 +5,8 @@
 ///
 /// Los kWh reales se calculan durante el proceso de liquidación cuando
 /// el administrador hace el matching con la energía disponible de prosumidores.
+import '../core/utils/formatters.dart';
+
 class ConsumerOffer {
   final int id;
   final int buyerId;
@@ -290,7 +292,7 @@ class ConsumerOffer {
 
   @override
   String toString() {
-    return 'ConsumerOffer(id: $id, buyer: $buyerName, pde: ${(pdePercentageRequested * 100).toStringAsFixed(1)}%, price: $pricePerKwh COP/kWh, status: $status)';
+    return 'ConsumerOffer(id: $id, buyer: $buyerName, pde: ${Formatters.formatNumber(pdePercentageRequested * 100, decimals: 1)}%, price: $pricePerKwh COP/kWh, status: $status)';
   }
 
   @override

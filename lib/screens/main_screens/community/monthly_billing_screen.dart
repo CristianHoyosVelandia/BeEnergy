@@ -205,7 +205,7 @@ class _MonthlyBillingScreenState extends State<MonthlyBillingScreen> {
                       Icon(Icons.savings_outlined, color: Colors.green, size: 28),
                       SizedBox(width: AppTokens.space8),
                       Text(
-                        'Ahorro Promedio: ${savingsPercent.toStringAsFixed(1)}%',
+                        'Ahorro Promedio: ${Formatters.formatNumber(savingsPercent, decimals: 1)}%',
                         style: context.textStyles.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: AppTokens.fontWeightBold,
@@ -525,7 +525,7 @@ class _MonthlyBillingScreenState extends State<MonthlyBillingScreen> {
                         ),
                         SizedBox(height: AppTokens.space4),
                         Text(
-                          '${Formatters.formatCurrency(savings)} (${savingsPercent.toStringAsFixed(1)}%)',
+                          '${Formatters.formatCurrency(savings)} (${Formatters.formatNumber(savingsPercent, decimals: 1)}%)',
                           style: context.textStyles.bodyMedium?.copyWith(
                             color: Colors.green,
                             fontWeight: AppTokens.fontWeightBold,

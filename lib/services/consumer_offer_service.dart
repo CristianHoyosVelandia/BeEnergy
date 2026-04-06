@@ -6,6 +6,7 @@ library;
 
 import '../models/consumer_offer.dart';
 import '../models/regulatory_models.dart';
+import '../core/utils/formatters.dart';
 import 'regulatory_validator.dart';
 import 'consumer_offer_local_storage.dart';
 
@@ -130,7 +131,7 @@ class ConsumerOfferService {
       );
     }
     return ValidationResult.success(
-      message: 'Porcentaje válido: ${(percentage * 100).toStringAsFixed(1)}%',
+      message: 'Porcentaje válido: ${Formatters.formatNumber(percentage * 100, decimals: 1)}%',
     );
   }
 
@@ -144,20 +145,20 @@ class ConsumerOfferService {
 
     if (price < minPrice) {
       return ValidationResult.violation(
-        message: 'Precio debe ser al menos VE+10% (${minPrice.toStringAsFixed(0)} COP/kWh)',
+        message: 'Precio debe ser al menos VE+10% (${Formatters.formatCurrency(minPrice, decimals: 0, showSymbol: false)} COP/kWh)',
         regulationArticle: 'CREG 101 072 - Rango mínimo',
       );
     }
 
     if (price > tarifaMax) {
       return ValidationResult.violation(
-        message: 'Precio no puede exceder Tarifa-Transporte (${tarifaMax.toStringAsFixed(0)} COP/kWh)',
+        message: 'Precio no puede exceder Tarifa-Transporte (${Formatters.formatCurrency(tarifaMax, decimals: 0, showSymbol: false)} COP/kWh)',
         regulationArticle: 'Restricción tarifaria',
       );
     }
 
     return ValidationResult.success(
-      message: 'Precio válido en rango ${minPrice.toStringAsFixed(0)}-${tarifaMax.toStringAsFixed(0)} COP/kWh',
+      message: 'Precio válido en rango ${Formatters.formatCurrency(minPrice, decimals: 0, showSymbol: false)}-${Formatters.formatCurrency(tarifaMax, decimals: 0, showSymbol: false)} COP/kWh',
     );
   }
 
@@ -286,12 +287,40 @@ class ConsumerOfferService {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Más recientes primero
   }
 
-  /// Obtiene ofertas de un comprador específico
+  /// Obtiene ofertas de un comprador específico para un período
   List<ConsumerOffer> getBuyerOffers(int buyerId, String period) {
     return _offers
         .where((o) => o.buyerId == buyerId && o.period == period)
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  /// Obtiene TODAS las ofertas históricas de un comprador (sin filtrar por período)
+  Future<List<ConsumerOffer>> getAllBuyerOffers(int buyerId) async {
+    // TODO: Reemplazar con llamada a Web Service cuando esté disponible
+    // Por ahora retorna las ofertas guardadas localmente
+    final localOffers = await _localStorage.getBuyerOffers(buyerId);
+
+    // Combinar con ofertas en memoria
+    final allOffers = <ConsumerOffer>[
+      ...localOffers,
+      ..._offers.where((o) => o.buyerId == buyerId),
+    ];
+
+    // Eliminar duplicados por ID y ordenar por fecha de creación (más recientes primero)
+    final uniqueOffers = <int, ConsumerOffer>{};
+    for (var offer in allOffers) {
+      uniqueOffers[offer.id] = offer;
+    }
+
+    return uniqueOffers.values.toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  /// Obtiene las últimas N ofertas de un comprador (para widget de home)
+  Future<List<ConsumerOffer>> getRecentBuyerOffers(int buyerId, {int limit = 3}) async {
+    final allOffers = await getAllBuyerOffers(buyerId);
+    return allOffers.take(limit).toList();
   }
 
   /// Obtiene una oferta por ID

@@ -8,8 +8,9 @@ import '../../../data/fake_data_january_2026.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../models/my_user.dart';
 import '../../../services/consumer_offer_api_service.dart';
+import '../../../widgets/my_offers_card.dart';
 import 'consumer_create_offer_screen.dart';
-import 'consumer_offers_list_screen.dart';
+import 'my_offers_screen.dart';
 
 /// Pantalla de Ofertas PDE - CONSUMIDOR
 /// Permite a los consumidores crear ofertas de compra basadas en % del PDE
@@ -44,6 +45,10 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   ConsumerOffer? _existingOffer;
   String? _loadError;
 
+  // Ofertas recientes del usuario (para mostrar en el tab)
+  List<ConsumerOffer> _recentOffers = [];
+  bool _isLoadingOffers = false;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +58,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
     _tabController = TabController(length: 2, vsync: this);
     _checkExistingOffer();
+    _loadRecentOffers();
   }
 
   /// Formatea el período YYYY-MM a nombre legible (ej: "2026-03" → "Marzo 2026")
@@ -121,6 +127,41 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     }
   }
 
+  /// Carga las últimas ofertas del usuario (máximo 3) desde el Web Service
+  Future<void> _loadRecentOffers() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingOffers = true;
+    });
+
+    try {
+      final allOffers = await _apiService.getBuyerOffers(widget.myUser.idUser ?? 0);
+      final recentOffers = allOffers.take(3).toList();
+
+      if (mounted) {
+        setState(() {
+          _recentOffers = recentOffers;
+          _isLoadingOffers = false;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _recentOffers = [];
+          _isLoadingOffers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _recentOffers = [];
+          _isLoadingOffers = false;
+        });
+      }
+    }
+  }
+
   /// Cancela la oferta existente
   Future<void> _cancelOffer() async {
     if (_existingOffer == null) return;
@@ -172,6 +213,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
         // Recargar ofertas
         await _checkExistingOffer();
+        await _loadRecentOffers();
       }
     } on ApiException catch (e) {
       if (mounted) {
@@ -216,6 +258,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
     // Recargar ofertas después de editar
     _checkExistingOffer();
+    _loadRecentOffers();
   }
 
   @override
@@ -458,6 +501,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                         ),
                       );
                       _checkExistingOffer();
+                      _loadRecentOffers();
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Crear Oferta'),
@@ -753,60 +797,134 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   }
 
   Widget _buildMyOffersTab() {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppTokens.space32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.list_alt,
-              size: 80,
-              color: AppTokens.primaryRed.withValues(alpha: 0.7),
-            ),
-            SizedBox(height: AppTokens.space24),
-            Text(
-              'Mis Ofertas de Compra',
-              style: context.textStyles.titleLarge?.copyWith(
-                fontWeight: AppTokens.fontWeightBold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: AppTokens.space12),
-            Text(
-              'Ve el estado de tus ofertas: pendientes, confirmadas o parciales.',
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: AppTokens.space32),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ConsumerOffersListScreen(
-                      period: _currentPeriod,
-                      myUser: widget.myUser,
-                    ),
+    if (_isLoadingOffers) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: AppTokens.space16),
+
+          // Widget de ofertas recientes (máx 3)
+          MyOffersCard(
+            offers: _recentOffers,
+            onViewAll: () {
+              // Navegar a la pantalla de todas las ofertas
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MyOffersScreen(
+                    myUser: widget.myUser,
+                    communityId: widget.communityId,
                   ),
-                );
-              },
-              icon: const Icon(Icons.list),
-              label: const Text('Ver Mis Ofertas'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTokens.primaryRed,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                  horizontal: AppTokens.space24,
-                  vertical: AppTokens.space16,
+                ),
+              ).then((_) {
+                // Recargar ofertas al volver
+                _loadRecentOffers();
+              });
+            },
+          ),
+
+          SizedBox(height: AppTokens.space24),
+
+          // Información adicional
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+            child: Card(
+              elevation: 2,
+              child: Padding(
+                padding: EdgeInsets.all(AppTokens.space16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: AppTokens.primaryBlue,
+                        ),
+                        SizedBox(width: AppTokens.space8),
+                        Text(
+                          'Estados de Ofertas',
+                          style: context.textStyles.titleSmall?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppTokens.space12),
+                    _buildStatusInfo(
+                      Icons.schedule,
+                      Colors.orange,
+                      'Pendiente',
+                      'Oferta creada, esperando liquidación',
+                    ),
+                    SizedBox(height: AppTokens.space8),
+                    _buildStatusInfo(
+                      Icons.check_circle,
+                      AppTokens.energyGreen,
+                      'Confirmada',
+                      'Oferta 100% satisfecha con energía asignada',
+                    ),
+                    SizedBox(height: AppTokens.space8),
+                    _buildStatusInfo(
+                      Icons.pie_chart,
+                      Colors.blue,
+                      'Parcial',
+                      'Solo se cumplió parte del % solicitado',
+                    ),
+                    SizedBox(height: AppTokens.space8),
+                    _buildStatusInfo(
+                      Icons.cancel,
+                      Colors.grey,
+                      'Cancelada',
+                      'Oferta cancelada por el usuario',
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildStatusInfo(IconData icon, Color color, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        SizedBox(width: AppTokens.space8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: AppTokens.fontWeightSemiBold,
+                  fontSize: 13,
+                ),
+              ),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

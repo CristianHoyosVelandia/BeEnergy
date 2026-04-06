@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/formatters.dart';
 import '../../../data/fake_data_phase2.dart';
 import '../../../services/p2p_service.dart';
 
@@ -72,7 +73,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
       }
 
       if (!_isPriceValid) {
-        throw Exception('Precio fuera del rango VE permitido (${_ve.minAllowedPrice.toStringAsFixed(0)}-${_ve.maxAllowedPrice.toStringAsFixed(0)} COP/kWh)');
+        throw Exception('Precio fuera del rango VE permitido (${Formatters.formatCurrency(_ve.minAllowedPrice, decimals: 0, showSymbol: false)}-${Formatters.formatCurrency(_ve.maxAllowedPrice, decimals: 0, showSymbol: false)} COP/kWh)');
       }
 
       // Crear oferta usando el servicio
@@ -122,9 +123,9 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
             const Text('Tu oferta P2P ha sido publicada exitosamente en el mercado.'),
             SizedBox(height: AppTokens.space16),
             _buildInfoRow('Oferta #', '$offerId'),
-            _buildInfoRow('Energía', '${_energyToSell.toStringAsFixed(2)} kWh'),
-            _buildInfoRow('Precio', '${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
-            _buildInfoRow('Total', '\$${_totalValue.toStringAsFixed(0)}'),
+            _buildInfoRow('Energía', '${Formatters.formatNumber(_energyToSell, decimals: 2)} kWh'),
+            _buildInfoRow('Precio', '${Formatters.formatCurrency(_pricePerKwh, decimals: 0)} COP/kWh'),
+            _buildInfoRow('Total', Formatters.formatCurrency(_totalValue, decimals: 0)),
             SizedBox(height: AppTokens.space16),
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
@@ -325,7 +326,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
           ],
         ),
         Text(
-          '${value.toStringAsFixed(2)} kWh',
+          '${Formatters.formatNumber(value, decimals: 2)} kWh',
           style: context.textStyles.bodyLarge?.copyWith(
             color: color,
             fontWeight: isBold ? AppTokens.fontWeightBold : AppTokens.fontWeightSemiBold,
@@ -364,7 +365,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                   child: Text(
-                    '${_energyToSell.toStringAsFixed(1)} kWh',
+                    '${Formatters.formatNumber(_energyToSell, decimals: 1)} kWh',
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
                       color: AppTokens.primaryPurple,
@@ -379,7 +380,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
               min: 0,
               max: maxEnergy,
               divisions: maxEnergy > 0 ? (maxEnergy * 2).toInt() : 1,
-              label: '${_energyToSell.toStringAsFixed(1)} kWh',
+              label: '${Formatters.formatNumber(_energyToSell, decimals: 1)} kWh',
               activeColor: AppTokens.primaryPurple,
               onChanged: (value) {
                 setState(() {
@@ -391,7 +392,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('0 kWh', style: context.textStyles.bodySmall),
-                Text('${maxEnergy.toStringAsFixed(1)} kWh', style: context.textStyles.bodySmall),
+                Text('${Formatters.formatNumber(maxEnergy, decimals: 1)} kWh', style: context.textStyles.bodySmall),
               ],
             ),
           ],
@@ -435,7 +436,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                     ),
                   ),
                   child: Text(
-                    '\$${_pricePerKwh.toStringAsFixed(0)}',
+                    Formatters.formatCurrency(_pricePerKwh, decimals: 0),
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
                       color: _isPriceValid ? Colors.green : AppTokens.primaryRed,
@@ -446,7 +447,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
             ),
             SizedBox(height: AppTokens.space8),
             Text(
-              'VE base: \$${_ve.totalVE.toStringAsFixed(0)} COP/kWh',
+              'VE base: ${Formatters.formatCurrency(_ve.totalVE, decimals: 0)} COP/kWh',
               style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
             ),
             SizedBox(height: AppTokens.space16),
@@ -455,7 +456,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
               min: minPrice,
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
-              label: '\$${_pricePerKwh.toStringAsFixed(0)}',
+              label: Formatters.formatCurrency(_pricePerKwh, decimals: 0),
               activeColor: _isPriceValid ? Colors.green : AppTokens.primaryRed,
               onChanged: (value) {
                 setState(() {
@@ -466,9 +467,9 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\$${minPrice.toStringAsFixed(0)}', style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(minPrice, decimals: 0), style: context.textStyles.bodySmall),
                 Text('VE ±10%', style: context.textStyles.bodySmall?.copyWith(color: Colors.grey)),
-                Text('\$${maxPrice.toStringAsFixed(0)}', style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(maxPrice, decimals: 0), style: context.textStyles.bodySmall),
               ],
             ),
           ],
@@ -507,7 +508,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                   ),
                   SizedBox(height: AppTokens.space4),
                   Text(
-                    'Desviación: ${deviation.toStringAsFixed(1)}% del VE',
+                    'Desviación: ${Formatters.formatNumber(deviation, decimals: 1)}% del VE',
                     style: context.textStyles.bodySmall?.copyWith(
                       color: isValid ? Colors.green : AppTokens.primaryRed,
                     ),
@@ -545,12 +546,12 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
             SizedBox(height: AppTokens.space16),
             _buildPreviewRow('Vendedor', _prosumer.fullName),
             _buildPreviewRow('NIU', _prosumer.niu),
-            _buildPreviewRow('Energía', '${_energyToSell.toStringAsFixed(2)} kWh'),
-            _buildPreviewRow('Precio', '\$${_pricePerKwh.toStringAsFixed(0)} COP/kWh'),
+            _buildPreviewRow('Energía', '${Formatters.formatNumber(_energyToSell, decimals: 2)} kWh'),
+            _buildPreviewRow('Precio', '${Formatters.formatCurrency(_pricePerKwh, decimals: 0)} COP/kWh'),
             Divider(height: AppTokens.space24),
             _buildPreviewRow(
               'Total',
-              '\$${_totalValue.toStringAsFixed(0)}',
+              Formatters.formatCurrency(_totalValue, decimals: 0),
               isBold: true,
             ),
             SizedBox(height: AppTokens.space8),

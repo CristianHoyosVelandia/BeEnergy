@@ -6,11 +6,14 @@ class Formatters {
 
   // ==================== NÚMEROS ====================
 
-  /// Formatea un número con separadores de miles
-  /// Ejemplo: 1500000 -> "1.500.000"
+  /// Formatea un número con separadores de miles y decimales en formato español
+  /// Miles separados por ".", decimales separados por ","
+  /// Ejemplo: 1500000 -> "1.500.000", 1500.50 con decimals=2 -> "1.500,50"
   static String formatNumber(num value, {int? decimals}) {
     final formatter = NumberFormat('#,##0${decimals != null ? '.${'0' * decimals}' : ''}', 'es_ES');
-    return formatter.format(value).replaceAll(',', '.');
+    String formatted = formatter.format(value);
+    // El locale es_ES ya usa el formato correcto (. para miles, , para decimales)
+    return formatted;
   }
 
   /// Formatea un número entero desde String
@@ -62,25 +65,35 @@ class Formatters {
     );
 
     String formatted = formatter.format(value);
-    // Asegurar formato español: separador miles = ".", decimales = ","
-    formatted = formatted.replaceAll('.', 'TEMP').replaceAll(',', '.').replaceAll('TEMP', ',');
-
-    // Remover espacios
+    // El locale es_ES ya usa el formato correcto (. para miles, , para decimales)
+    // Solo remover espacios
     formatted = formatted.trim();
 
     return showSymbol ? '$symbol$formatted' : formatted;
   }
 
-  /// Formatea un valor como moneda (pesos colombianos por defecto)
-  /// Ejemplo: 15000 -> "\$ 15.000"
+  /// Formatea un valor como moneda con formato español (miles: ., decimales: ,)
+  /// - Si decimals = 0: no muestra decimales (ej: $15.000)
+  /// - Si decimals > 0: muestra decimales con coma (ej: $15.000,50)
+  /// - Si el valor tiene decimales y decimals = 0, se redondea
+  /// Ejemplo: 15000 -> "$15.000", 15000.50 con decimals=2 -> "$15.000,50"
     static String formatCurrency(
       num value, {
       String symbol = '\$',
       int decimals = 0,
       bool showSymbol = true,
     }) {
-      final formatted = formatNumber(value, decimals: decimals);
-      return showSymbol ? '$symbol $formatted' : formatted;
+      final formatter = NumberFormat.currency(
+        locale: 'es_ES',
+        symbol: '',
+        decimalDigits: decimals,
+      );
+
+      String formatted = formatter.format(value);
+      // El locale es_ES ya usa el formato correcto (. para miles, , para decimales)
+      formatted = formatted.trim();
+
+      return showSymbol ? '$symbol$formatted' : formatted;
     }
 
   /// Formatea un valor de String como moneda
@@ -108,19 +121,16 @@ class Formatters {
   static String formatEnergyES(num value, {String unit = 'kWh', int decimals = 2}) {
     final formatter = NumberFormat('#,##0.${'0' * decimals}', 'es_ES');
     String formatted = formatter.format(value);
-    // Asegurar formato español: separador miles = ".", decimales = ","
-    formatted = formatted.replaceAll('.', 'TEMP').replaceAll(',', '.').replaceAll('TEMP', ',');
+    // El locale es_ES ya usa el formato correcto (. para miles, , para decimales)
     return '$formatted $unit';
   }
 
-  /// Formatea un valor de energía
-  /// Ejemplo: 1500 -> "1.500 kWh"
+  /// Formatea un valor de energía con formato español (miles: ., decimales: ,)
+  /// Ejemplo: 1500 -> "1.500 kWh", 1500.50 con decimals=2 -> "1.500,50 kWh"
   static String formatEnergy(num value, {String unit = 'kWh', int decimals = 0}) {
-    final formatter = NumberFormat.decimalPattern('es_CO')
-      ..minimumFractionDigits = decimals
-      ..maximumFractionDigits = decimals;
-
-    final formatted = formatter.format(value);
+    final formatter = NumberFormat('#,##0${decimals > 0 ? '.${'0' * decimals}' : ''}', 'es_ES');
+    String formatted = formatter.format(value);
+    // El locale es_ES ya usa el formato correcto (. para miles, , para decimales)
     return '$formatted $unit';
   }
 
@@ -208,16 +218,18 @@ class Formatters {
   static String formatPercentageES(num value) {
     final formatter = NumberFormat('0.00', 'es_ES');
     String formatted = formatter.format(value);
-    // Asegurar que use coma como separador decimal
-    formatted = formatted.replaceAll('.', ',');
+    // El locale es_ES ya usa coma como separador decimal
     return '$formatted%';
   }
 
-  /// Formatea un porcentaje
-  /// Ejemplo: 0.75 -> "75%"
+  /// Formatea un porcentaje con formato español (separador decimal: ,)
+  /// Ejemplo: 0.75 con decimals=0 -> "75%", 0.755 con decimals=2 -> "75,50%"
   static String formatPercentage(double value, {int decimals = 0}) {
     final percentage = value * 100;
-    return '${formatNumber(percentage, decimals: decimals)}%';
+    final formatter = NumberFormat('0${decimals > 0 ? '.${'0' * decimals}' : ''}', 'es_ES');
+    String formatted = formatter.format(percentage);
+    // El locale es_ES ya usa coma como separador decimal
+    return '$formatted%';
   }
 
   /// Formatea un porcentaje desde un valor directo
