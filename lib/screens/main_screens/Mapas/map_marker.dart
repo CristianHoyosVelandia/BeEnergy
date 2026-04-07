@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/utils/logger.dart';
 import '../../../models/callmodels.dart';
 import '../../../utils/metodos.dart';
 
@@ -48,9 +48,7 @@ class MapMarkerPopup extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onLongPress: (){
-        if (kDebugMode) {
-          print(esAgrupado);
-        }
+        AppLogger.debug('esAgrupado: $esAgrupado', tag: 'MapMarker');
       },
       child: SizedBox(
         width: 200,

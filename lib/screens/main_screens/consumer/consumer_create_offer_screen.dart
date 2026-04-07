@@ -7,7 +7,6 @@ import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/consumer_offer_api_service.dart';
 import '../../../widgets/pde_indicator.dart';
-import '../../../models/regulatory_models.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../models/my_user.dart';
 
@@ -44,18 +43,6 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
 
   final _totalPDEAvailable = 1500.0; // kWh disponibles para PDE
-
-  // MC_m - Valor de energía promedio (300 COP/kWh) para compatibilidad con validaciones
-  final _ve = VECalculation(
-    period: '2026-01',
-    cuComponent: 0.0,
-    mcComponent: 0.0,
-    pcnComponent: 0.0,
-    totalVE: FakeDataJanuary2026.mcmValorEnergiaPromedio, // 300 COP/kWh
-    minAllowedPrice: FakeDataJanuary2026.precioMinimoConsumidor, // 330 COP/kWh
-    maxAllowedPrice: FakeDataJanuary2026.precioMaximoConsumidor, // 693.5 COP/kWh
-    source: 'manual',
-  );
 
   // Controles del formulario
   double _pdePercentageRequested = 5.0; // 5% por defecto (rango 0-9.99)

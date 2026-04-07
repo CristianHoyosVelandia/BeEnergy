@@ -1,7 +1,6 @@
-// ignore_for_file: avoid_print
-
 import 'package:be_energy/models/callmodels.dart';
 import 'package:be_energy/screens/bloc/bloc_main.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:flutter/material.dart';
 
 import '../routes.dart';
@@ -52,12 +51,9 @@ class _BeenergyState extends State<Beenergy> {
             //de ser el caso cargamos los datos en el menu de codigo de usuario, codigo ciudad y nomCiudad y redirigimos.
             if (snapshotUser.hasData) {
 
-              print("data Snapshot: ${snapshotUser.data.toMap()}");
+              AppLogger.debug('User snapshot: ${snapshotUser.data.toMap()}', tag: 'MainScreen');
 
               if (snapshotUser.data.idUser != 0) {
-                
-                // print('Usuario ya logueado exitosamente');
-                // print(snapshotUser.data);
                 return NavPages( myUser: snapshotUser.data);
                 
               } else {

@@ -1,11 +1,12 @@
-import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../api/api_exceptions.dart';
 import '../constants/api_endpoints.dart';
+import '../utils/logger.dart';
 
 /// Servicio de autenticación para la aplicación BeEnergy
 /// Integrado con Volt Platform Services API
 class AuthService {
+  static const String _tag = 'AuthService';
   final ApiClient _apiClient = ApiClient.instance;
 
   /// Verifica la conexión con el servidor (ping)
@@ -16,9 +17,7 @@ class AuthService {
       final response = await _apiClient.get(ApiEndpoints.ping);
       return response.statusCode == 200;
     } on ApiException catch (e) {
-      if (kDebugMode) {
-        print('Error en ping: ${e.message}');
-      }
+      AppLogger.error('Error en ping', tag: _tag, error: e.message);
       return false;
     }
   }
@@ -43,7 +42,7 @@ class AuthService {
           'password': password,
         },
       );
-      print("El response es-->${response.data}");
+      AppLogger.debug('Login response: ${response.data}', tag: _tag);
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
 
@@ -258,9 +257,7 @@ class AuthService {
       final response = await _apiClient.get(ApiEndpoints.verifyToken);
       return response.statusCode == 200;
     } on ApiException catch (e) {
-      if (kDebugMode) {
-        print('Error verificando token: ${e.message}');
-      }
+      AppLogger.error('Error verificando token', tag: _tag, error: e.message);
       return false;
     }
   }

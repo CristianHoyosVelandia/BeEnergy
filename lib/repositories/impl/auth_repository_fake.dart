@@ -1,6 +1,7 @@
 /// Implementación fake del repositorio de autenticación
 library;
 
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:be_energy/models/auth_models.dart';
 import 'package:be_energy/repositories/domain/auth_repository.dart';
 
@@ -149,8 +150,8 @@ class AuthRepositoryFake implements AuthRepository {
     _recoveryTokens[token] = request.email;
 
     // En producción, aquí se enviaría un email
-    print('📧 Email de recuperación enviado a ${request.email}');
-    print('🔑 Token de recuperación (solo para testing): $token');
+    AppLogger.info('Email de recuperación enviado a ${request.email}', tag: 'AuthFake');
+    AppLogger.debug('Token de recuperación (testing): $token', tag: 'AuthFake');
 
     return RecoveryResult.success(
       message:

@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:be_energy/repositories/domain/energy_stats_repository.dart';
 import 'package:be_energy/repositories/domain/transaction_repository.dart';
 import 'package:be_energy/repositories/domain/community_repository.dart';
@@ -75,8 +76,7 @@ class DataSourceConfig {
       // print('🔧 [DataSourceConfig] Using: $_currentSource');
       // print('🌐 [DataSourceConfig] API Base URL: $_apiBaseUrl');
     } catch (e) {
-      print('⚠️ [DataSourceConfig] Error loading .env: $e');
-      // print('📌 [DataSourceConfig] Using default configuration (fake data)');
+      AppLogger.warning('Error loading .env, using default config', tag: 'DataSourceConfig', error: e);
       _currentSource = DataSourceType.fake;
       _apiBaseUrl = 'http://10.0.2.2:8000';
     }

@@ -4,10 +4,13 @@ library;
 
 import 'package:be_energy/core/api/api_client.dart';
 import 'package:be_energy/core/constants/api_endpoints.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:be_energy/models/home_data_models.dart';
 import 'package:be_energy/models/community_models.dart';
 import 'package:be_energy/models/energy_models.dart';
 import 'package:be_energy/repositories/domain/community_repository.dart';
+
+const String _tag = 'CommunityRepoApi';
 
 /// Implementación con API real para comunidad
 class CommunityRepositoryApi implements CommunityRepository {
@@ -147,7 +150,7 @@ class CommunityRepositoryApi implements CommunityRepository {
         );
       }).toList();
     } catch (e) {
-      print('Error al obtener miembros de comunidad: $e');
+      AppLogger.error('Error al obtener miembros de comunidad', tag: _tag, error: e);
       rethrow;
     }
   }
@@ -208,7 +211,7 @@ class CommunityRepositoryApi implements CommunityRepository {
         }
       }).toList();
     } catch (e) {
-      print('Error al obtener energy records: $e');
+      AppLogger.error('Error al obtener energy records', tag: _tag, error: e);
       rethrow;
     }
   }

@@ -19,6 +19,10 @@ class ConsumerOffer {
   /// Ejemplo: 0.15 = quiere el 15% del PDE total disponible
   final double pdePercentageRequested;
 
+  /// Porcentaje del PDE realmente asignado (0.0 - 1.0)
+  /// Se asigna durante la liquidación, puede ser menor al solicitado
+  final double? pdePercentageAssigned;
+
   /// Precio que está dispuesto a pagar (COP/kWh)
   /// Rango permitido: VE+10% a Tarifa-Transporte (495-550 COP/kWh para Ene 2026)
   final double pricePerKwh;
@@ -47,6 +51,7 @@ class ConsumerOffer {
     required this.communityId,
     required this.period,
     required this.pdePercentageRequested,
+    this.pdePercentageAssigned,
     required this.pricePerKwh,
     required this.status,
     required this.createdAt,
@@ -103,6 +108,7 @@ class ConsumerOffer {
     int? communityId,
     String? period,
     double? pdePercentageRequested,
+    double? pdePercentageAssigned,
     double? pricePerKwh,
     double? energyKwhCalculated,
     ConsumerOfferStatus? status,
@@ -121,6 +127,7 @@ class ConsumerOffer {
       communityId: communityId ?? this.communityId,
       period: period ?? this.period,
       pdePercentageRequested: pdePercentageRequested ?? this.pdePercentageRequested,
+      pdePercentageAssigned: pdePercentageAssigned ?? this.pdePercentageAssigned,
       pricePerKwh: pricePerKwh ?? this.pricePerKwh,
       energyKwhCalculated: energyKwhCalculated ?? this.energyKwhCalculated,
       status: status ?? this.status,
@@ -143,6 +150,7 @@ class ConsumerOffer {
       'communityId': communityId,
       'period': period,
       'pdePercentageRequested': pdePercentageRequested,
+      'pdePercentageAssigned': pdePercentageAssigned,
       'pricePerKwh': pricePerKwh,
       'energyKwhCalculated': energyKwhCalculated,
       'status': status.name,
@@ -165,6 +173,9 @@ class ConsumerOffer {
       communityId: json['communityId'] as int,
       period: json['period'] as String,
       pdePercentageRequested: (json['pdePercentageRequested'] as num).toDouble(),
+      pdePercentageAssigned: json['pdePercentageAssigned'] != null
+          ? (json['pdePercentageAssigned'] as num).toDouble()
+          : null,
       pricePerKwh: (json['pricePerKwh'] as num).toDouble(),
       energyKwhCalculated: json['energyKwhCalculated'] != null
           ? (json['energyKwhCalculated'] as num).toDouble()
@@ -219,6 +230,9 @@ class ConsumerOffer {
       period: json['period'] as String,
       // Backend retorna como decimal (0.0-1.0)
       pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble(),
+      pdePercentageAssigned: json['pde_percentage_assigned'] != null
+          ? (json['pde_percentage_assigned'] as num).toDouble()
+          : null,
       pricePerKwh: (json['price_per_kwh'] as num).toDouble(),
       // Usar energy_requested calculado por el backend
       energyKwhCalculated: (json['energy_requested'] as num).toDouble(),
@@ -263,6 +277,9 @@ class ConsumerOffer {
       period: json['period'] as String,
       // Backend retorna como porcentaje (0.01-99.99), convertir a decimal (0.0001-0.9999)
       pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble() / 100,
+      pdePercentageAssigned: json['pde_percentage_assigned'] != null
+          ? (json['pde_percentage_assigned'] as num).toDouble() / 100
+          : null,
       pricePerKwh: (json['price_per_kwh'] as num).toDouble(),
       energyKwhCalculated: null, // Backend no retorna este campo
       // Backend retorna status como int (0-4)

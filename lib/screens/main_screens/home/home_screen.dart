@@ -1,6 +1,7 @@
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:be_energy/routes.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import '../../../data/fake_periods_data.dart';
 import '../../../repositories/domain/pde_period_repository.dart';
 import '../../../repositories/impl/pde_period_repository_api.dart';
 import '../../../core/config/data_source_config.dart';
+import '../../../services/consumer_offer_api_service.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 import '../admin/admin_community_offers_screen.dart';
 // import 'transaction_detail_screen.dart';
@@ -105,8 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingPDEStatus = false;
       });
     } catch (e, stackTrace) {
-      print('❌ Error cargando estado PDE: $e');
-      print('📍 StackTrace: $stackTrace');
+      AppLogger.error('Error cargando estado PDE', tag: 'HomeScreen', error: e, stackTrace: stackTrace);
       setState(() => _isLoadingPDEStatus = false);
     }
   }
@@ -363,24 +364,43 @@ class _HomeScreenState extends State<HomeScreen> {
     // Si ENABLE_MOCKS=false, usar datos del backend
     if (!DataSourceConfig.isFake) {
       final energyData = _selectedPeriodEnergyData;
-      const costPerKwh = 300.0; // Precio promedio COP/kWh
 
       return Column(
         children: [
           _energyCard(
-            title: "Importe",
-            energy: energyData['imported']!,
-            amount: energyData['imported']! * costPerKwh,
-            icon: Icons.trending_down_rounded,
-            color: AppTokens.error,
+            title: "Generada",
+            energy: energyData['generated']!,
+            amount: 0,
+            icon: Icons.wb_sunny_rounded,
+            color: AppTokens.primaryRed,
+            hideAmount: true,
+          ),
+          SizedBox(height: AppTokens.space8),
+          _energyCard(
+            title: "Consumida",
+            energy: energyData['consumed']!,
+            amount: 0,
+            icon: Icons.electric_bolt_rounded,
+            color: AppTokens.primaryRed,
+            hideAmount: true,
           ),
           SizedBox(height: AppTokens.space8),
           _energyCard(
             title: "Exportada",
             energy: energyData['exported']!,
-            amount: energyData['exported']! * costPerKwh,
+            amount: 0,
             icon: Icons.trending_up_rounded,
             color: AppTokens.primaryRed,
+            hideAmount: true,
+          ),
+          SizedBox(height: AppTokens.space8),
+          _energyCard(
+            title: "Importada",
+            energy: energyData['imported']!,
+            amount: 0,
+            icon: Icons.trending_down_rounded,
+            color: AppTokens.primaryRed,
+            hideAmount: true,
           ),
         ],
       );
@@ -468,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
     bool hideAmount = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space12),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusMedium,
@@ -480,18 +500,18 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(AppTokens.space12),
+            padding: EdgeInsets.all(AppTokens.space8),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               borderRadius: AppTokens.borderRadiusSmall,
             ),
             child: Icon(
               icon,
-              size: 28,
+              size: 18,
               color: color,
             ),
           ),
-          SizedBox(width: AppTokens.space16),
+          SizedBox(width: AppTokens.space12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,10 +533,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ],
-                SizedBox(height: AppTokens.space8),
+                SizedBox(height: AppTokens.space4),
                 Text(
-                  Formatters.formatEnergy(energy),
-                  style: context.textStyles.headlineSmall?.copyWith(
+                  Formatters.formatEnergy(energy, decimals: 2),
+                  style: context.textStyles.titleMedium?.copyWith(
                     color: color,
                     fontWeight: AppTokens.fontWeightBold,
                   ),
@@ -671,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return '${months[month] ?? month} $year';
       }
     } catch (e) {
-      print('Error formateando período $period: $e');
+      AppLogger.warning('Error formateando período $period', tag: 'HomeScreen', error: e);
     }
 
     return period; // Fallback: retornar el período original
@@ -1287,6 +1307,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
   }
 
+  // ignore: unused_element
   Widget _miniListHistorial() {
     return ListView.separated(
       scrollDirection: Axis.vertical,
@@ -1390,6 +1411,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _titulobtnHistorial() {
     return Padding(
       padding: EdgeInsets.only(bottom: AppTokens.space12),
@@ -1429,8 +1451,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Column(
         children: [
-          _titulobtnHistorial(),
-          _miniListHistorial(),
+          // _titulobtnHistorial(),
+          // _miniListHistorial(),
         ],
       ),
     );
@@ -1447,8 +1469,23 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Si no hay estado o no está disponible, ocultar el card
-    if (_pdePeriodStatus == null || !_pdePeriodStatus!.isPDEAvailable) {
+    // Si no hay estado, ocultar el card
+    if (_pdePeriodStatus == null) {
+      return const SizedBox.shrink();
+    }
+
+    // NUEVO: Ofertas Finalizadas (statusCode == 3)
+    if (_pdePeriodStatus!.statusCode == 3) {
+      return _buildPDEFinalizadoCard();
+    }
+
+    // NUEVO: En Conciliación (statusCode == 4)
+    if (_pdePeriodStatus!.statusCode == 4) {
+      return _buildPDEEnConciliacionCard();
+    }
+
+    // PDE Disponible (statusCode == 1)
+    if (!_pdePeriodStatus!.isPDEAvailable) {
       return const SizedBox.shrink();
     }
 
@@ -1661,6 +1698,447 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Widget para mostrar cuando ofertas están finalizadas (statusCode == 3)
+  /// Carga datos reales del backend y muestra: pde_percentage_requested,
+  /// pde_percentage_assigned, price_per_kwh, liquidated_at
+  Widget _buildPDEFinalizadoCard() {
+    // Ocultar en vista admin
+    if (_isAdminView) {
+      return const SizedBox.shrink();
+    }
+
+    final apiService = ConsumerOfferApiService();
+    final userId = widget.myUser?.idUser ?? 0;
+
+    return FutureBuilder<ConsumerOffer?>(
+      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
+      builder: (context, snapshot) {
+        // Mostrar loading mientras carga
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+            padding: EdgeInsets.all(AppTokens.space20),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Si no hay oferta para este período, ocultar el card
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox.shrink();
+        }
+
+        final offer = snapshot.data!;
+
+        // Calcular valor total si hay energía calculada
+        final double? totalValue = offer.energyKwhCalculated != null
+            ? offer.energyKwhCalculated! * offer.pricePerKwh
+            : null;
+
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+          padding: EdgeInsets.all(AppTokens.space20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTokens.primaryRed,
+                AppTokens.primaryRed.withValues(alpha: 0.85),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: AppTokens.borderRadiusLarge,
+            boxShadow: [
+              BoxShadow(
+                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con icono
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(AppTokens.space12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(width: AppTokens.space12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ofertas Finalizadas',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          _selectedPeriodDisplayName,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: AppTokens.space20),
+
+              // Datos de la oferta
+              Container(
+                padding: EdgeInsets.all(AppTokens.space16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // PDE Solicitado vs Asignado
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'PDE Solicitado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (offer.pdePercentageAssigned != null) ...[
+                      SizedBox(height: AppTokens.space12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'PDE Asignado',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            '${Formatters.formatNumber(offer.pdePercentageAssigned! * 100, decimals: 2)}%',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: AppTokens.space12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Precio',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0, showSymbol: false)} COP/kWh',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (totalValue != null) ...[
+                      SizedBox(height: AppTokens.space12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Valor Total',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            Formatters.formatCurrency(totalValue, decimals: 0),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (offer.liquidatedAt != null) ...[
+                      SizedBox(height: AppTokens.space12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Liquidado el',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            Formatters.formatDateMedium(offer.liquidatedAt!),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              SizedBox(height: AppTokens.space16),
+
+              // Mensaje de espera
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: AppTokens.space8),
+                    Expanded(
+                      child: Text(
+                        'Apenas se concilie con el comercializador podrá ver el ahorro real en su tarifa energética',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Widget para mostrar cuando está en conciliación (statusCode == 4)
+  /// Carga datos reales del backend y muestra únicamente pde_percentage_assigned
+  /// con mensaje de espera del comercializador
+  Widget _buildPDEEnConciliacionCard() {
+    // Ocultar en vista admin
+    if (_isAdminView) {
+      return const SizedBox.shrink();
+    }
+
+    final apiService = ConsumerOfferApiService();
+    final userId = widget.myUser?.idUser ?? 0;
+
+    return FutureBuilder<ConsumerOffer?>(
+      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
+      builder: (context, snapshot) {
+        // Mostrar loading mientras carga
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+            padding: EdgeInsets.all(AppTokens.space20),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Si no hay oferta para este período, ocultar el card
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox.shrink();
+        }
+
+        final offer = snapshot.data!;
+
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+          padding: EdgeInsets.all(AppTokens.space20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTokens.primaryRed,
+                AppTokens.primaryRed.withValues(alpha: 0.85),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: AppTokens.borderRadiusLarge,
+            boxShadow: [
+              BoxShadow(
+                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con icono
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(AppTokens.space12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                    child: const Icon(
+                      Icons.hourglass_empty,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(width: AppTokens.space12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'En Conciliación',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          _selectedPeriodDisplayName,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: AppTokens.space20),
+
+              // Datos de la oferta - Solo PDE Asignado
+              Container(
+                padding: EdgeInsets.all(AppTokens.space16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // PDE Asignado (único dato mostrado)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'PDE Asignado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${Formatters.formatNumber((offer.pdePercentageAssigned ?? 0.0) * 100, decimals: 2)}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: AppTokens.space16),
+
+              // Mensaje de espera del comercializador
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: AppTokens.space8),
+                    Expanded(
+                      child: Text(
+                        'A la espera de conciliación con el comercializador',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   /// Tarjetas de precios de referencia para el gestor comunitario (admin)
   Widget _buildPriceCardsAdmin() {
     final prices = [
@@ -1764,6 +2242,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         _actividades(),
         SizedBox(height: AppTokens.space24),
+        SizedBox(height: AppTokens.space64),
         _minihostiral(),
       ],
     );

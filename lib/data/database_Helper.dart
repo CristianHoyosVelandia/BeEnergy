@@ -1,8 +1,9 @@
-// ignore_for_file: file_names, avoid_print
+// ignore_for_file: file_names
 import 'package:sqflite/sqflite.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart';
 import '../models/my_user.dart';
+import '../core/utils/logger.dart';
 
 /// La clase database Helper es la encargada del manejo de todas las bases de datos dentro de la  aplicación
 class DatabaseHelper{
@@ -230,8 +231,7 @@ class DatabaseHelper{
   Future<void> addUsertbUsuarios(MyUser usuarioLocal) async {
     final Database? dbConnection = await db;
     int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarios'));
-    print(nUsers);
-    // print("----> creando usuarios nuevo insert");
+    AppLogger.debug('Users count: $nUsers', tag: 'DatabaseHelper');
     await dbConnection.insert( tbUsuarios, usuarioLocal.toMap());
 
   }

@@ -1,6 +1,9 @@
 import '../../core/api/api_client.dart';
+import '../../core/utils/logger.dart';
 import '../../models/consumer_offer.dart';
 import '../domain/consumer_offer_repository.dart';
+
+const String _tag = 'ConsumerOfferRepo';
 
 /// Implementación del repositorio de ofertas de consumidores usando API REST.
 ///
@@ -14,17 +17,14 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
   @override
   Future<List<ConsumerOffer>> getCommunityPeriodOffers({ required int communityId, required String period, }) async {
     try {
-      print('🌐 [ConsumerOfferRepositoryApi] Llamando GET /consumer-offers/community/$communityId/period/$period');
+      AppLogger.debug('GET /consumer-offers/community/$communityId/period/$period', tag: _tag);
 
       // Llamada HTTP GET al endpoint
       final response = await ApiClient.instance.get(
         '/consumer-offers/community/$communityId/period/$period',
       );
 
-      print('📡 [ConsumerOfferRepositoryApi] Respuesta recibida:');
-      print('   Status code: ${response.statusCode}');
-      print('   Status: ${response.data['status']}');
-      print('   Data count: ${(response.data['data'] as List?)?.length ?? 0}');
+      AppLogger.debug('Response: status=${response.statusCode}, count=${(response.data['data'] as List?)?.length ?? 0}', tag: _tag);
 
       // Validar respuesta exitosa (el backend retorna 'status', no 'success')
       if (response.statusCode == 200 && response.data['status'] == true) {
@@ -35,7 +35,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
             .map((json) => ConsumerOffer.fromBackendJsonWithBuyerInfo(json as Map<String, dynamic>))
             .toList();
 
-        print('✅ [ConsumerOfferRepositoryApi] ${offers.length} ofertas parseadas correctamente');
+        AppLogger.info('${offers.length} ofertas parseadas correctamente', tag: _tag);
         return offers;
       } else {
         throw Exception(
@@ -43,7 +43,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
         );
       }
     } catch (e) {
-      print('❌ [ConsumerOfferRepositoryApi] Error: $e');
+      AppLogger.error('Error obteniendo ofertas', tag: _tag, error: e);
       throw Exception('Error obteniendo ofertas de comunidad: $e');
     }
   }
@@ -51,7 +51,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
   @override
   Future<ConsumerOffer?> getOfferById(int offerId) async {
     try {
-      print('🌐 [ConsumerOfferRepositoryApi] Llamando GET /consumer-offers/$offerId');
+      AppLogger.debug('GET /consumer-offers/$offerId', tag: _tag);
 
       final response = await ApiClient.instance.get(
         '/consumer-offers/$offerId',
@@ -63,7 +63,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
         return null;
       }
     } catch (e) {
-      print('❌ [ConsumerOfferRepositoryApi] Error obteniendo oferta: $e');
+      AppLogger.error('Error obteniendo oferta', tag: _tag, error: e);
       return null;
     }
   }
@@ -71,7 +71,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
   @override
   Future<ConsumerOffer> createOffer(ConsumerOffer offer) async {
     try {
-      print('🌐 [ConsumerOfferRepositoryApi] Llamando POST /consumer-offers');
+      AppLogger.debug('POST /consumer-offers', tag: _tag);
 
       final response = await ApiClient.instance.post(
         '/consumer-offers',
@@ -86,7 +86,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
         );
       }
     } catch (e) {
-      print('❌ [ConsumerOfferRepositoryApi] Error creando oferta: $e');
+      AppLogger.error('Error creando oferta', tag: _tag, error: e);
       throw Exception('Error creando oferta: $e');
     }
   }
@@ -98,7 +98,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
     double? pricePerKwh,
   }) async {
     try {
-      print('🌐 [ConsumerOfferRepositoryApi] Llamando PUT /consumer-offers/$offerId');
+      AppLogger.debug('PUT /consumer-offers/$offerId', tag: _tag);
 
       final data = <String, dynamic>{};
       if (pdePercentageRequested != null) {
@@ -122,7 +122,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
         );
       }
     } catch (e) {
-      print('❌ [ConsumerOfferRepositoryApi] Error actualizando oferta: $e');
+      AppLogger.error('Error actualizando oferta', tag: _tag, error: e);
       throw Exception('Error actualizando oferta: $e');
     }
   }
@@ -130,7 +130,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
   @override
   Future<bool> cancelOffer(int offerId) async {
     try {
-      print('🌐 [ConsumerOfferRepositoryApi] Llamando DELETE /consumer-offers/$offerId/cancel');
+      AppLogger.debug('DELETE /consumer-offers/$offerId/cancel', tag: _tag);
 
       final response = await ApiClient.instance.delete(
         '/consumer-offers/$offerId/cancel',
@@ -142,7 +142,7 @@ class ConsumerOfferRepositoryApi implements ConsumerOfferRepository {
         return false;
       }
     } catch (e) {
-      print('❌ [ConsumerOfferRepositoryApi] Error cancelando oferta: $e');
+      AppLogger.error('Error cancelando oferta', tag: _tag, error: e);
       return false;
     }
   }

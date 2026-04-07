@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/repositories/impl/consumer_offer_repository_api.dart';
@@ -40,7 +41,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
   @override
   void initState() {
     super.initState();
-    print('📍 [AdminCommunityOffersScreen] widget.period: ${widget.period}');
+    AppLogger.debug('widget.period: ${widget.period}', tag: 'AdminOffers');
     // Cargar datos desde el backend
     _loadOffers();
   }
@@ -50,14 +51,14 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
     setState(() => _isLoading = true);
 
     try {
-      print('🌐 [AdminCommunityOffersScreen] Cargando ofertas para periodo: ${widget.period}');
+      AppLogger.debug('Cargando ofertas para periodo: ${widget.period}', tag: 'AdminOffers');
 
       final offers = await _repository.getCommunityPeriodOffers(
         communityId: 1, // UAO community
         period: widget.period,
       );
 
-      print('✅ [AdminCommunityOffersScreen] ${offers.length} ofertas cargadas');
+      AppLogger.info('${offers.length} ofertas cargadas', tag: 'AdminOffers');
 
       // Calcular estadísticas
       final totalEnergy = offers.fold<double>(
@@ -73,7 +74,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
         _isLoading = false;
       });
     } catch (e) {
-      print('❌ [AdminCommunityOffersScreen] Error cargando ofertas: $e');
+      AppLogger.error('Error cargando ofertas', tag: 'AdminOffers', error: e);
 
       if (mounted) {
         setState(() => _isLoading = false);

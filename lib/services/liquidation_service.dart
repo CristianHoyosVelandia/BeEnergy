@@ -10,6 +10,7 @@
 /// 4. Admin finaliza → se generan contratos P2P
 library;
 
+import '../core/utils/logger.dart';
 import '../models/consumer_offer.dart';
 import '../models/liquidation_session.dart';
 import '../models/p2p_models.dart';
@@ -17,12 +18,10 @@ import '../models/energy_models.dart';
 import '../models/regulatory_models.dart';
 import 'consumer_offer_service.dart';
 import 'p2p_service.dart';
-import 'regulatory_validator.dart';
 
 class LiquidationService {
   final ConsumerOfferService _consumerOfferService;
   final P2PService _p2pService;
-  final RegulatoryValidator _validator = RegulatoryValidator();
 
   // Almacenamiento en memoria
   final List<LiquidationSession> _sessions = [];
@@ -259,7 +258,7 @@ class LiquidationService {
         );
       } catch (e) {
         // Si falla algún contrato, registrar pero continuar
-        print('Error creando contrato para match ${match.consumerOfferId}: $e');
+        AppLogger.error('Error creando contrato para match ${match.consumerOfferId}', tag: 'LiquidationService', error: e);
       }
     }
 

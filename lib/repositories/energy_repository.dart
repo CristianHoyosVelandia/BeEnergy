@@ -1,13 +1,13 @@
-// ignore_for_file: avoid_print
-
 import '../core/api/api_client.dart';
 import '../core/api/api_response.dart';
 import '../core/api/api_exceptions.dart';
 import '../core/constants/api_endpoints.dart';
+import '../core/utils/logger.dart';
 
 /// Repositorio de ejemplo para manejar operaciones relacionadas con energía
 /// Este es un patrón de diseño que separa la lógica de acceso a datos
 class EnergyRepository {
+  static const String _tag = 'EnergyRepository';
   final ApiClient _apiClient = ApiClient.instance;
 
   /// Obtiene los datos de energía del usuario
@@ -35,7 +35,7 @@ class EnergyRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error obteniendo datos de energía: ${e.message}');
+      AppLogger.error('Error obteniendo datos de energía', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -70,7 +70,7 @@ class EnergyRepository {
         (data) => data,
       );
     } on ApiException catch (e) {
-      print('Error obteniendo historial de energía: ${e.message}');
+      AppLogger.error('Error obteniendo historial de energía', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -94,7 +94,7 @@ class EnergyRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error obteniendo estadísticas de energía: ${e.message}');
+      AppLogger.error('Error obteniendo estadísticas de energía', tag: _tag, error: e.message);
       rethrow;
     }
   }

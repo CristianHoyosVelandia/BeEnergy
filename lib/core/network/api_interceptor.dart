@@ -1,11 +1,13 @@
-// ignore_for_file: depend_on_referenced_packages, avoid_print
-
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../utils/logger.dart';
 
 /// Interceptor personalizado para manejar requests y responses del API
 /// Agrega headers comunes y maneja errores de forma centralizada
 class ApiInterceptor extends Interceptor {
+  static const String _tag = 'API';
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Agregar headers personalizados de la aplicación
@@ -17,13 +19,12 @@ class ApiInterceptor extends Interceptor {
       options.headers['codCiudad'] = dotenv.env['DEFAULT_CITY_CODE'] ?? '4110';
     }
 
-    print('⬆️ REQUEST[${options.method}] => PATH: ${options.path}');
-    // print('⬆️ Headers: ${options.headers}');
+    AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}', tag: _tag);
     if (options.data != null) {
-      print('⬆️ Data: ${options.data}');
+      AppLogger.debug('Data: ${options.data}', tag: _tag);
     }
     if (options.queryParameters.isNotEmpty) {
-      print('⬆️ Query Parameters: ${options.queryParameters}');
+      AppLogger.debug('Query Parameters: ${options.queryParameters}', tag: _tag);
     }
 
     super.onRequest(options, handler);
@@ -31,18 +32,21 @@ class ApiInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    print('⬇️ RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
-    print('⬇️ Data: ${response.data}');
+    AppLogger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}', tag: _tag);
+    AppLogger.debug('Data: ${response.data}', tag: _tag);
 
     super.onResponse(response, handler);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    print('❌ ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
-    print('❌ Message: ${err.message}');
+    AppLogger.error(
+      'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+      tag: _tag,
+      error: err.message,
+    );
     if (err.response != null) {
-      print('❌ Response: ${err.response?.data}');
+      AppLogger.error('Response: ${err.response?.data}', tag: _tag);
     }
 
     // Aquí puedes manejar errores específicos como:
@@ -52,7 +56,7 @@ class ApiInterceptor extends Interceptor {
 
     if (err.response?.statusCode == 401) {
       // Manejar token expirado
-      print('🔐 Token expirado o no autorizado');
+      AppLogger.warning('Token expirado o no autorizado', tag: _tag);
       // TODO: Implementar lógica de refresh token o redirigir a login
     }
 

@@ -1,12 +1,12 @@
-// ignore_for_file: avoid_print
-
 import '../core/api/api_client.dart';
 import '../core/api/api_response.dart';
 import '../core/api/api_exceptions.dart';
 import '../core/constants/api_endpoints.dart';
+import '../core/utils/logger.dart';
 
 /// Repositorio para manejar operaciones de autenticación
 class AuthRepository {
+  static const String _tag = 'AuthRepository';
   final ApiClient _apiClient = ApiClient.instance;
 
   /// Realiza el login del usuario
@@ -38,7 +38,7 @@ class AuthRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en login: ${e.message}');
+      AppLogger.error('Error en login', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -88,7 +88,7 @@ class AuthRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en registro: ${e.message}');
+      AppLogger.error('Error en registro', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -108,7 +108,7 @@ class AuthRepository {
         (_) {},
       );
     } on ApiException catch (e) {
-      print('Error en logout: ${e.message}');
+      AppLogger.error('Error en logout', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -132,7 +132,7 @@ class AuthRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error en recuperación de contraseña: ${e.message}');
+      AppLogger.error('Error en recuperación de contraseña', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -164,7 +164,7 @@ class AuthRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error al resetear contraseña: ${e.message}');
+      AppLogger.error('Error al resetear contraseña', tag: _tag, error: e.message);
       rethrow;
     }
   }
@@ -193,7 +193,7 @@ class AuthRepository {
         (data) => data as Map<String, dynamic>,
       );
     } on ApiException catch (e) {
-      print('Error al refrescar token: ${e.message}');
+      AppLogger.error('Error al refrescar token', tag: _tag, error: e.message);
       rethrow;
     }
   }

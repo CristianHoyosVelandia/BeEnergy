@@ -1,7 +1,10 @@
 import '../../core/api/api_client.dart';
+import '../../core/utils/logger.dart';
 import '../../models/pde_period_status.dart';
 import '../../models/user_period_history.dart';
 import '../domain/pde_period_repository.dart';
+
+const String _tag = 'PDEPeriodRepo';
 
 /// Implementación del repositorio de periodos PDE usando API REST.
 ///
@@ -41,7 +44,7 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         );
       }
     } catch (e) {
-      print('❌ [PDEPeriodRepositoryApi] Error: $e');
+      AppLogger.error('Error obteniendo estado PDE', tag: _tag, error: e);
       // Re-lanzar con mensaje más descriptivo
       throw Exception('Error obteniendo estado PDE: $e');
     }
@@ -61,8 +64,7 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         'limit': limit,
       };
 
-      print('🌐 [PDEPeriodRepositoryApi] Llamando GET /community/pde-historial-period');
-      print('   Query params: $queryParams');
+      AppLogger.debug('GET /community/pde-historial-period params=$queryParams', tag: _tag);
 
       // Llamada HTTP GET al endpoint
       final response = await ApiClient.instance.get(
@@ -70,15 +72,12 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         queryParameters: queryParams,
       );
 
-      print('📡 [PDEPeriodRepositoryApi] Respuesta historial recibida:');
-      print('   Status code: ${response.statusCode}');
-      print('   Success: ${response.data['success']}');
-      print('   Total periods: ${response.data['data']['total_periods']}');
+      AppLogger.debug('Response: status=${response.statusCode}, periods=${response.data['data']['total_periods']}', tag: _tag);
 
       // Validar respuesta exitosa
       if (response.statusCode == 200 && response.data['success'] == true) {
         final history = UserPeriodHistory.fromJson(response.data['data']);
-        print('✅ [PDEPeriodRepositoryApi] UserPeriodHistory parseado correctamente');
+        AppLogger.info('UserPeriodHistory parseado correctamente', tag: _tag);
         return history;
       } else {
         throw Exception(
@@ -86,7 +85,7 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         );
       }
     } catch (e) {
-      print('❌ [PDEPeriodRepositoryApi] Error obteniendo historial: $e');
+      AppLogger.error('Error obteniendo historial', tag: _tag, error: e);
       throw Exception('Error obteniendo historial de períodos: $e');
     }
   }

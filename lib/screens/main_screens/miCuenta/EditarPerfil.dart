@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/utils/logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/my_user.dart';
@@ -116,8 +117,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       hoverColor: Colors.transparent,
       highlightColor: Colors.transparent,
       onTap: () => {
-        // ignore: avoid_print
-        print("Presiono en cambiar foto")
+        AppLogger.debug('Presiono en cambiar foto', tag: 'EditarPerfil')
       },
       borderRadius: AppTokens.borderRadiusSmall,
       child: Container(
