@@ -19,21 +19,21 @@ class ApiInterceptor extends Interceptor {
       options.headers['codCiudad'] = dotenv.env['DEFAULT_CITY_CODE'] ?? '4110';
     }
 
-    AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}', tag: _tag);
-    if (options.data != null) {
-      AppLogger.debug('Data: ${options.data}', tag: _tag);
-    }
-    if (options.queryParameters.isNotEmpty) {
-      AppLogger.debug('Query Parameters: ${options.queryParameters}', tag: _tag);
-    }
+    // AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}', tag: _tag);
+    // if (options.data != null) {
+    //   AppLogger.debug('Data: ${options.data}', tag: _tag);
+    // }
+    // if (options.queryParameters.isNotEmpty) {
+    //   AppLogger.debug('Query Parameters: ${options.queryParameters}', tag: _tag);
+    // }
 
     super.onRequest(options, handler);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    AppLogger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}', tag: _tag);
-    AppLogger.debug('Data: ${response.data}', tag: _tag);
+    // AppLogger.debug('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}', tag: _tag);
+    // AppLogger.debug('Data: ${response.data}', tag: _tag);
 
     super.onResponse(response, handler);
   }

@@ -18,7 +18,6 @@ import '../../../core/config/data_source_config.dart';
 import '../../../services/consumer_offer_api_service.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 import '../admin/admin_community_offers_screen.dart';
-// import 'transaction_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
@@ -78,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _userPeriodHistory = history;
+        AppLogger.debug('UserPeriodHistory: $history', tag: 'HomeScreen');
         // SIEMPRE seleccionar el período actual del sistema (viene del backend)
         _selectedPeriod = history.currentPeriod;
         _isLoadingPeriods = false;
@@ -1474,6 +1474,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox.shrink();
     }
 
+    // NUEVO: Periodo Cerrado (statusCode == 2)
+    if (_pdePeriodStatus!.statusCode == 2) {
+      return _buildPDEPeriodoCerradoCard();
+    }
+
     // NUEVO: Ofertas Finalizadas (statusCode == 3)
     if (_pdePeriodStatus!.statusCode == 3) {
       return _buildPDEFinalizadoCard();
@@ -1698,13 +1703,718 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Widget para mostrar cuando el periodo está cerrado (statusCode == 2)
+  /// Admin: Puede realizar asignación de PDE
+  /// Usuario: Ver si tiene oferta y esperar asignación
+  Widget _buildPDEPeriodoCerradoCard() {
+    // Vista Admin: Puede realizar asignación de PDE
+    if (_isAdminView) {
+      return _buildPDEPeriodoCerradoAdminCard();
+    }
+
+    // Vista Usuario: Ver si tiene oferta pendiente
+    return _buildPDEPeriodoCerradoUsuarioCard();
+  }
+
+  /// Card para Admin cuando el periodo está cerrado
+  /// Permite realizar la asignación de PDE
+  Widget _buildPDEPeriodoCerradoAdminCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdminCommunityOffersScreen(
+              period: _selectedPeriod,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+        padding: EdgeInsets.all(AppTokens.space20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTokens.primaryRed,
+              AppTokens.primaryRed.withValues(alpha: 0.85),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppTokens.borderRadiusLarge,
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.primaryRed.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header con icono
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
+                  child: const Icon(
+                    Icons.assignment_turned_in,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Periodo Cerrado',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                      SizedBox(height: AppTokens.space4),
+                      Text(
+                        _selectedPeriodDisplayName,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ],
+            ),
+
+            SizedBox(height: AppTokens.space20),
+
+            // Mensaje informativo
+            Container(
+              padding: EdgeInsets.all(AppTokens.space12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: AppTokens.borderRadiusMedium,
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  SizedBox(width: AppTokens.space8),
+                  Expanded(
+                    child: Text(
+                      'El periodo de ofertas ha cerrado. Puede proceder a realizar la asignación de PDE.',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: AppTokens.space16),
+
+            // CTA Button
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: AppTokens.space12,
+                horizontal: AppTokens.space16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppTokens.borderRadiusMedium,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.assignment,
+                    color: AppTokens.primaryRed,
+                    size: 20,
+                  ),
+                  SizedBox(width: AppTokens.space8),
+                  Text(
+                    'Realizar Asignación de PDE',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.primaryRed,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Card para Usuario cuando el periodo está cerrado
+  /// Muestra si tiene oferta y notifica que esperará asignación
+  Widget _buildPDEPeriodoCerradoUsuarioCard() {
+    final apiService = ConsumerOfferApiService();
+    final userId = widget.myUser?.idUser ?? 0;
+
+    return FutureBuilder<ConsumerOffer?>(
+      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
+      builder: (context, snapshot) {
+        // Mostrar loading mientras carga
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+            padding: EdgeInsets.all(AppTokens.space20),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Si no hay oferta para este período, mostrar mensaje informativo
+        if (!snapshot.hasData || snapshot.data == null) {
+          return Container(
+            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+            padding: EdgeInsets.all(AppTokens.space20),
+            decoration: BoxDecoration(
+              color: context.colors.surfaceContainerHighest,
+              borderRadius: AppTokens.borderRadiusLarge,
+              border: Border.all(
+                color: context.colors.outline.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.lock_clock,
+                      color: context.colors.onSurfaceVariant,
+                      size: 24,
+                    ),
+                    SizedBox(width: AppTokens.space12),
+                    Expanded(
+                      child: Text(
+                        'Periodo Cerrado',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppTokens.space12),
+                Text(
+                  'No realizaste ninguna oferta para este periodo.',
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final offer = snapshot.data!;
+
+        // Usuario tiene oferta pendiente de asignación
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+          padding: EdgeInsets.all(AppTokens.space20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTokens.primaryRed,
+                AppTokens.primaryRed.withValues(alpha: 0.85),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: AppTokens.borderRadiusLarge,
+            boxShadow: [
+              BoxShadow(
+                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header con icono
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(AppTokens.space12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: AppTokens.borderRadiusSmall,
+                    ),
+                    child: const Icon(
+                      Icons.timer,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  SizedBox(width: AppTokens.space12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Periodo Cerrado',
+                          style: context.textStyles.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                        SizedBox(height: AppTokens.space4),
+                        Text(
+                          _selectedPeriodDisplayName,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: AppTokens.space20),
+
+              // Datos de la oferta realizada
+              Container(
+                padding: EdgeInsets.all(AppTokens.space16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tu Oferta',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        fontWeight: AppTokens.fontWeightMedium,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space12),
+                    // PDE Solicitado
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'PDE Solicitado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: AppTokens.space12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Precio Ofertado',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0, showSymbol: false)} COP/kWh',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: AppTokens.space16),
+
+              // Mensaje de espera
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.notifications_active,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: AppTokens.space8),
+                    Expanded(
+                      child: Text(
+                        'Se te notificará cuando se realice la asignación de PDE',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Card para Admin cuando las ofertas están finalizadas (statusCode == 3)
+  /// Permite pasar el periodo a estado de conciliación
+  Widget _buildPDEFinalizadoAdminCard() {
+    return GestureDetector(
+      onTap: () => _showConfirmacionConciliacionModal(),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+        padding: EdgeInsets.all(AppTokens.space20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTokens.primaryRed,
+              AppTokens.primaryRed.withValues(alpha: 0.85),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppTokens.borderRadiusLarge,
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.primaryRed.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header con icono
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(AppTokens.space12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: AppTokens.borderRadiusSmall,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ofertas Finalizadas',
+                        style: context.textStyles.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                      ),
+                      SizedBox(height: AppTokens.space4),
+                      Text(
+                        _selectedPeriodDisplayName,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ],
+            ),
+
+            SizedBox(height: AppTokens.space20),
+
+            // Mensaje informativo
+            Container(
+              padding: EdgeInsets.all(AppTokens.space12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: AppTokens.borderRadiusMedium,
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  SizedBox(width: AppTokens.space8),
+                  Expanded(
+                    child: Text(
+                      'Las ofertas han sido liquidadas. Puede proceder a cambiar el estado a "En Conciliación".',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: AppTokens.space16),
+
+            // CTA Button
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(
+                vertical: AppTokens.space12,
+                horizontal: AppTokens.space16,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppTokens.borderRadiusMedium,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.forward_to_inbox,
+                    color: AppTokens.primaryRed,
+                    size: 20,
+                  ),
+                  SizedBox(width: AppTokens.space8),
+                  Text(
+                    'Pasar a Conciliación',
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.primaryRed,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Muestra modal de confirmación para pasar a estado de conciliación
+  void _showConfirmacionConciliacionModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusLarge,
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.help_outline,
+                color: context.colors.primary,
+                size: 28,
+              ),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Text(
+                  'Confirmar Cambio de Estado',
+                  style: context.textStyles.titleLarge?.copyWith(
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Desea pasar el periodo $_selectedPeriodDisplayName a estado "En Conciliación"?',
+                style: context.textStyles.bodyLarge,
+              ),
+              SizedBox(height: AppTokens.space16),
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: context.colors.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: AppTokens.borderRadiusMedium,
+                  border: Border.all(
+                    color: context.colors.primary.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: context.colors.primary,
+                      size: 20,
+                    ),
+                    SizedBox(width: AppTokens.space8),
+                    Expanded(
+                      child: Text(
+                        'Los usuarios serán notificados y podrán ver su PDE asignado.',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: context.colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppTokens.primaryRed),
+                    ),
+                    child: Text(
+                      'Cancelar',
+                      style: context.textStyles.labelLarge?.copyWith(
+                        color: AppTokens.primaryRed,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      _actualizarEstadoPeriodo(4);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTokens.primaryRed,
+                    ),
+                    child: Text(
+                      'Confirmar',
+                      style: context.textStyles.labelLarge?.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Actualiza el estado del periodo PDE en el backend
+  Future<void> _actualizarEstadoPeriodo(int nuevoEstado) async {
+    try {
+      // Mostrar loading
+      if (!mounted) return;
+      context.showInfoSnackbar('Actualizando estado del periodo...');
+
+      // Llamar al repositorio para actualizar el estado
+      final nuevoStatus = await _pdePeriodRepository.updatePeriodStatus(
+        communityId: 1,
+        period: _selectedPeriod,
+        newStatusCode: nuevoEstado,
+      );
+
+      // Verificar si el widget todavía está montado
+      if (!mounted) return;
+
+      // Actualizar el estado local
+      setState(() {
+        _pdePeriodStatus = nuevoStatus;
+      });
+
+      // Mostrar mensaje de éxito
+      context.showInfoSnackbar(
+        'Estado actualizado a: ${nuevoStatus.statusName}',
+      );
+
+      AppLogger.info(
+        'Estado del periodo $_selectedPeriod actualizado a: ${nuevoStatus.statusName}',
+        tag: 'HomeScreen',
+      );
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error actualizando estado del periodo',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
+      // Verificar si el widget todavía está montado antes de mostrar el error
+      if (!mounted) return;
+
+      // Mostrar mensaje de error
+      context.showInfoSnackbar(
+        'Error al actualizar estado: ${e.toString()}',
+      );
+    }
+  }
+
   /// Widget para mostrar cuando ofertas están finalizadas (statusCode == 3)
   /// Carga datos reales del backend y muestra: pde_percentage_requested,
   /// pde_percentage_assigned, price_per_kwh, liquidated_at
   Widget _buildPDEFinalizadoCard() {
-    // Ocultar en vista admin
+    // Vista Admin: Mostrar card con acción para pasar a conciliación
     if (_isAdminView) {
-      return const SizedBox.shrink();
+      return _buildPDEFinalizadoAdminCard();
     }
 
     final apiService = ConsumerOfferApiService();
@@ -1970,10 +2680,119 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Carga datos reales del backend y muestra únicamente pde_percentage_assigned
   /// con mensaje de espera del comercializador
   Widget _buildPDEEnConciliacionCard() {
-    // Ocultar en vista admin
     if (_isAdminView) {
-      return const SizedBox.shrink();
+      return _buildPDEEnConciliacionAdminCard();
     }
+    return _buildPDEEnConciliacionUsuarioCard();
+  }
+
+  /// Card informativo para Admin en Estado 4: En Conciliación
+  Widget _buildPDEEnConciliacionAdminCard() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTokens.primaryRed,
+            AppTokens.primaryRed.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppTokens.borderRadiusLarge,
+        boxShadow: [
+          BoxShadow(
+            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header con icono
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(AppTokens.space12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: AppTokens.borderRadiusSmall,
+                ),
+                child: const Icon(
+                  Icons.sync,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              SizedBox(width: AppTokens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'En Conciliación',
+                      style: context.textStyles.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      _selectedPeriodDisplayName,
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: AppTokens.space20),
+
+          // Mensaje informativo
+          Container(
+            padding: EdgeInsets.all(AppTokens.space16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: AppTokens.borderRadiusMedium,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.schedule,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                SizedBox(width: AppTokens.space12),
+                Expanded(
+                  child: Text(
+                    'Esperando conciliación con el comercializador',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Card de usuario para Estado 4: En Conciliación
+  Widget _buildPDEEnConciliacionUsuarioCard() {
 
     final apiService = ConsumerOfferApiService();
     final userId = widget.myUser?.idUser ?? 0;

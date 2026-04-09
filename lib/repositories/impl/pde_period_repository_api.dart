@@ -64,7 +64,7 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         'limit': limit,
       };
 
-      AppLogger.debug('GET /community/pde-historial-period params=$queryParams', tag: _tag);
+      // AppLogger.debug('GET /community/pde-historial-period params=$queryParams', tag: _tag);
 
       // Llamada HTTP GET al endpoint
       final response = await ApiClient.instance.get(
@@ -72,12 +72,12 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
         queryParameters: queryParams,
       );
 
-      AppLogger.debug('Response: status=${response.statusCode}, periods=${response.data['data']['total_periods']}', tag: _tag);
+      // AppLogger.debug('Response: status=${response.statusCode}, periods=${response.data['data']['total_periods']}', tag: _tag);
 
       // Validar respuesta exitosa
       if (response.statusCode == 200 && response.data['success'] == true) {
         final history = UserPeriodHistory.fromJson(response.data['data']);
-        AppLogger.info('UserPeriodHistory parseado correctamente', tag: _tag);
+        // AppLogger.info('UserPeriodHistory parseado correctamente', tag: _tag);
         return history;
       } else {
         throw Exception(
@@ -87,6 +87,46 @@ class PDEPeriodRepositoryApi implements PDEPeriodRepository {
     } catch (e) {
       AppLogger.error('Error obteniendo historial', tag: _tag, error: e);
       throw Exception('Error obteniendo historial de períodos: $e');
+    }
+  }
+
+  @override
+  Future<PDEPeriodStatus> updatePeriodStatus({
+    required int communityId,
+    required String period,
+    required int newStatusCode,
+  }) async {
+    try {
+      // Construir body para el PUT
+      final body = {
+        'community_id': communityId,
+        'period': period,
+        'status_code': newStatusCode,
+      };
+
+      AppLogger.debug('PUT /community/pde-period-status body=$body', tag: _tag);
+
+      // Llamada HTTP PUT al endpoint
+      final response = await ApiClient.instance.put(
+        '/community/pde-period-status',
+        data: body,
+      );
+
+      AppLogger.debug('Response: status=${response.statusCode}', tag: _tag);
+
+      // Validar respuesta exitosa
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final updatedStatus = PDEPeriodStatus.fromJson(response.data['data']);
+        AppLogger.info('Estado PDE actualizado a: ${updatedStatus.statusName}', tag: _tag);
+        return updatedStatus;
+      } else {
+        throw Exception(
+          'Error actualizando estado PDE: ${response.data['message'] ?? response.statusMessage ?? "Error desconocido"}'
+        );
+      }
+    } catch (e) {
+      AppLogger.error('Error actualizando estado PDE', tag: _tag, error: e);
+      throw Exception('Error actualizando estado PDE: $e');
     }
   }
 }

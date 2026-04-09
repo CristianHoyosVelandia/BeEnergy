@@ -32,4 +32,17 @@ abstract class PDEPeriodRepository {
     int communityId = 1,
     int limit = 4,
   });
+
+  /// Actualiza el estado de un periodo PDE.
+  ///
+  /// [communityId]: ID de la comunidad energética
+  /// [period]: Periodo en formato YYYY-MM
+  /// [newStatusCode]: Nuevo código de estado (1-5)
+  ///
+  /// Returns: [PDEPeriodStatus] con el estado actualizado
+  Future<PDEPeriodStatus> updatePeriodStatus({
+    required int communityId,
+    required String period,
+    required int newStatusCode,
+  });
 }
