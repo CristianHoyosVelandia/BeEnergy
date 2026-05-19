@@ -134,26 +134,26 @@ class _LoginScreenState extends State<LoginScreen> {
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             obscureText ? Icons.lock_outline : Icons.email_outlined,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
           ),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     showpassword ? Icons.visibility : Icons.visibility_off,
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                   ),
                   onPressed: () {
                     if (!mounted) return;
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               '¿Olvidaste la contraseña?',
               style: context.textStyles.bodyMedium?.copyWith(
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightMedium,
               ),
             ),
@@ -320,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTokens.primaryRed,
+          backgroundColor: AppTokens.primaryColor,
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
           shape: RoundedRectangleBorder(
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Text(
               "Regístrate",
               style: context.textStyles.titleMedium?.copyWith(
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
                 decorationColor: Colors.white,

@@ -190,7 +190,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showClosePeriodDialog,
-        backgroundColor: AppTokens.primaryRed,
+        backgroundColor: AppTokens.primaryColor,
         tooltip: 'Cerrar Periodo',
         child: const Icon(Icons.lock_clock, color: Colors.white, size: 28),
       ),
@@ -238,7 +238,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
           width: 45.0,
           height: 45.0,
           decoration: BoxDecoration(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             border: Border.all(width: 2.0, color: Colors.white),
             borderRadius: BorderRadius.circular(25.0),
           ),
@@ -268,8 +268,8 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.8),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -277,7 +277,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -444,12 +444,12 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
               ),
               decoration: BoxDecoration(
                 color: _sortType == SortType.price
-                    ? AppTokens.primaryRed
+                    ? AppTokens.primaryColor
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: _sortType == SortType.price
-                      ? AppTokens.primaryRed
+                      ? AppTokens.primaryColor
                       : context.colors.outline,
                   width: 1,
                 ),
@@ -542,7 +542,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                   : Icons.arrow_downward,
               size: 20,
             ),
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             tooltip: _sortOrder == SortOrder.asc
                 ? 'Orden ascendente'
                 : 'Orden descendente',
@@ -604,7 +604,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
   Widget _buildMemberOffersCard(ConsumerOffer offer) {
     // Determinar color basado en ROL del usuario
     final isProsumidor = offer.buyerType == 'Prosumidor';
-    final roleColor = isProsumidor ? AppTokens.energyGreen : AppTokens.primaryRed;
+    final roleColor = isProsumidor ? AppTokens.energyGreen : AppTokens.primaryColor;
 
     // Información del estado de la oferta
     final statusInfo = _getStatusInfo(offer.status.index);
@@ -633,12 +633,12 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nombre del comprador (SIEMPRE en primaryRed)
+                      // Nombre del comprador (SIEMPRE en primaryColor)
                       Text(
                         offer.buyerName.toUpperCase(),
                         style: context.textStyles.titleMedium?.copyWith(
                           fontWeight: AppTokens.fontWeightBold,
-                          color: AppTokens.primaryRed,
+                          color: AppTokens.primaryColor,
                           fontSize: 15,
                         ),
                       ),
@@ -702,7 +702,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                       Text(
                         '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)} COP/kWh',
                         style: context.textStyles.titleMedium?.copyWith(
-                          color: AppTokens.primaryRed,
+                          color: AppTokens.primaryColor,
                           fontWeight: AppTokens.fontWeightBold,
                           fontSize: 16,
                         ),
@@ -791,7 +791,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
       case 4:
         return {
           'label': 'Cancelada',
-          'color': AppTokens.primaryRed,
+          'color': AppTokens.primaryColor,
           'icon': Icons.cancel,
         };
       default:
@@ -871,7 +871,7 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
               _closePeriod();
             },
             style: FilledButton.styleFrom(
-              backgroundColor: AppTokens.primaryRed,
+              backgroundColor: AppTokens.primaryColor,
             ),
             child: const Text('Cerrar Periodo'),
           ),

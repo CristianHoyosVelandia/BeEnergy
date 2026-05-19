@@ -393,7 +393,7 @@ class _MonthlyBillingScreenState extends State<MonthlyBillingScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: member.isProsumer
-                      ? AppTokens.primaryRed.withValues(alpha: 0.15)
+                      ? AppTokens.primaryColor.withValues(alpha: 0.15)
                       : context.colors.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: AppTokens.borderRadiusSmall,
                 ),
@@ -401,7 +401,7 @@ class _MonthlyBillingScreenState extends State<MonthlyBillingScreen> {
                   child: Text(
                     billing.userName[0].toUpperCase(),
                     style: context.textStyles.titleLarge?.copyWith(
-                      color: member.isProsumer ? AppTokens.primaryRed : context.colors.primary,
+                      color: member.isProsumer ? AppTokens.primaryColor : context.colors.primary,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),

@@ -291,7 +291,7 @@ class _TradingScreenState extends State<TradingScreen> {
       child: Row(
         children: [
           _actionButton(1, "Energía", Icons.energy_savings_leaf, AppTokens.energyGreen),
-          _actionButton(2, "Dinero", Icons.account_balance, AppTokens.primaryBlue),
+          _actionButton(2, "Dinero", Icons.account_balance, AppTokens.secondaryColor),
         ],
       ),
     );
@@ -300,7 +300,7 @@ class _TradingScreenState extends State<TradingScreen> {
   /// SpeedDial flotante (mejorado con estilo rojizo)
   Widget _btnFlotante() {
     return SpeedDial(
-      backgroundColor: AppTokens.primaryRed,
+      backgroundColor: AppTokens.primaryColor,
       foregroundColor: Colors.white,
       overlayColor: Colors.black,
       elevation: 8,
@@ -310,7 +310,7 @@ class _TradingScreenState extends State<TradingScreen> {
       children: [
         SpeedDialChild(
           backgroundColor: Colors.white,
-          foregroundColor: AppTokens.primaryRed,
+          foregroundColor: AppTokens.primaryColor,
           onTap: () {
             context.showInfoSnackbar("Enviar dinero");
           },
@@ -334,7 +334,7 @@ class _TradingScreenState extends State<TradingScreen> {
         ),
         SpeedDialChild(
           backgroundColor: Colors.white,
-          foregroundColor: AppTokens.primaryRed,
+          foregroundColor: AppTokens.primaryColor,
           onTap: () {
             context.showInfoSnackbar("Retirar dinero");
           },
@@ -358,7 +358,7 @@ class _TradingScreenState extends State<TradingScreen> {
         ),
         SpeedDialChild(
           backgroundColor: Colors.white,
-          foregroundColor: AppTokens.primaryRed,
+          foregroundColor: AppTokens.primaryColor,
           onTap: () {
             context.showInfoSnackbar("Servicios disponibles");
           },

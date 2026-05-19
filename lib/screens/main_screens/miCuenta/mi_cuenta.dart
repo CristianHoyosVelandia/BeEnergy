@@ -59,13 +59,13 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
               Container(
                 padding: EdgeInsets.all(AppTokens.space16),
                 decoration: BoxDecoration(
-                  color: AppTokens.primaryRed.withValues(alpha: 0.1),
+                  color: AppTokens.primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.logout_rounded,
                   size: 40,
-                  color: AppTokens.primaryRed,
+                  color: AppTokens.primaryColor,
                 ),
               ),
 
@@ -76,7 +76,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                 "Cerrar Sesión",
                 style: context.textStyles.titleLarge?.copyWith(
                   fontWeight: AppTokens.fontWeightBold,
-                  color: AppTokens.primaryRed,
+                  color: AppTokens.primaryColor,
                 ),
               ),
 
@@ -146,7 +146,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTokens.primaryRed,
+                        backgroundColor: AppTokens.primaryColor,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
                         elevation: 0,

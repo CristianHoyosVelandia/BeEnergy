@@ -179,7 +179,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: AppTokens.primaryRed,
+              foregroundColor: AppTokens.primaryColor,
             ),
             child: const Text('Sí, cancelar'),
           ),
@@ -222,7 +222,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al cancelar: ${e.message}'),
-            backgroundColor: AppTokens.primaryRed,
+            backgroundColor: AppTokens.primaryColor,
           ),
         );
       }
@@ -233,7 +233,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error inesperado: $e'),
-            backgroundColor: AppTokens.primaryRed,
+            backgroundColor: AppTokens.primaryColor,
           ),
         );
       }
@@ -325,7 +325,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.help_outline, color: AppTokens.primaryRed),
+            Icon(Icons.help_outline, color: AppTokens.primaryColor),
             SizedBox(width: 12),
             Text('¿Qué son los PDE?'),
           ],
@@ -395,7 +395,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     if (_isCheckingOffer) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),
       );
     }
@@ -411,7 +411,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
               Icon(
                 Icons.error_outline,
                 size: 64,
-                color: AppTokens.primaryRed.withValues(alpha: 0.7),
+                color: AppTokens.primaryColor.withValues(alpha: 0.7),
               ),
               SizedBox(height: AppTokens.space16),
               Text(
@@ -435,7 +435,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 icon: const Icon(Icons.refresh),
                 label: const Text('Reintentar'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTokens.primaryRed,
+                  backgroundColor: AppTokens.primaryColor,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
                     horizontal: AppTokens.space24,
@@ -469,7 +469,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                   Icon(
                     Icons.add_shopping_cart,
                     size: 80,
-                    color: AppTokens.primaryRed.withValues(alpha: 0.7),
+                    color: AppTokens.primaryColor.withValues(alpha: 0.7),
                   ),
                   SizedBox(height: AppTokens.space24),
                   Text(
@@ -506,7 +506,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     icon: const Icon(Icons.add),
                     label: const Text('Crear Oferta'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTokens.primaryRed,
+                      backgroundColor: AppTokens.primaryColor,
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
                         horizontal: AppTokens.space24,
@@ -538,7 +538,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.info_outline, color: AppTokens.primaryRed),
+            Icon(Icons.info_outline, color: AppTokens.primaryColor),
             SizedBox(width: 12),
             Text('¿Cómo funciona?'),
           ],
@@ -601,8 +601,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.85),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.85),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -610,7 +610,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -800,7 +800,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     if (_isLoadingOffers) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),
       );
     }
@@ -848,7 +848,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                         Icon(
                           Icons.info_outline,
                           size: 20,
-                          color: AppTokens.primaryBlue,
+                          color: AppTokens.secondaryColor,
                         ),
                         SizedBox(width: AppTokens.space8),
                         Text(

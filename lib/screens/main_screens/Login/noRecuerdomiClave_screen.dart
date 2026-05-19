@@ -67,20 +67,20 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 2.5,
             ),
           ),
           prefixIcon: Icon(
             Icons.email_outlined,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
           ),
         ),
         validator: validator,
@@ -110,10 +110,10 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
             child: Text(
               "Volver a login",
               style: context.textStyles.titleMedium?.copyWith(
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
                 decoration: TextDecoration.underline,
-                decorationColor: AppTokens.primaryRed,
+                decorationColor: AppTokens.primaryColor,
                 decorationThickness: 2,
               ),
             ),
@@ -259,7 +259,7 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTokens.primaryRed,
+                  backgroundColor: AppTokens.primaryColor,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
                   shape: RoundedRectangleBorder(

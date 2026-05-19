@@ -231,7 +231,7 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 0.25,
             ),
             borderRadius: BorderRadius.circular(8),

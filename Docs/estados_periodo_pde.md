@@ -134,7 +134,7 @@ Definidos en `PeriodStatus` (enum):
 - **Título:** "Ofertas Finalizadas"
 - **Subtítulo:** Nombre del mes
 - **Icono:** `Icons.check_circle_outline`
-- **Color:** Rojo (`AppTokens.primaryRed`)
+- **Color:** Rojo (`AppTokens.primaryColor`)
 - **Información mostrada:**
   - **PDE Solicitado:** Porcentaje solicitado por el usuario (ej: "50%")
   - **PDE Asignado:** Porcentaje realmente asignado (ej: "45%")
@@ -170,7 +170,7 @@ Definidos en `PeriodStatus` (enum):
 - **Título:** "En Conciliación"
 - **Subtítulo:** Nombre del mes
 - **Icono:** `Icons.sync`
-- **Color:** Rojo (`AppTokens.primaryRed`)
+- **Color:** Rojo (`AppTokens.primaryColor`)
 - **Información mostrada:**
   - Mensaje informativo: "Esperando conciliación con el comercializador"
 - **Tipo:** Card informativo (solo lectura, sin acciones)
@@ -180,7 +180,7 @@ Definidos en `PeriodStatus` (enum):
 - **Título:** "En Conciliación"
 - **Subtítulo:** Nombre del mes
 - **Icono:** `Icons.hourglass_empty`
-- **Color:** Rojo (`AppTokens.primaryRed`)
+- **Color:** Rojo (`AppTokens.primaryColor`)
 - **Información mostrada:**
   - **PDE Asignado:** ÚNICAMENTE el porcentaje asignado (ej: "45%")
 - **Mensaje informativo:**
@@ -234,7 +234,7 @@ Todos los periodos muestran un indicador visual en la parte superior de la panta
 
 ### Indicador para Periodo Actual (status = "current")
 
-- **Color:** Rojo (`AppTokens.primaryRed`)
+- **Color:** Rojo (`AppTokens.primaryColor`)
 - **Indicador:** Círculo pulsante rojo
 - **Texto:** "NUEVO MODELO"
 - **Periodo:** Nombre del mes (ej: "Enero 2026")
@@ -295,7 +295,7 @@ Cuando el usuario selecciona un periodo diferente:
 - **✅** = Se muestra el card
 - **❌** = No se muestra card
 - **ℹ️** = Card informativo (sin acciones)
-- **Cards en rojo**: Usan gradiente de `AppTokens.primaryRed`
+- **Cards en rojo**: Usan gradiente de `AppTokens.primaryColor`
 - **Cards en púrpura**: Usan gradiente de `AppTokens.primaryPurple`
 - **Indicadores verdes**: Usan color `AppTokens.energyGreen`
 - **Estado 2**: Comportamiento diferente para usuario con/sin oferta

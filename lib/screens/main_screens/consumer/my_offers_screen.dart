@@ -91,7 +91,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTokens.primaryRed,
+              backgroundColor: AppTokens.primaryColor,
             ),
             child: const Text('Sí, cancelar'),
           ),
@@ -108,7 +108,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
         barrierDismissible: false,
         builder: (context) => const Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+            valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
           ),
         ),
       );
@@ -137,7 +137,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✗ Error: ${e.message}'),
-            backgroundColor: AppTokens.primaryRed,
+            backgroundColor: AppTokens.primaryColor,
           ),
         );
       }
@@ -148,7 +148,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✗ Error inesperado: $e'),
-            backgroundColor: AppTokens.primaryRed,
+            backgroundColor: AppTokens.primaryColor,
           ),
         );
       }
@@ -200,7 +200,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),
       );
     }
@@ -213,13 +213,13 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
             ),
             SizedBox(height: AppTokens.space16),
             Text(
               _error!,
               style: context.textStyles.bodyMedium?.copyWith(
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -227,7 +227,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
             ElevatedButton(
               onPressed: _loadOffers,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTokens.primaryRed,
+                backgroundColor: AppTokens.primaryColor,
               ),
               child: const Text('Reintentar'),
             ),
@@ -242,7 +242,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadOffers,
-      color: AppTokens.primaryRed,
+      color: AppTokens.primaryColor,
       child: ListView.builder(
         padding: EdgeInsets.all(AppTokens.space16),
         itemCount: _offers.length,
@@ -283,7 +283,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
               Navigator.pop(context); // Volver a la pantalla anterior
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTokens.primaryRed,
+              backgroundColor: AppTokens.primaryColor,
               padding: EdgeInsets.symmetric(
                 horizontal: AppTokens.space32,
                 vertical: AppTokens.space16,
@@ -356,14 +356,14 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                   icon: Icons.percent,
                   label: 'PDE Solicitado',
                   value: '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}%',
-                  valueColor: AppTokens.primaryRed,
+                  valueColor: AppTokens.primaryColor,
                 ),
                 SizedBox(height: AppTokens.space12),
                 _buildDetailRow(
                   icon: Icons.attach_money,
                   label: 'Precio Ofertado',
                   value: '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0)} COP/kWh',
-                  valueColor: AppTokens.primaryRed,
+                  valueColor: AppTokens.primaryColor,
                 ),
 
                 // Mostrar energía calculada si está disponible
@@ -373,7 +373,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                     icon: Icons.flash_on,
                     label: 'Energía Asignada',
                     value: '${Formatters.formatNumber(offer.energyKwhCalculated!, decimals: 2)} kWh',
-                    valueColor: AppTokens.primaryRed,
+                    valueColor: AppTokens.primaryColor,
                   ),
                   SizedBox(height: AppTokens.space12),
                   _buildDetailRow(
@@ -383,7 +383,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                       offer.energyKwhCalculated! * offer.pricePerKwh,
                       decimals: 0,
                     ),
-                    valueColor: AppTokens.primaryRed,
+                    valueColor: AppTokens.primaryColor,
                   ),
                 ],
 
@@ -396,7 +396,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () => _editOffer(offer),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppTokens.primaryRed),
+                            side: BorderSide(color: AppTokens.primaryColor),
                           ),
                           icon: const Icon(Icons.edit, size: 18),
                           label: const Text('Editar'),
@@ -407,7 +407,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () => _cancelOffer(offer),
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppTokens.primaryRed),
+                            side: BorderSide(color: AppTokens.primaryColor),
                           ),
                           icon: const Icon(Icons.cancel, size: 18),
                           label: const Text('Cancelar'),
@@ -465,7 +465,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
     switch (status) {
       case ConsumerOfferStatus.pending:
         backgroundColor = Colors.orange.withValues(alpha: 0.2);
-        textColor = AppTokens.primaryRed;
+        textColor = AppTokens.primaryColor;
         icon = Icons.schedule;
         break;
       case ConsumerOfferStatus.matched:
@@ -484,8 +484,8 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
         icon = Icons.cancel;
         break;
       case ConsumerOfferStatus.expired:
-        backgroundColor = AppTokens.primaryRed.withValues(alpha: 0.2);
-        textColor = AppTokens.primaryRed;
+        backgroundColor = AppTokens.primaryColor.withValues(alpha: 0.2);
+        textColor = AppTokens.primaryColor;
         icon = Icons.access_time;
         break;
     }
@@ -528,7 +528,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
       case ConsumerOfferStatus.cancelled:
         return Colors.grey;
       case ConsumerOfferStatus.expired:
-        return AppTokens.primaryRed;
+        return AppTokens.primaryColor;
     }
   }
 }

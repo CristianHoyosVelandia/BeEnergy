@@ -107,7 +107,7 @@ class _BolsaScreenState extends State<BolsaScreen> {
             ),
           );
         },
-        backgroundColor: AppTokens.primaryRed,
+        backgroundColor: AppTokens.primaryColor,
         foregroundColor: Colors.white,
         elevation: 8,
         child: const Icon(Icons.add_circle_outline, size: 24),

@@ -232,8 +232,8 @@ Todas las pantallas usan **Material Design 3** con:
 - ✅ Color coding consistente
 
 **Paleta de colores:**
-- 🔴 Community Management: `AppTokens.primaryRed`
-- 🔵 Energy Records: `AppTokens.primaryRed`
+- 🔴 Community Management: `AppTokens.primaryColor`
+- 🔵 Energy Records: `AppTokens.primaryColor`
 - 🟠 PDE: `Colors.orange`
 - 🟢 P2P Market: `Colors.green`
 - 🟣 Energy Credits: `Colors.purple`

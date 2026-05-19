@@ -429,17 +429,17 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                   decoration: BoxDecoration(
                     color: _isPriceValid
                         ? Colors.green.withValues(alpha: 0.1)
-                        : AppTokens.primaryRed.withValues(alpha: 0.1),
+                        : AppTokens.primaryColor.withValues(alpha: 0.1),
                     borderRadius: AppTokens.borderRadiusMedium,
                     border: Border.all(
-                      color: _isPriceValid ? Colors.green : AppTokens.primaryRed,
+                      color: _isPriceValid ? Colors.green : AppTokens.primaryColor,
                     ),
                   ),
                   child: Text(
                     Formatters.formatCurrency(_pricePerKwh, decimals: 0),
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: _isPriceValid ? Colors.green : AppTokens.primaryRed,
+                      color: _isPriceValid ? Colors.green : AppTokens.primaryColor,
                     ),
                   ),
                 ),
@@ -457,7 +457,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
               label: Formatters.formatCurrency(_pricePerKwh, decimals: 0),
-              activeColor: _isPriceValid ? Colors.green : AppTokens.primaryRed,
+              activeColor: _isPriceValid ? Colors.green : AppTokens.primaryColor,
               onChanged: (value) {
                 setState(() {
                   _pricePerKwh = value;
@@ -484,14 +484,14 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      color: isValid ? Colors.green.withValues(alpha: 0.1) : AppTokens.primaryRed.withValues(alpha: 0.1),
+      color: isValid ? Colors.green.withValues(alpha: 0.1) : AppTokens.primaryColor.withValues(alpha: 0.1),
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space16),
         child: Row(
           children: [
             Icon(
               isValid ? Icons.check_circle : Icons.warning,
-              color: isValid ? Colors.green : AppTokens.primaryRed,
+              color: isValid ? Colors.green : AppTokens.primaryColor,
               size: 32,
             ),
             SizedBox(width: AppTokens.space12),
@@ -502,7 +502,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                   Text(
                     isValid ? 'Precio Válido' : 'Precio Fuera de Rango',
                     style: context.textStyles.titleSmall?.copyWith(
-                      color: isValid ? Colors.green : AppTokens.primaryRed,
+                      color: isValid ? Colors.green : AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
@@ -510,7 +510,7 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
                   Text(
                     'Desviación: ${Formatters.formatNumber(deviation, decimals: 1)}% del VE',
                     style: context.textStyles.bodySmall?.copyWith(
-                      color: isValid ? Colors.green : AppTokens.primaryRed,
+                      color: isValid ? Colors.green : AppTokens.primaryColor,
                     ),
                   ),
                   SizedBox(height: AppTokens.space4),
@@ -593,18 +593,18 @@ class _ProsumerCreateOfferScreenState extends State<ProsumerCreateOfferScreen> {
       margin: EdgeInsets.all(AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
-        color: AppTokens.primaryRed.withValues(alpha: 0.1),
+        color: AppTokens.primaryColor.withValues(alpha: 0.1),
         borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(color: AppTokens.primaryRed),
+        border: Border.all(color: AppTokens.primaryColor),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: AppTokens.primaryRed),
+          const Icon(Icons.error, color: AppTokens.primaryColor),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryRed),
+              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryColor),
             ),
           ),
         ],

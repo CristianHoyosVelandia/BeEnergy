@@ -136,7 +136,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             "Cambiar Foto",
             style: context.textStyles.titleMedium?.copyWith(
               fontWeight: AppTokens.fontWeightMedium,
-              color: AppTokens.primaryRed
+              color: AppTokens.primaryColor
             ),
           ),
         ),
@@ -179,14 +179,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 1,
             ),
             borderRadius: AppTokens.borderRadiusSmall,
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderSide: const BorderSide(
-              color: AppTokens.primaryRed,
+              color: AppTokens.primaryColor,
               width: 2,
             ),
             borderRadius: AppTokens.borderRadiusSmall,

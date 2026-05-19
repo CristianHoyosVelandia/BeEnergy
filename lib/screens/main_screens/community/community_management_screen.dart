@@ -98,8 +98,8 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.8),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -107,7 +107,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -279,14 +279,14 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
         });
       },
       backgroundColor: context.colors.surface,
-      selectedColor: AppTokens.primaryRed,
+      selectedColor: AppTokens.primaryColor,
       checkmarkColor: Colors.white,
       labelStyle: context.textStyles.bodyMedium?.copyWith(
         color: isSelected ? Colors.white : context.colors.onSurface,
         fontWeight: isSelected ? AppTokens.fontWeightBold : AppTokens.fontWeightMedium,
       ),
       side: BorderSide(
-        color: isSelected ? AppTokens.primaryRed : context.colors.outline.withValues(alpha: 0.3),
+        color: isSelected ? AppTokens.primaryColor : context.colors.outline.withValues(alpha: 0.3),
         width: isSelected ? 2 : 1,
       ),
     );
@@ -383,7 +383,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: member.isProsumer
-                        ? AppTokens.primaryRed.withValues(alpha: 0.15)
+                        ? AppTokens.primaryColor.withValues(alpha: 0.15)
                         : context.colors.primaryContainer.withValues(alpha: 0.3),
                     borderRadius: AppTokens.borderRadiusSmall,
                   ),
@@ -391,7 +391,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                     child: Text(
                       member.userName[0].toUpperCase(),
                       style: context.textStyles.titleLarge?.copyWith(
-                        color: member.isProsumer ? AppTokens.primaryRed : context.colors.primary,
+                        color: member.isProsumer ? AppTokens.primaryColor : context.colors.primary,
                         fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
@@ -419,7 +419,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: member.isProsumer
-                                  ? AppTokens.primaryRed.withValues(alpha: 0.1)
+                                  ? AppTokens.primaryColor.withValues(alpha: 0.1)
                                   : context.colors.surfaceContainerHighest,
                               borderRadius: AppTokens.borderRadiusSmall,
                             ),
@@ -429,13 +429,13 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                                 Icon(
                                   member.isProsumer ? Icons.solar_power : Icons.home,
                                   size: 14,
-                                  color: member.isProsumer ? AppTokens.primaryRed : context.colors.onSurfaceVariant,
+                                  color: member.isProsumer ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
                                 ),
                                 SizedBox(width: AppTokens.space4),
                                 Text(
                                   member.isProsumer ? 'Prosumidor' : 'Consumidor',
                                   style: context.textStyles.bodySmall?.copyWith(
-                                    color: member.isProsumer ? AppTokens.primaryRed : context.colors.onSurfaceVariant,
+                                    color: member.isProsumer ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
                                     fontWeight: AppTokens.fontWeightMedium,
                                   ),
                                 ),
@@ -488,7 +488,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                       'Generación',
                       Formatters.formatEnergy(energyRecord.energyGenerated),
                       Icons.wb_sunny_outlined,
-                      AppTokens.primaryRed,
+                      AppTokens.primaryColor,
                     ),
                   ),
                 ],
@@ -682,7 +682,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: AppTokens.primaryRed),
+                  CircularProgressIndicator(color: AppTokens.primaryColor),
                   SizedBox(height: AppTokens.space16),
                   Text(
                     'Cargando miembros de la comunidad...',
@@ -727,7 +727,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                           icon: const Icon(Icons.refresh),
                           label: const Text('Reintentar'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTokens.primaryRed,
+                            backgroundColor: AppTokens.primaryColor,
                             foregroundColor: Colors.white,
                           ),
                         ),

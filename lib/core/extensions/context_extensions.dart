@@ -244,7 +244,7 @@ extension ContextExtensions on BuildContext {
   ) {
     return showSnackbar(
       message: message,
-      backgroundColor: AppTokens.primaryRed,
+      backgroundColor: AppTokens.primaryColor,
     );
   }
 

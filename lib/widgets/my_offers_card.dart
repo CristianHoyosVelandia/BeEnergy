@@ -49,7 +49,7 @@ class MyOffersCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.receipt_long,
-                  color: AppTokens.primaryRed,
+                  color: AppTokens.primaryColor,
                   size: 24,
                 ),
                 SizedBox(width: AppTokens.space12),
@@ -66,7 +66,7 @@ class MyOffersCard extends StatelessWidget {
                   child: Text(
                     'Ver Todas',
                     style: TextStyle(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightSemiBold,
                     ),
                   ),
@@ -85,7 +85,7 @@ class MyOffersCard extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
-                color: AppTokens.primaryRed.withValues(alpha: 0.05),
+                color: AppTokens.primaryColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(AppTokens.space16),
                   bottomRight: Radius.circular(AppTokens.space16),
@@ -97,13 +97,13 @@ class MyOffersCard extends StatelessWidget {
                   Icon(
                     Icons.info_outline,
                     size: 16,
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
                     'Tienes ${offers.length - 3} ofertas más',
                     style: context.textStyles.bodySmall?.copyWith(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightMedium,
                     ),
                   ),

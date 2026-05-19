@@ -369,13 +369,13 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
                           vertical: AppTokens.space4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTokens.primaryRed.withValues(alpha: 0.2),
+                          color: AppTokens.primaryColor.withValues(alpha: 0.2),
                           borderRadius: AppTokens.borderRadiusSmall,
                         ),
                         child: Text(
                           '${_notifications.where((n) => !n.isRead).length}',
                           style: context.textStyles.bodySmall?.copyWith(
-                            color: AppTokens.primaryRed,
+                            color: AppTokens.primaryColor,
                             fontWeight: AppTokens.fontWeightBold,
                           ),
                         ),

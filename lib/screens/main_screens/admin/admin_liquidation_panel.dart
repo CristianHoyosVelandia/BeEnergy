@@ -253,7 +253,7 @@ class _AdminLiquidationPanelState extends State<AdminLiquidationPanel>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? AppTokens.primaryRed : Colors.green,
+        backgroundColor: isError ? AppTokens.primaryColor : Colors.green,
       ),
     );
   }

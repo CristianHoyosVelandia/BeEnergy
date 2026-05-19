@@ -267,7 +267,7 @@ class _AprendeScreenState extends State<AprendeScreen> with SingleTickerProvider
         _buildSectionCard(
           title: 'Comunidad Energética UAO',
           icon: Icons.groups_outlined,
-          iconColor: AppTokens.primaryBlue,
+          iconColor: AppTokens.secondaryColor,
           content: [
             Text(
               'La comunidad energética UAO está conformada por 15 usuarios del campus universitario que participan en un esquema de generación distribuida con paneles solares fotovoltaicos.',
@@ -407,7 +407,7 @@ class _AprendeScreenState extends State<AprendeScreen> with SingleTickerProvider
         _buildSectionCard(
           title: 'Contexto en Colombia',
           icon: Icons.flag_outlined,
-          iconColor: AppTokens.primaryRed,
+          iconColor: AppTokens.primaryColor,
           content: [
             Text(
               'Colombia tiene un gran potencial renovable gracias a su ubicación geográfica. La Ley 1715 de 2014 y la Ley 2099 de 2021 promueven la integración de energías renovables no convencionales y la transición energética del país.',
@@ -498,7 +498,7 @@ class _AprendeScreenState extends State<AprendeScreen> with SingleTickerProvider
         _buildSectionCard(
           title: 'Energía Solar en la UAO',
           icon: Icons.school_outlined,
-          iconColor: AppTokens.primaryBlue,
+          iconColor: AppTokens.secondaryColor,
           content: [
             Text(
               'La Universidad Autónoma de Occidente cuenta con instalaciones solares fotovoltaicas distribuidas en el campus. Los usuarios de la comunidad energética UAO tienen sistemas de ~5 kW promedio, generando energía limpia y participando en intercambios P2P bajo la regulación CREG 101 072.',

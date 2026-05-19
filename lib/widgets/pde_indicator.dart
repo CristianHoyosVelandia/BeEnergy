@@ -46,7 +46,7 @@ class PDEIndicator extends StatelessWidget {
     final percentageText = '${Formatters.formatNumber(percentage * 100, decimals: 1)}%';
     final kwhText = '≈ ${Formatters.formatNumber(kwh, decimals: 2)} kWh';
 
-    final color = customColor ?? AppTokens.primaryRed;
+    final color = customColor ?? AppTokens.primaryColor;
 
     Widget content;
 
@@ -213,8 +213,8 @@ class PDEAvailabilitySummary extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.8),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

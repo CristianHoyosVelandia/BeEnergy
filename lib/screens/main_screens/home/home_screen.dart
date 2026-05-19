@@ -372,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
             energy: energyData['generated']!,
             amount: 0,
             icon: Icons.wb_sunny_rounded,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             hideAmount: true,
           ),
           SizedBox(height: AppTokens.space8),
@@ -381,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
             energy: energyData['consumed']!,
             amount: 0,
             icon: Icons.electric_bolt_rounded,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             hideAmount: true,
           ),
           SizedBox(height: AppTokens.space8),
@@ -390,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
             energy: energyData['exported']!,
             amount: 0,
             icon: Icons.trending_up_rounded,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             hideAmount: true,
           ),
           SizedBox(height: AppTokens.space8),
@@ -399,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
             energy: energyData['imported']!,
             amount: 0,
             icon: Icons.trending_down_rounded,
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             hideAmount: true,
           ),
         ],
@@ -458,7 +458,7 @@ class _HomeScreenState extends State<HomeScreen> {
           energy: exportEnergy,
           amount: exportEnergy * costPerKwh,
           icon: Icons.trending_up_rounded,
-          color: AppTokens.primaryRed,
+          color: AppTokens.primaryColor,
         ),
         // Excedentes totales – solo para enero 2026
         if (isJan2026) ...[
@@ -647,7 +647,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final isCurrentPeriod = _selectedPeriod == _userPeriodHistory!.currentPeriod;
 
         return _buildStatusIndicatorWidget(
-          statusColor: isCurrentPeriod ? AppTokens.primaryRed : context.colors.onSurfaceVariant,
+          statusColor: isCurrentPeriod ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
           statusIcon: isCurrentPeriod ? Icons.auto_awesome : Icons.calendar_month_outlined,
           statusText: isCurrentPeriod ? 'NUEVO MODELO' : 'MES CERRADO',
           periodLabel: _formatPeriodLabel(_selectedPeriod),
@@ -943,7 +943,7 @@ class _HomeScreenState extends State<HomeScreen> {
             title: _formatPeriodLabel(currentPeriod),
             subtitle: subtitle,
             icon: Icons.auto_awesome,
-            iconColor: AppTokens.primaryRed,
+            iconColor: AppTokens.primaryColor,
             badge: '✨',
             enabled: true,
           ),
@@ -1270,8 +1270,8 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTokens.primaryRed,
-                    AppTokens.primaryRed.withValues(alpha: 0.8),
+                    AppTokens.primaryColor,
+                    AppTokens.primaryColor.withValues(alpha: 0.8),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -1279,7 +1279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderRadius: AppTokens.borderRadiusMedium,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                    color: AppTokens.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: Offset(0, 4),
                   ),
@@ -1318,7 +1318,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (BuildContext context, int index) {
         final transaction = data[index];
         final bool isIncome = transaction['entrada'] as bool;
-        final color = isIncome ? AppTokens.primaryRed : AppTokens.error;
+        final color = isIncome ? AppTokens.primaryColor : AppTokens.error;
 
         return InkWell(
           onTap: () {
@@ -1528,8 +1528,8 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTokens.primaryRed,
-              AppTokens.primaryRed.withValues(alpha: 0.8),
+              AppTokens.primaryColor,
+              AppTokens.primaryColor.withValues(alpha: 0.8),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -1537,7 +1537,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: AppTokens.borderRadiusLarge,
           boxShadow: [
             BoxShadow(
-              color: AppTokens.primaryRed.withValues(alpha: 0.4),
+              color: AppTokens.primaryColor.withValues(alpha: 0.4),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -1681,7 +1681,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     _isAdminView ? Icons.manage_search : Icons.add_shopping_cart,
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                     size: 20,
                   ),
                   SizedBox(width: AppTokens.space8),
@@ -1690,7 +1690,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'Revisar Ofertas Comunitarias'
                       : 'Crear Oferta de PDE',
                     style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
@@ -1736,8 +1736,8 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTokens.primaryRed,
-              AppTokens.primaryRed.withValues(alpha: 0.85),
+              AppTokens.primaryColor,
+              AppTokens.primaryColor.withValues(alpha: 0.85),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -1745,7 +1745,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: AppTokens.borderRadiusLarge,
           boxShadow: [
             BoxShadow(
-              color: AppTokens.primaryRed.withValues(alpha: 0.3),
+              color: AppTokens.primaryColor.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -1848,14 +1848,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     Icons.assignment,
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                     size: 20,
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
                     'Realizar Asignación de PDE',
                     style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
@@ -1941,8 +1941,8 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTokens.primaryRed,
-                AppTokens.primaryRed.withValues(alpha: 0.85),
+                AppTokens.primaryColor,
+                AppTokens.primaryColor.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -1950,7 +1950,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: AppTokens.borderRadiusLarge,
             boxShadow: [
               BoxShadow(
-                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                color: AppTokens.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -2118,8 +2118,8 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppTokens.primaryRed,
-              AppTokens.primaryRed.withValues(alpha: 0.85),
+              AppTokens.primaryColor,
+              AppTokens.primaryColor.withValues(alpha: 0.85),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -2127,7 +2127,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: AppTokens.borderRadiusLarge,
           boxShadow: [
             BoxShadow(
-              color: AppTokens.primaryRed.withValues(alpha: 0.3),
+              color: AppTokens.primaryColor.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -2230,14 +2230,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     Icons.forward_to_inbox,
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                     size: 20,
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
                     'Pasar a Conciliación',
                     style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
@@ -2326,12 +2326,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   OutlinedButton(
                     onPressed: () => Navigator.of(dialogContext).pop(),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppTokens.primaryRed),
+                      side: BorderSide(color: AppTokens.primaryColor),
                     ),
                     child: Text(
                       'Cancelar',
                       style: context.textStyles.labelLarge?.copyWith(
-                        color: AppTokens.primaryRed,
+                        color: AppTokens.primaryColor,
                       ),
                     ),
                   ),
@@ -2341,7 +2341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _actualizarEstadoPeriodo(4);
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppTokens.primaryRed,
+                      backgroundColor: AppTokens.primaryColor,
                     ),
                     child: Text(
                       'Confirmar',
@@ -2450,8 +2450,8 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTokens.primaryRed,
-                AppTokens.primaryRed.withValues(alpha: 0.85),
+                AppTokens.primaryColor,
+                AppTokens.primaryColor.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -2459,7 +2459,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: AppTokens.borderRadiusLarge,
             boxShadow: [
               BoxShadow(
-                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                color: AppTokens.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -2694,8 +2694,8 @@ class _HomeScreenState extends State<HomeScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.85),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.85),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -2703,7 +2703,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -2822,8 +2822,8 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTokens.primaryRed,
-                AppTokens.primaryRed.withValues(alpha: 0.85),
+                AppTokens.primaryColor,
+                AppTokens.primaryColor.withValues(alpha: 0.85),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -2831,7 +2831,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: AppTokens.borderRadiusLarge,
             boxShadow: [
               BoxShadow(
-                color: AppTokens.primaryRed.withValues(alpha: 0.3),
+                color: AppTokens.primaryColor.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -3142,7 +3142,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 45.0,
             height: 45.0,
             decoration: BoxDecoration(
-              color: _isAdminView ? AppTokens.primaryRed : AppTokens.primaryRed,
+              color: _isAdminView ? AppTokens.primaryColor : AppTokens.primaryColor,
               border: Border.all(width: 2.0, color: Colors.white),
               borderRadius: BorderRadius.circular(25.0),
             ),
@@ -3169,7 +3169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 45.0,
           height: 45.0,
           decoration: BoxDecoration(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             border: Border.all(width: 2.0, color: Colors.white),
             borderRadius: BorderRadius.circular(25.0),
           ),

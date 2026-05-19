@@ -32,7 +32,7 @@ class MonthPeriod {
   Color getStatusColor() {
     switch (status) {
       case PeriodStatus.current:
-        return AppTokens.primaryRed;
+        return AppTokens.primaryColor;
       case PeriodStatus.historical:
         return AppTokens.energyGreen;
       case PeriodStatus.future:

@@ -72,7 +72,7 @@ class UserPeriodItem {
 
   /// Obtiene el color asociado al estado del período
   Color getStatusColor() {
-    return isCurrentPeriod ? AppTokens.primaryRed : AppTokens.energyGreen;
+    return isCurrentPeriod ? AppTokens.primaryColor : AppTokens.energyGreen;
   }
 
   /// Obtiene el ícono asociado al estado del período

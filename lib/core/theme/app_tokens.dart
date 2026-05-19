@@ -8,8 +8,8 @@ class AppTokens {
   // ==================== COLORES ====================
 
   /// Paleta de colores primarios - Energía y sostenibilidad
-  static const Color primaryBlue = Color(0xFF0070C0);
-  static const Color primaryRed = Color(0xFF891427);
+  static const Color secondaryColor = Color(0xFF0070C0);
+  static const Color primaryColor = Color(0xFF891427);
   static const Color primaryPurple = Color(0xFF7E57C2);
   static const Color primaryYellow = Color(0xFFFFD966);
 
@@ -243,7 +243,7 @@ class AppTokens {
 
   /// Gradientes predefinidos
   static LinearGradient get gradientPrimary => const LinearGradient(
-        colors: [primaryRed, black],
+        colors: [primaryColor, black],
         begin: AlignmentDirectional(0.94, -1),
         end: AlignmentDirectional(-0.94, 1),
       );
@@ -255,7 +255,7 @@ class AppTokens {
       );
 
   static LinearGradient get gradientCard => LinearGradient(
-        colors: [primaryRed, grey900],
+        colors: [primaryColor, grey900],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       );

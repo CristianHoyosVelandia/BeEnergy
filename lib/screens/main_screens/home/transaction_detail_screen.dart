@@ -211,7 +211,7 @@ class TransactionDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isNegative
-              ? [AppTokens.primaryRed, AppTokens.primaryRed.withValues(alpha: 0.75)]
+              ? [AppTokens.primaryColor, AppTokens.primaryColor.withValues(alpha: 0.75)]
               : [AppTokens.energyGreen, AppTokens.energyGreen.withValues(alpha: 0.75)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -219,7 +219,7 @@ class TransactionDetailScreen extends StatelessWidget {
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: (isNegative ? AppTokens.primaryRed : AppTokens.energyGreen)
+            color: (isNegative ? AppTokens.primaryColor : AppTokens.energyGreen)
                 .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),

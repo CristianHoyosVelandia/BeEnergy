@@ -280,7 +280,7 @@ class _MapasState extends State<Mapas> {
   //   if(_posicionActual!=null){
   //     marcas.add(Marker(
   //       point: LatLng(_posicionActual!.latitude, _posicionActual!.longitude),
-  //       child: (BuildContext context) => const Icon(Icons.location_history, size: 40, color: AppTokens.primaryRed)
+  //       child: (BuildContext context) => const Icon(Icons.location_history, size: 40, color: AppTokens.primaryColor)
   //     ));
   //   }
   //   for (var empresa in empresas) {

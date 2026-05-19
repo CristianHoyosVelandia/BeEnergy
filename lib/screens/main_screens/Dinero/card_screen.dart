@@ -268,7 +268,7 @@ class _CardscreenState extends State<Cardscreen> {
                     '-\$8.392',
                     textAlign: TextAlign.start,
                     style: TextStyle(
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                       fontSize: 25.0,
                       fontFamily:"SEGOEUI",
                       fontWeight: FontWeight.w600,
@@ -294,7 +294,7 @@ class _CardscreenState extends State<Cardscreen> {
                       ),
                       const Icon(
                         Icons.trending_up_rounded,
-                        color: AppTokens.primaryRed,
+                        color: AppTokens.primaryColor,
                         size: 24,
                       ),
                     ],

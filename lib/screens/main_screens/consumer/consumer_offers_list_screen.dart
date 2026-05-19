@@ -79,8 +79,8 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              foregroundColor: AppTokens.primaryRed,
-              side: const BorderSide(color: AppTokens.primaryRed),
+              foregroundColor: AppTokens.primaryColor,
+              side: const BorderSide(color: AppTokens.primaryColor),
             ),
             child: const Text('Sí, Cancelar'),
           ),
@@ -117,7 +117,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? AppTokens.primaryRed : Colors.green,
+        backgroundColor: isError ? AppTokens.primaryColor : Colors.green,
       ),
     );
   }
@@ -149,7 +149,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+                valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
               ),
             )
           : _offers.isEmpty
@@ -166,7 +166,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                       _buildSectionHeader(
                         'Ofertas Pendientes',
                         Icons.pending_actions,
-                        AppTokens.primaryRed,
+                        AppTokens.primaryColor,
                       ),
                       ...pendingOffers.map((offer) => _buildOfferCard(offer, canCancel: true)),
                       SizedBox(height: AppTokens.space16),
@@ -243,7 +243,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Crear Oferta'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTokens.primaryRed,
+                backgroundColor: AppTokens.primaryColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -270,9 +270,9 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Total', total, AppTokens.primaryRed),
-                _buildStatItem('Pendientes', pending, AppTokens.primaryRed),
-                _buildStatItem('Confirmadas', matched, AppTokens.primaryRed),
+                _buildStatItem('Total', total, AppTokens.primaryColor),
+                _buildStatItem('Pendientes', pending, AppTokens.primaryColor),
+                _buildStatItem('Confirmadas', matched, AppTokens.primaryColor),
               ],
             ),
           ],
@@ -430,8 +430,8 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                   icon: const Icon(Icons.cancel, size: 20),
                   label: const Text('Cancelar Oferta'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppTokens.primaryRed,
-                    side: const BorderSide(color: AppTokens.primaryRed),
+                    foregroundColor: AppTokens.primaryColor,
+                    side: const BorderSide(color: AppTokens.primaryColor),
                   ),
                 ),
               ),
@@ -456,7 +456,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
         icon = Icons.check_circle;
         break;
       case ConsumerOfferStatus.partialMatch:
-        color = AppTokens.primaryRed.withValues(alpha: 0.7);
+        color = AppTokens.primaryColor.withValues(alpha: 0.7);
         icon = Icons.pie_chart;
         break;
       case ConsumerOfferStatus.expired:

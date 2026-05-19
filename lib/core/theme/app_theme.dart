@@ -12,13 +12,13 @@ class AppTheme {
   /// ColorScheme para modo claro
   static const ColorScheme _lightColorScheme = ColorScheme.light(
     // Colores primarios
-    primary: AppTokens.primaryRed,
+    primary: AppTokens.primaryColor,
     onPrimary: AppTokens.white,
     primaryContainer: Color(0xFFFFDAD6),
     onPrimaryContainer: Color(0xFF410002),
 
     // Colores secundarios
-    secondary: AppTokens.primaryRed,
+    secondary: AppTokens.primaryColor,
     // secondary: AppTokens.primaryPurple,
     onSecondary: AppTokens.white,
     secondaryContainer: Color(0xFFE8DEF8),
@@ -99,7 +99,7 @@ class AppTheme {
     // Colores inversos
     inverseSurface: AppTokens.grey100,
     onInverseSurface: AppTokens.grey900,
-    inversePrimary: AppTokens.primaryRed,
+    inversePrimary: AppTokens.primaryColor,
   );
 
   // ==================== TEXT THEMES ====================
@@ -250,9 +250,9 @@ class AppTheme {
       fontFamily: AppTokens.fontFamilyPrimary,
 
       // Colores legacy (para compatibilidad)
-      primaryColor: AppTokens.primaryRed,
+      primaryColor: AppTokens.primaryColor,
       cardColor: AppTokens.primaryPurple,
-      canvasColor: AppTokens.primaryRed,
+      canvasColor: AppTokens.primaryColor,
       focusColor: AppTokens.black,
 
       // Scaffold
@@ -310,7 +310,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: AppTokens.borderRadiusMedium,
           ),
-          textStyle: _textTheme(AppTokens.primaryRed).labelLarge,
+          textStyle: _textTheme(AppTokens.primaryColor).labelLarge,
         ),
       ),
 
@@ -325,10 +325,10 @@ class AppTheme {
             borderRadius: AppTokens.borderRadiusMedium,
           ),
           side: const BorderSide(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             width: AppTokens.borderWidthNormal,
           ),
-          textStyle: _textTheme(AppTokens.primaryRed).labelLarge,
+          textStyle: _textTheme(AppTokens.primaryColor).labelLarge,
         ),
       ),
 
@@ -354,7 +354,7 @@ class AppTheme {
         focusedBorder: OutlineInputBorder(
           borderRadius: AppTokens.borderRadiusMedium,
           borderSide: const BorderSide(
-            color: AppTokens.primaryRed,
+            color: AppTokens.primaryColor,
             width: AppTokens.borderWidthThick,
           ),
         ),
@@ -381,7 +381,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppTokens.white,
-        selectedItemColor: AppTokens.primaryRed,
+        selectedItemColor: AppTokens.primaryColor,
         unselectedItemColor: AppTokens.grey500,
         elevation: AppTokens.elevation8,
         showSelectedLabels: true,
@@ -390,7 +390,7 @@ class AppTheme {
 
       // Floating Action Button
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppTokens.primaryRed,
+        backgroundColor: AppTokens.primaryColor,
         foregroundColor: AppTokens.white,
         elevation: AppTokens.elevation6,
         shape: CircleBorder(),
@@ -399,7 +399,7 @@ class AppTheme {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: AppTokens.grey200,
-        selectedColor: AppTokens.primaryRed,
+        selectedColor: AppTokens.primaryColor,
         disabledColor: AppTokens.grey300,
         padding: const EdgeInsets.symmetric(
           horizontal: AppTokens.spacingMedium,
@@ -436,7 +436,7 @@ class AppTheme {
 
       // Progress Indicator
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppTokens.primaryRed,
+        color: AppTokens.primaryColor,
         linearTrackColor: AppTokens.grey300,
         circularTrackColor: AppTokens.grey300,
       ),

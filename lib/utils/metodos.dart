@@ -263,7 +263,7 @@ class Metodos {
   static Future flushbarNegativo(context, mensaje) { 
     return Flushbar(
       message: mensaje,
-      backgroundColor: AppTokens.primaryRed,
+      backgroundColor: AppTokens.primaryColor,
       messageColor: Colors.white,
       duration: const Duration(seconds: 3),
       icon: const Icon(
@@ -798,7 +798,7 @@ class Metodos {
           color: colApp1
         )
       ),
-      errorStyle: descripcionTextStyle(context, AppTokens.primaryRed, 15),
+      errorStyle: descripcionTextStyle(context, AppTokens.primaryColor, 15),
       focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(
           color: colApp1

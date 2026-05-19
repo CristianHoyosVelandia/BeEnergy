@@ -52,8 +52,8 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.8),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -61,7 +61,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -202,13 +202,13 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
         });
       },
       backgroundColor: context.colors.surface,
-      selectedColor: AppTokens.primaryRed,
+      selectedColor: AppTokens.primaryColor,
       labelStyle: context.textStyles.bodyMedium?.copyWith(
         color: isSelected ? Colors.white : context.colors.onSurface,
         fontWeight: isSelected ? AppTokens.fontWeightBold : AppTokens.fontWeightMedium,
       ),
       side: BorderSide(
-        color: isSelected ? AppTokens.primaryRed : context.colors.outline.withValues(alpha: 0.3),
+        color: isSelected ? AppTokens.primaryColor : context.colors.outline.withValues(alpha: 0.3),
         width: isSelected ? 2 : 1,
       ),
     );
@@ -267,7 +267,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: position <= 3
-                    ? AppTokens.primaryRed.withValues(alpha: 0.15)
+                    ? AppTokens.primaryColor.withValues(alpha: 0.15)
                     : context.colors.surfaceContainerHighest,
                   borderRadius: AppTokens.borderRadiusSmall,
                 ),
@@ -275,7 +275,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
                   child: Text(
                     '#$position',
                     style: context.textStyles.labelMedium?.copyWith(
-                      color: position <= 3 ? AppTokens.primaryRed : context.colors.onSurfaceVariant,
+                      color: position <= 3 ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
@@ -510,7 +510,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
             Text(
               '${Formatters.formatNumber(percentage * 100, decimals: 0)}%',
               style: context.textStyles.bodySmall?.copyWith(
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
               ),
             ),
@@ -522,7 +522,7 @@ class _EnergyRecordsScreenState extends State<EnergyRecordsScreen> {
           child: LinearProgressIndicator(
             value: percentage,
             backgroundColor: context.colors.surfaceContainerHighest,
-            valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryRed),
+            valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
             minHeight: 8,
           ),
         ),

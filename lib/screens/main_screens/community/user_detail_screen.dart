@@ -66,7 +66,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: widget.member.isProsumer
-              ? [AppTokens.primaryRed, AppTokens.primaryRed.withValues(alpha: 0.8)]
+              ? [AppTokens.primaryColor, AppTokens.primaryColor.withValues(alpha: 0.8)]
               : [context.colors.primary, context.colors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -572,7 +572,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
-            backgroundColor: widget.member.isProsumer ? AppTokens.primaryRed : context.colors.primary,
+            backgroundColor: widget.member.isProsumer ? AppTokens.primaryColor : context.colors.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: _buildHeader(),
             ),

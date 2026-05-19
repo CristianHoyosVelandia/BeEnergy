@@ -16,7 +16,7 @@ class MyProgressIndicator extends StatelessWidget{
     double screenWidth = MediaQuery.of(context).size.width;
 
     // Paleta de colores moderna rojo-blanco
-    const Color primaryRed = Color(0xFFD32F2F); // Rojo Material profundo
+    const Color primaryColor = Color(0xFFD32F2F); // Rojo Material profundo
     const Color accentRed = Color(0xFFF44336); // Rojo vibrante
     const Color lightRed = Color(0xFFFFEBEE); // Rojo muy suave
     const Color bgWhite = Color(0xFFFFFFFF); // Blanco puro
@@ -71,8 +71,8 @@ class MyProgressIndicator extends StatelessWidget{
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    primaryRed.withValues(alpha: 0.12),
-                    primaryRed.withValues(alpha: 0.03),
+                    primaryColor.withValues(alpha: 0.12),
+                    primaryColor.withValues(alpha: 0.03),
                   ],
                 ),
               ),
@@ -91,7 +91,7 @@ class MyProgressIndicator extends StatelessWidget{
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryRed.withValues(alpha: 0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         blurRadius: 40,
                         offset: const Offset(0, 10),
                         spreadRadius: -5,
@@ -129,7 +129,7 @@ class MyProgressIndicator extends StatelessWidget{
                       height: 56,
                       child: CircularProgressIndicator(
                         strokeWidth: 4.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(primaryRed),
+                        valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                         backgroundColor: lightRed,
                       ),
                     ),
@@ -140,7 +140,7 @@ class MyProgressIndicator extends StatelessWidget{
                 Text(
                   'Cargando...',
                   style: TextStyle(
-                    color: primaryRed.withValues(alpha: 0.8),
+                    color: primaryColor.withValues(alpha: 0.8),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.5,

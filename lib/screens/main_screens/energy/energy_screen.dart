@@ -741,7 +741,7 @@ class _LineChart extends StatelessWidget {
     show: true,
     border: Border(
       bottom: BorderSide(
-        color: AppTokens.primaryRed.withValues(alpha: 0.2),
+        color: AppTokens.primaryColor.withValues(alpha: 0.2),
         width: 4,
       ),
       left: const BorderSide(color: Colors.transparent),

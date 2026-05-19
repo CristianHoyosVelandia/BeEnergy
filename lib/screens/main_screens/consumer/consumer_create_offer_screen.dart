@@ -198,19 +198,19 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
-                color: AppTokens.primaryRed.withValues(alpha: 0.1),
+                color: AppTokens.primaryColor.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
-                border: Border.all(color: AppTokens.primaryRed.withValues(alpha: 0.3)),
+                border: Border.all(color: AppTokens.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTokens.primaryRed.withValues(alpha: 0.7), size: 20),
+                  Icon(Icons.info_outline, color: AppTokens.primaryColor.withValues(alpha: 0.7), size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
                       'Energía final dependerá de la liquidación',
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.primaryRed.withValues(alpha: 0.8),
+                        color: AppTokens.primaryColor.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -301,7 +301,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               ? null
               : _submitOffer,
           backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
-              ? AppTokens.primaryRed
+              ? AppTokens.primaryColor
               : Colors.grey,
           child: Icon(
             _isEditMode ? Icons.save : Icons.publish,
@@ -347,7 +347,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                     ),
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.symmetric(
@@ -355,22 +355,22 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                         vertical: AppTokens.space8,
                       ),
                       filled: true,
-                      fillColor: AppTokens.primaryRed.withValues(alpha: 0.1),
+                      fillColor: AppTokens.primaryColor.withValues(alpha: 0.1),
                       border: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
-                        borderSide: BorderSide(color: AppTokens.primaryRed),
+                        borderSide: BorderSide(color: AppTokens.primaryColor),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
-                        borderSide: BorderSide(color: AppTokens.primaryRed),
+                        borderSide: BorderSide(color: AppTokens.primaryColor),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
-                        borderSide: BorderSide(color: AppTokens.primaryRed, width: 2),
+                        borderSide: BorderSide(color: AppTokens.primaryColor, width: 2),
                       ),
                       suffixText: '%',
                       suffixStyle: context.textStyles.bodyMedium?.copyWith(
-                        color: AppTokens.primaryRed,
+                        color: AppTokens.primaryColor,
                       ),
                     ),
                     controller: TextEditingController(
@@ -397,7 +397,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               max: 9.99,
               divisions: 998,
               label: '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
-              activeColor: AppTokens.primaryRed,
+              activeColor: AppTokens.primaryColor,
               onChanged: (value) {
                 setState(() {
                   _pdePercentageRequested = value;
@@ -415,18 +415,18 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
-                color: AppTokens.primaryRed.withValues(alpha: 0.1),
+                color: AppTokens.primaryColor.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTokens.primaryRed.withValues(alpha: 0.7), size: 20),
+                  Icon(Icons.info_outline, color: AppTokens.primaryColor.withValues(alpha: 0.7), size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
                       'Energía final asignada dependerá de la liquidación del administrador',
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.primaryRed.withValues(alpha: 0.8),
+                        color: AppTokens.primaryColor.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -466,7 +466,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                      color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                     ),
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.symmetric(
@@ -475,34 +475,34 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       ),
                       filled: true,
                       fillColor: _isPriceValid
-                          ? AppTokens.primaryRed.withValues(alpha: 0.1)
+                          ? AppTokens.primaryColor.withValues(alpha: 0.1)
                           : context.colors.error.withValues(alpha: 0.1),
                       border: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                           width: 2,
                         ),
                       ),
                       prefixText: '\$',
                       suffixText: ' COP/kWh',
                       prefixStyle: context.textStyles.bodyMedium?.copyWith(
-                        color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                        color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                       ),
                       suffixStyle: context.textStyles.bodySmall?.copyWith(
-                        color: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+                        color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
                       ),
                     ),
                     controller: TextEditingController(
@@ -541,7 +541,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
               label: Formatters.formatCurrency(_pricePerKwh, decimals: 0),
-              activeColor: _isPriceValid ? AppTokens.primaryRed : context.colors.error,
+              activeColor: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
               onChanged: (value) {
                 setState(() {
                   _pricePerKwh = value;
@@ -573,8 +573,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTokens.primaryRed,
-            AppTokens.primaryRed.withValues(alpha: 0.8),
+            AppTokens.primaryColor,
+            AppTokens.primaryColor.withValues(alpha: 0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -582,7 +582,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryRed.withValues(alpha: 0.3),
+            color: AppTokens.primaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -708,7 +708,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               'Vista Previa de Oferta PDE',
               style: context.textStyles.titleMedium?.copyWith(
                 fontWeight: AppTokens.fontWeightBold,
-                color: AppTokens.primaryRed,
+                color: AppTokens.primaryColor,
               ),
             ),
             SizedBox(height: AppTokens.space16),

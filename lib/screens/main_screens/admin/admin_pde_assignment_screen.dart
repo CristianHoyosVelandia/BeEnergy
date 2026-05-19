@@ -188,7 +188,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Asignar PDE - Enero 2026'),
-        backgroundColor: AppTokens.primaryBlue,
+        backgroundColor: AppTokens.secondaryColor,
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -218,7 +218,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isLoading ? null : _assignPDE,
-        backgroundColor: _isCompliant ? AppTokens.primaryBlue : Colors.grey,
+        backgroundColor: _isCompliant ? AppTokens.secondaryColor : Colors.grey,
         icon: const Icon(Icons.check),
         label: const Text('Asignar PDE'),
       ),
@@ -231,14 +231,14 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
       padding: EdgeInsets.all(AppTokens.space20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTokens.primaryBlue, AppTokens.primaryBlue.withValues(alpha: 0.8)],
+          colors: [AppTokens.secondaryColor, AppTokens.secondaryColor.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: AppTokens.borderRadiusLarge,
         boxShadow: [
           BoxShadow(
-            color: AppTokens.primaryBlue.withValues(alpha: 0.3),
+            color: AppTokens.secondaryColor.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -354,14 +354,14 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                     vertical: AppTokens.space8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTokens.primaryBlue.withValues(alpha: 0.1),
+                    color: AppTokens.secondaryColor.withValues(alpha: 0.1),
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                   child: Text(
                     '${Formatters.formatNumber(_pdeToAssign, decimals: 1)} kWh',
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: AppTokens.primaryRed,
+                      color: AppTokens.primaryColor,
                     ),
                   ),
                 ),
@@ -390,7 +390,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
 
     return Card(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      color: isCompliant ? Colors.green.withValues(alpha: 0.1) : AppTokens.primaryRed.withValues(alpha: 0.1),
+      color: isCompliant ? Colors.green.withValues(alpha: 0.1) : AppTokens.primaryColor.withValues(alpha: 0.1),
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space16),
         child: Column(
@@ -399,7 +399,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
               children: [
                 Icon(
                   isCompliant ? Icons.check_circle : Icons.warning,
-                  color: isCompliant ? Colors.green : AppTokens.primaryRed,
+                  color: isCompliant ? Colors.green : AppTokens.primaryColor,
                   size: 32,
                 ),
                 SizedBox(width: AppTokens.space12),
@@ -410,7 +410,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                       Text(
                         isCompliant ? 'Cumple Regulación' : 'Excede Límite',
                         style: context.textStyles.titleMedium?.copyWith(
-                          color: isCompliant ? Colors.green : AppTokens.primaryRed,
+                          color: isCompliant ? Colors.green : AppTokens.primaryColor,
                           fontWeight: AppTokens.fontWeightBold,
                         ),
                       ),
@@ -418,7 +418,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                       Text(
                         'CREG 101 072 Art 3.4',
                         style: context.textStyles.bodySmall?.copyWith(
-                          color: isCompliant ? Colors.green : AppTokens.primaryRed,
+                          color: isCompliant ? Colors.green : AppTokens.primaryColor,
                         ),
                       ),
                     ],
@@ -427,7 +427,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
                 Text(
                   '${Formatters.formatNumber(percentage, decimals: 1)}%',
                   style: context.textStyles.headlineMedium?.copyWith(
-                    color: isCompliant ? Colors.green : AppTokens.primaryRed,
+                    color: isCompliant ? Colors.green : AppTokens.primaryColor,
                     fontWeight: AppTokens.fontWeightBold,
                   ),
                 ),
@@ -438,7 +438,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
               value: percentage / 10.0,
               backgroundColor: Colors.grey.withValues(alpha: 0.2),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isCompliant ? Colors.green : AppTokens.primaryRed,
+                isCompliant ? Colors.green : AppTokens.primaryColor,
               ),
             ),
             SizedBox(height: AppTokens.space8),
@@ -481,11 +481,11 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: AppTokens.primaryBlue.withValues(alpha: 0.2),
+        backgroundColor: AppTokens.secondaryColor.withValues(alpha: 0.2),
         child: Text(
           consumer.userName[0].toUpperCase(),
           style: const TextStyle(
-            color: AppTokens.primaryBlue,
+            color: AppTokens.secondaryColor,
             fontWeight: AppTokens.fontWeightBold,
           ),
         ),
@@ -518,18 +518,18 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
       margin: EdgeInsets.all(AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
-        color: AppTokens.primaryRed.withValues(alpha: 0.1),
+        color: AppTokens.primaryColor.withValues(alpha: 0.1),
         borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(color: AppTokens.primaryRed),
+        border: Border.all(color: AppTokens.primaryColor),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: AppTokens.primaryRed),
+          const Icon(Icons.error, color: AppTokens.primaryColor),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(
               _errorMessage!,
-              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryRed),
+              style: context.textStyles.bodyMedium?.copyWith(color: AppTokens.primaryColor),
             ),
           ),
         ],

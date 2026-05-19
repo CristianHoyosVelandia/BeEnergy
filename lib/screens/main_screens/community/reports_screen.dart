@@ -421,7 +421,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   'Prosumidores',
                   '${stats.totalProsumers}/${stats.totalMembers}',
                   Icons.groups_rounded,
-                  AppTokens.primaryRed,
+                  AppTokens.primaryColor,
                 ),
               ),
               SizedBox(width: AppTokens.space12),

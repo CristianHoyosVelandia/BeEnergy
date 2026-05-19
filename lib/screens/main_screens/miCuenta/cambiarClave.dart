@@ -66,13 +66,13 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
           width: 120,
           height: 120,
           decoration: BoxDecoration(
-            color: AppTokens.primaryBlue.withValues(alpha: 0.1),
+            color: AppTokens.secondaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.lock_reset,
             size: 60,
-            color: AppTokens.primaryBlue,
+            color: AppTokens.secondaryColor,
           ),
         ),
       ),
@@ -140,7 +140,7 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
                 ),
                 prefixIcon: Icon(
                   Icons.email_outlined,
-                  color: AppTokens.primaryRed,
+                  color: AppTokens.primaryColor,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -151,21 +151,21 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: AppTokens.primaryBlue,
+                    color: AppTokens.secondaryColor,
                     width: 2,
                   ),
                   borderRadius: AppTokens.borderRadiusMedium,
                 ),
                 errorBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                     width: 1.5,
                   ),
                   borderRadius: AppTokens.borderRadiusMedium,
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderSide: const BorderSide(
-                    color: AppTokens.primaryRed,
+                    color: AppTokens.primaryColor,
                     width: 2,
                   ),
                   borderRadius: AppTokens.borderRadiusMedium,
