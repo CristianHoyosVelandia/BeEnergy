@@ -4,6 +4,7 @@ import 'app_tokens.dart';
 
 /// Configuración completa del tema de la aplicación
 /// Soporta Light Mode y Dark Mode siguiendo Material Design 3
+/// También soporta temas dinámicos basados en colores de comunidad
 class AppTheme {
   AppTheme._(); // Constructor privado
 
@@ -510,6 +511,171 @@ class AppTheme {
       iconTheme: const IconThemeData(
         color: AppTokens.white,
         size: AppTokens.iconSizeMedium,
+      ),
+    );
+  }
+
+  // ==================== TEMAS DINÁMICOS ====================
+
+  /// Genera un tema claro con colores personalizados basados en comunidad
+  static ThemeData dynamicLightTheme(Color primaryColor,
+      [Color? secondaryColor]) {
+    final colorScheme = ColorScheme.light(
+      primary: primaryColor,
+      onPrimary: AppTokens.white,
+      primaryContainer: primaryColor.withAlpha(51),
+      onPrimaryContainer: AppTokens.black,
+      secondary: secondaryColor ?? primaryColor,
+      onSecondary: AppTokens.white,
+      secondaryContainer: (secondaryColor ?? primaryColor).withAlpha(51),
+      onSecondaryContainer: AppTokens.black,
+      tertiary: AppTokens.primaryYellow,
+      onTertiary: AppTokens.black,
+      tertiaryContainer: Color(0xFFFFE082),
+      onTertiaryContainer: Color(0xFF2B1700),
+      error: AppTokens.error,
+      onError: AppTokens.white,
+      errorContainer: Color(0xFFFFDAD6),
+      onErrorContainer: Color(0xFF410002),
+      surface: AppTokens.white,
+      onSurface: AppTokens.black,
+      surfaceContainerHighest: AppTokens.grey100,
+      onSurfaceVariant: AppTokens.grey700,
+      outline: AppTokens.grey400,
+      outlineVariant: AppTokens.grey300,
+      shadow: Colors.black,
+      scrim: Colors.black,
+      inverseSurface: AppTokens.grey900,
+      onInverseSurface: AppTokens.grey100,
+      inversePrimary: primaryColor.withAlpha(204),
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      textTheme: _textTheme(AppTokens.black),
+      fontFamily: AppTokens.fontFamilyPrimary,
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: AppTokens.white,
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        titleTextStyle: _textTheme(AppTokens.black).titleLarge,
+        toolbarHeight: 60,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          elevation: AppTokens.elevation2,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.buttonPaddingHorizontalMedium,
+            vertical: AppTokens.spacingMedium,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+          ),
+          textStyle: _textTheme(AppTokens.white).labelLarge,
+          minimumSize: const Size.fromHeight(AppTokens.buttonHeightMedium),
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppTokens.white,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: AppTokens.grey500,
+        elevation: AppTokens.elevation8,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: AppTokens.white,
+        elevation: AppTokens.elevation6,
+        shape: const CircleBorder(),
+      ),
+    );
+  }
+
+  /// Genera un tema oscuro con colores personalizados basados en comunidad
+  static ThemeData dynamicDarkTheme(Color primaryColor,
+      [Color? secondaryColor]) {
+    final colorScheme = ColorScheme.dark(
+      primary: primaryColor,
+      onPrimary: AppTokens.white,
+      primaryContainer: primaryColor.withAlpha(102),
+      onPrimaryContainer: AppTokens.white,
+      secondary: secondaryColor ?? primaryColor,
+      onSecondary: AppTokens.white,
+      secondaryContainer: (secondaryColor ?? primaryColor).withAlpha(102),
+      onSecondaryContainer: AppTokens.white,
+      tertiary: AppTokens.primaryYellow,
+      onTertiary: Color(0xFF452B00),
+      tertiaryContainer: Color(0xFF633F00),
+      onTertiaryContainer: Color(0xFFFFE082),
+      error: Color(0xFFFFB4AB),
+      onError: Color(0xFF690005),
+      errorContainer: Color(0xFF93000A),
+      onErrorContainer: Color(0xFFFFDAD6),
+      surface: AppTokens.grey900,
+      onSurface: AppTokens.grey100,
+      surfaceContainerHighest: AppTokens.grey800,
+      onSurfaceVariant: AppTokens.grey400,
+      outline: AppTokens.grey600,
+      outlineVariant: AppTokens.grey700,
+      shadow: Colors.black,
+      scrim: Colors.black,
+      inverseSurface: AppTokens.grey100,
+      onInverseSurface: AppTokens.grey900,
+      inversePrimary: primaryColor,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      textTheme: _textTheme(AppTokens.white),
+      fontFamily: AppTokens.fontFamilyPrimary,
+      scaffoldBackgroundColor: AppTokens.grey900,
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        titleTextStyle: _textTheme(AppTokens.white).titleLarge,
+        toolbarHeight: 60,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          elevation: AppTokens.elevation2,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTokens.buttonPaddingHorizontalMedium,
+            vertical: AppTokens.spacingMedium,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+          ),
+          textStyle: _textTheme(AppTokens.white).labelLarge,
+          minimumSize: const Size.fromHeight(AppTokens.buttonHeightMedium),
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppTokens.grey900,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: AppTokens.grey500,
+        elevation: AppTokens.elevation8,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+        foregroundColor: AppTokens.white,
+        elevation: AppTokens.elevation6,
+        shape: const CircleBorder(),
       ),
     );
   }

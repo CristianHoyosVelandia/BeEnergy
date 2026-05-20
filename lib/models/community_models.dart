@@ -4,6 +4,10 @@ class Community {
   final String description;
   final String location;
   final DateTime createdAt;
+  final int? topologic;
+  final String? urlImg;
+  final String? primaryColor;
+  final String? secondColor;
 
   Community({
     required this.id,
@@ -11,6 +15,10 @@ class Community {
     required this.description,
     required this.location,
     required this.createdAt,
+    this.topologic,
+    this.urlImg,
+    this.primaryColor,
+    this.secondColor,
   });
 
   factory Community.fromJson(Map<String, dynamic> json) {
@@ -20,6 +28,10 @@ class Community {
       description: json['description'] as String,
       location: json['location'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      topologic: json['topologic'] as int?,
+      urlImg: json['url_img'] as String?,
+      primaryColor: json['primary_color'] as String?,
+      secondColor: json['second_color'] as String?,
     );
   }
 
@@ -30,6 +42,10 @@ class Community {
       'description': description,
       'location': location,
       'created_at': createdAt.toIso8601String(),
+      'topologic': topologic,
+      'url_img': urlImg,
+      'primary_color': primaryColor,
+      'second_color': secondColor,
     };
   }
 }

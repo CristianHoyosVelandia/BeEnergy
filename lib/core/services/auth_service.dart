@@ -2,12 +2,14 @@ import '../api/api_client.dart';
 import '../api/api_exceptions.dart';
 import '../constants/api_endpoints.dart';
 import '../utils/logger.dart';
+import '../../services/community_theme_storage.dart';
 
 /// Servicio de autenticación para la aplicación BeEnergy
 /// Integrado con Volt Platform Services API
 class AuthService {
   static const String _tag = 'AuthService';
   final ApiClient _apiClient = ApiClient.instance;
+  final CommunityThemeStorage _themeStorage = CommunityThemeStorage();
 
   /// Verifica la conexión con el servidor (ping)
   ///
@@ -32,9 +34,9 @@ class AuthService {
   /// - message: String
   /// - data: Map con información del usuario y token
   /// - token: String (JWT token)
-  Future<Map<String, dynamic>> login({ required String email, required String password }) async {
+  Future<Map<String, dynamic>> login(
+      {required String email, required String password}) async {
     try {
-
       final response = await _apiClient.post(
         ApiEndpoints.login,
         data: {
@@ -47,15 +49,19 @@ class AuthService {
         final data = response.data as Map<String, dynamic>;
 
         // Si hay token, guardarlo en el cliente
-        if (data['token'] != null) {
-          _apiClient.setAuthToken(data['token']);
+        if (data['data'] != null) {
+          final userData = data['data'] as Map<String, dynamic>;
+          _apiClient.setAuthToken(userData['token']);
+
+          // Guardar datos de tema en storage
+          await _saveThemeDataFromLogin(userData);
         }
 
         return {
           'success': true,
           'message': data['message'] ?? 'Login exitoso',
           'data': data['data'],
-          'token': data['token'],
+          'token': data['data']?['token'],
         };
       } else {
         return {
@@ -81,6 +87,47 @@ class AuthService {
       };
     }
   }
+
+  /// Guarda los datos de tema de comunidad en storage durante el login
+  Future<void> _saveThemeDataFromLogin(Map<String, dynamic> userData) async {
+    try {
+      final primaryColor = userData['primary_color'] as String? ??
+          CommunityThemeStorage.defaultPrimaryColor;
+      final secondColor = userData['second_color'] as String? ??
+          CommunityThemeStorage.defaultSecondColor;
+      final urlImg =
+          userData['url_img'] as String? ?? CommunityThemeStorage.defaultUrlImg;
+      final topology =
+          userData['topologic'] as int? ?? CommunityThemeStorage.defaultTopology;
+
+      // Si hay comunidades, guardar la primera
+      int? communityId;
+      final communities = userData['communities'] as List?;
+      if (communities != null && communities.isNotEmpty) {
+        communityId = communities[0] as int;
+      }
+
+      await _themeStorage.saveCommunityTheme(
+        primaryColor: primaryColor,
+        secondColor: secondColor,
+        urlImg: urlImg,
+        topology: topology,
+        communityId: communityId ?? 0,
+      );
+
+      AppLogger.debug(
+        'Theme data saved: primary=$primaryColor, second=$secondColor',
+        tag: _tag,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Error saving theme data',
+        tag: _tag,
+        error: e.toString(),
+      );
+    }
+  }
+
 
   /// Registra un nuevo usuario
   ///

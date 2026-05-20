@@ -11,6 +11,10 @@ class AuthUser {
   final String role; // 'consumer', 'prosumer', 'admin'
   final String token;
   final DateTime? tokenExpiry;
+  final List<int>? communities; // IDs de comunidades
+  final String? urlImg;
+  final String? primaryColor;
+  final String? secondColor;
 
   AuthUser({
     required this.id,
@@ -20,6 +24,10 @@ class AuthUser {
     required this.role,
     required this.token,
     this.tokenExpiry,
+    this.communities,
+    this.urlImg,
+    this.primaryColor,
+    this.secondColor,
   });
 
   String get fullName => '$name $lastName';
@@ -29,29 +37,41 @@ class AuthUser {
     return DateTime.now().isBefore(tokenExpiry!);
   }
 
+  bool get hasMultipleCommunities => communities != null && communities!.length > 1;
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
-      id: json['id'] as int,
+      id: json['user_id'] as int,
       email: json['email'] as String,
       name: json['name'] as String,
-      lastName: json['last_name'] as String,
-      role: json['role'] as String,
+      lastName: json['lastname'] as String,
+      role: json['role'].toString(),
       token: json['token'] as String,
       tokenExpiry: json['token_expiry'] != null
           ? DateTime.parse(json['token_expiry'] as String)
           : null,
+      communities: json['communities'] != null
+          ? List<int>.from(json['communities'] as List)
+          : null,
+      urlImg: json['url_img'] as String?,
+      primaryColor: json['primary_color'] as String?,
+      secondColor: json['second_color'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'user_id': id,
       'email': email,
       'name': name,
-      'last_name': lastName,
+      'lastname': lastName,
       'role': role,
       'token': token,
       'token_expiry': tokenExpiry?.toIso8601String(),
+      'communities': communities,
+      'url_img': urlImg,
+      'primary_color': primaryColor,
+      'second_color': secondColor,
     };
   }
 }
