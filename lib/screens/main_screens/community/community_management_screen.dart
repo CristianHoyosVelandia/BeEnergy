@@ -10,12 +10,20 @@ import '../../../utils/metodos.dart';
 import 'user_detail_screen.dart';
 
 /// Pantalla de Gestión de la Comunidad Energética
-/// Muestra la lista de los 15 miembros de la Comunidad UAO
+/// Muestra la lista de miembros de la comunidad seleccionada.
 class CommunityManagementScreen extends StatefulWidget {
-  const CommunityManagementScreen({super.key});
+  final int communityId;
+  final String communityName;
+
+  const CommunityManagementScreen({
+    super.key,
+    this.communityId = 1,
+    this.communityName = 'Comunidad',
+  });
 
   @override
-  State<CommunityManagementScreen> createState() => _CommunityManagementScreenState();
+  State<CommunityManagementScreen> createState() =>
+      _CommunityManagementScreenState();
 }
 
 class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
@@ -46,12 +54,12 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
 
       // Cargar miembros y energy records desde el repositorio
       final members = await repository.getCommunityMembers(
-        communityId: 1,
+        communityId: widget.communityId,
         period: '2026-01', // Enero 2026
       );
 
       final energyRecords = await repository.getEnergyRecords(
-        communityId: 1,
+        communityId: widget.communityId,
         period: '2026-01',
       );
 
@@ -81,9 +89,10 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
 
     // Filtrar por búsqueda
     if (_searchQuery.isNotEmpty) {
-      members = members.where((m) =>
-        m.fullName.toLowerCase().contains(_searchQuery.toLowerCase())
-      ).toList();
+      members = members
+          .where((m) =>
+              m.fullName.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .toList();
     }
 
     return members;
@@ -283,10 +292,13 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
       checkmarkColor: Colors.white,
       labelStyle: context.textStyles.bodyMedium?.copyWith(
         color: isSelected ? Colors.white : context.colors.onSurface,
-        fontWeight: isSelected ? AppTokens.fontWeightBold : AppTokens.fontWeightMedium,
+        fontWeight:
+            isSelected ? AppTokens.fontWeightBold : AppTokens.fontWeightMedium,
       ),
       side: BorderSide(
-        color: isSelected ? AppTokens.primaryColor : context.colors.outline.withValues(alpha: 0.3),
+        color: isSelected
+            ? AppTokens.primaryColor
+            : context.colors.outline.withValues(alpha: 0.3),
         width: isSelected ? 2 : 1,
       ),
     );
@@ -341,7 +353,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
         id: 0,
         userId: member.userId,
         userName: member.fullName,
-        communityId: 1,
+        communityId: widget.communityId,
         energyGenerated: 0,
         energyConsumed: 0,
         energyExported: 0,
@@ -384,14 +396,17 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                   decoration: BoxDecoration(
                     color: member.isProsumer
                         ? AppTokens.primaryColor.withValues(alpha: 0.15)
-                        : context.colors.primaryContainer.withValues(alpha: 0.3),
+                        : context.colors.primaryContainer
+                            .withValues(alpha: 0.3),
                     borderRadius: AppTokens.borderRadiusSmall,
                   ),
                   child: Center(
                     child: Text(
                       member.userName[0].toUpperCase(),
                       style: context.textStyles.titleLarge?.copyWith(
-                        color: member.isProsumer ? AppTokens.primaryColor : context.colors.primary,
+                        color: member.isProsumer
+                            ? AppTokens.primaryColor
+                            : context.colors.primary,
                         fontWeight: AppTokens.fontWeightBold,
                       ),
                     ),
@@ -419,7 +434,8 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: member.isProsumer
-                                  ? AppTokens.primaryColor.withValues(alpha: 0.1)
+                                  ? AppTokens.primaryColor
+                                      .withValues(alpha: 0.1)
                                   : context.colors.surfaceContainerHighest,
                               borderRadius: AppTokens.borderRadiusSmall,
                             ),
@@ -427,15 +443,23 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  member.isProsumer ? Icons.solar_power : Icons.home,
+                                  member.isProsumer
+                                      ? Icons.solar_power
+                                      : Icons.home,
                                   size: 14,
-                                  color: member.isProsumer ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
+                                  color: member.isProsumer
+                                      ? AppTokens.primaryColor
+                                      : context.colors.onSurfaceVariant,
                                 ),
                                 SizedBox(width: AppTokens.space4),
                                 Text(
-                                  member.isProsumer ? 'Prosumidor' : 'Consumidor',
+                                  member.isProsumer
+                                      ? 'Prosumidor'
+                                      : 'Consumidor',
                                   style: context.textStyles.bodySmall?.copyWith(
-                                    color: member.isProsumer ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
+                                    color: member.isProsumer
+                                        ? AppTokens.primaryColor
+                                        : context.colors.onSurfaceVariant,
                                     fontWeight: AppTokens.fontWeightMedium,
                                   ),
                                 ),
@@ -464,7 +488,9 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
               ],
             ),
             SizedBox(height: AppTokens.space12),
-            Divider(height: 1, color: context.colors.outline.withValues(alpha: 0.1)),
+            Divider(
+                height: 1,
+                color: context.colors.outline.withValues(alpha: 0.1)),
             SizedBox(height: AppTokens.space12),
             // Métricas energéticas
             Row(
@@ -501,8 +527,12 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
                   child: _buildMetricItem(
                     'Balance',
                     Formatters.formatEnergy(energyRecord.netBalance),
-                    energyRecord.netBalance >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                    energyRecord.netBalance >= 0 ? Colors.green : AppTokens.error,
+                    energyRecord.netBalance >= 0
+                        ? Icons.trending_up_rounded
+                        : Icons.trending_down_rounded,
+                    energyRecord.netBalance >= 0
+                        ? Colors.green
+                        : AppTokens.error,
                   ),
                 ),
               ],
@@ -513,7 +543,8 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
     );
   }
 
-  Widget _buildMetricItem(String label, String value, IconData icon, Color color) {
+  Widget _buildMetricItem(
+      String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, size: 18, color: color),
@@ -621,7 +652,8 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
     );
   }
 
-  Widget _buildQuickAccessCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickAccessCard(
+      String title, IconData icon, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: AppTokens.borderRadiusMedium,
@@ -664,7 +696,7 @@ class _CommunityManagementScreenState extends State<CommunityManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestión de la Comunidad'),
+        title: Text('Gestión de ${widget.communityName}'),
         elevation: 0,
         backgroundColor: context.colors.surface,
         actions: [

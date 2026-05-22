@@ -16,6 +16,8 @@ import '../../../repositories/domain/pde_period_repository.dart';
 import '../../../repositories/impl/pde_period_repository_api.dart';
 import '../../../core/config/data_source_config.dart';
 import '../../../services/consumer_offer_api_service.dart';
+import 'controllers/home_controller.dart';
+import 'widgets/price_reference_cards.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 import '../admin/admin_community_offers_screen.dart';
 
@@ -28,8 +30,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   Metodos metodos = Metodos();
-  String _selectedPeriod = FakePeriodsData.currentPeriod; // Período actual por defecto
+  String _selectedPeriod =
+      FakePeriodsData.currentPeriod; // Período actual por defecto
   bool _isAdminView = false; // Vista de usuario por defecto
+  final HomeController _homeController = HomeController();
 
   // PDE Period Status (API data)
   PDEPeriodStatus? _pdePeriodStatus;
@@ -39,6 +43,16 @@ class _HomeScreenState extends State<HomeScreen> {
   // User Period History (API data)
   UserPeriodHistory? _userPeriodHistory;
   bool _isLoadingPeriods = true;
+
+  int get _currentCommunityId => widget.myUser?.communityId ?? 1;
+
+  String get _currentCommunityName {
+    final name = widget.myUser?.communityName;
+    if (name == null || name.trim().isEmpty) {
+      return 'Comunidad';
+    }
+    return name.trim();
+  }
 
   @override
   void initState() {
@@ -50,9 +64,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initializeData() async {
     // 1. Primero cargar el historial de períodos (para obtener currentPeriod)
     await _loadUserPeriods();
-
     // 2. Luego cargar el estado PDE del período actual (ya tenemos _selectedPeriod correcto)
     _loadPDEPeriodStatus();
+  }
+
+  Future<void> _loadPriceReferences() async {
+    if (DataSourceConfig.isFake || !_isAdminView || !_isCurrentPeriod) {
+      return;
+    }
+
+    setState(() => _homeController.isLoadingPriceReferences = true);
+
+    await _homeController.loadPriceReferences(
+      communityId: _currentCommunityId,
+      period: _selectedPeriod,
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   /// Carga el historial de períodos del usuario desde la API o usa mock data
@@ -71,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final userId = widget.myUser?.idUser ?? 1;
       final history = await _pdePeriodRepository.getUserPeriodHistory(
         userId: userId,
-        communityId: 1,
+        communityId: _currentCommunityId,
         limit: 4,
       );
 
@@ -93,9 +123,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       // print('🔍 Cargando estado PDE para periodo: $_selectedPeriod');
-
       final status = await _pdePeriodRepository.getPeriodStatus(
-        communityId: 1, // UAO community
+        communityId: _currentCommunityId,
         period: _selectedPeriod,
       );
       // print('✅ Estado PDE recibido: ${status.statusName} (code: ${status.statusCode})');
@@ -107,7 +136,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoadingPDEStatus = false;
       });
     } catch (e, stackTrace) {
-      AppLogger.error('Error cargando estado PDE', tag: 'HomeScreen', error: e, stackTrace: stackTrace);
+      AppLogger.error('Error cargando estado PDE',
+          tag: 'HomeScreen', error: e, stackTrace: stackTrace);
       setState(() => _isLoadingPDEStatus = false);
     }
   }
@@ -115,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Obtiene el período seleccionado como objeto MonthPeriod
   MonthPeriod get _currentPeriodData {
     return FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
-           FakePeriodsData.currentPeriodData;
+        FakePeriodsData.currentPeriodData;
   }
 
   /// Obtiene el nombre formateado del período seleccionado
@@ -145,7 +175,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // Si estamos usando mock data
     return _currentPeriodData.displayName;
   }
-
 
   /// Verifica si el período seleccionado es el actual
   bool get _isCurrentPeriod {
@@ -187,8 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'imported': periodData.energyRecord.energyImported,
       };
     }
-
-    // Si ENABLE_MOCKS=true, retornar datos mock (lógica existente)
+    
     return {
       'generated': 0,
       'consumed': 0,
@@ -202,7 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Enero 2026: ingreso por PDE del consumidor
     if (_selectedPeriod == '2026-01') {
       final pde = FakeDataPhase2.pdeDec2025;
-      final totalCost = pde.allocatedEnergy * FakeDataPhase2.precioP2P; // 41.21 × 400 = 16484
+      final totalCost =
+          pde.allocatedEnergy * FakeDataPhase2.precioP2P; // 41.21 × 400 = 16484
       final consumer = FakeDataPhase2.cristianHoyos;
       return [
         {
@@ -232,7 +261,12 @@ class _HomeScreenState extends State<HomeScreen> {
       final isIncome = contract.sellerId == (widget.myUser?.idUser ?? 24);
       final nombre = isIncome ? contract.buyerName : contract.sellerName;
 
-      final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      final months = [
+        'Ene', 'Feb', 'Mar',
+        'Abr', 'May', 'Jun',
+        'Jul', 'Ago', 'Sep',
+        'Oct', 'Nov', 'Dic'
+      ];
       final fecha = '${contract.createdAt.day}-${months[contract.createdAt.month - 1]}';
 
       return {
@@ -432,13 +466,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ? (_isAdminView ? "Importada de red" : "Autoconsumo solar")
         : "Importe";
     final double firstEnergy = isJan2026
-        ? (_isAdminView ? 120.0 : 107.7) // Admin: red del consumidor | Prosumidor: autoconsumo
+        ? (_isAdminView
+            ? 120.0
+            : 107.7) // Admin: red del consumidor | Prosumidor: autoconsumo
         : stats.totalEnergyImported;
     final IconData firstIcon = isJan2026 && !_isAdminView
-        ? Icons.light_mode_rounded   // sol para autoconsumo
+        ? Icons.light_mode_rounded // sol para autoconsumo
         : Icons.trending_down_rounded;
     final Color firstColor = isJan2026 && !_isAdminView
-        ? AppTokens.energyGreen      // verde para autoconsumo solar
+        ? AppTokens.energyGreen // verde para autoconsumo solar
         : AppTokens.error;
 
     final exportEnergy = stats.totalEnergyExported;
@@ -564,10 +600,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _saludoText() {
     // Determinar datos según vista (Admin/Usuario) y período seleccionado
     final periodData = _currentPeriodData;
-    final periodLabel = periodData.status == PeriodStatus.current ? 'Actual' : 'Histórico';
+    final periodLabel =
+        periodData.status == PeriodStatus.current ? 'Actual' : 'Histórico';
 
     // Texto descriptivo según vista
-    final viewLabel = _isAdminView ? 'Comunidad UAO' : 'Mi Energía';
+    final viewLabel = _isAdminView ? _currentCommunityName : 'Mi Energía';
 
     // Determinar total de miembros según período
     late int totalMembers;
@@ -579,7 +616,8 @@ class _HomeScreenState extends State<HomeScreen> {
       totalMembers = 1; // Vista usuario: solo 1 (usuario individual)
     }
 
-    final membersLabel = _isAdminView ? '$totalMembers miembros' : 'Vista Individual';
+    final membersLabel =
+        _isAdminView ? '$totalMembers miembros' : 'Vista Individual';
 
     return Container(
       width: context.width,
@@ -613,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Si ENABLE_MOCKS=true, usar FakePeriodsData
     if (DataSourceConfig.isFake) {
       final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
-                         FakePeriodsData.currentPeriodData;
+          FakePeriodsData.currentPeriodData;
 
       return _buildStatusIndicatorWidget(
         statusColor: periodData.getStatusColor(),
@@ -644,11 +682,16 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         // El período seleccionado NO tiene datos (ej: período actual sin registros)
         // Verificar si es el período actual del sistema
-        final isCurrentPeriod = _selectedPeriod == _userPeriodHistory!.currentPeriod;
+        final isCurrentPeriod =
+            _selectedPeriod == _userPeriodHistory!.currentPeriod;
 
         return _buildStatusIndicatorWidget(
-          statusColor: isCurrentPeriod ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
-          statusIcon: isCurrentPeriod ? Icons.auto_awesome : Icons.calendar_month_outlined,
+          statusColor: isCurrentPeriod
+              ? AppTokens.primaryColor
+              : context.colors.onSurfaceVariant,
+          statusIcon: isCurrentPeriod
+              ? Icons.auto_awesome
+              : Icons.calendar_month_outlined,
           statusText: isCurrentPeriod ? 'NUEVO MODELO' : 'MES CERRADO',
           periodLabel: _formatPeriodLabel(_selectedPeriod),
           isCurrentMonth: isCurrentPeriod,
@@ -669,18 +712,38 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Formatea el período actual en español
   String _formatCurrentPeriod() {
     final now = DateTime.now();
-    final months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    final months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ];
     return '${months[now.month - 1]} ${now.year}';
   }
 
   /// Formatea un período YYYY-MM a formato legible (ej: "Marzo 2026")
   String _formatPeriodLabel(String period) {
     final months = {
-      '01': 'Enero', '02': 'Febrero', '03': 'Marzo',
-      '04': 'Abril', '05': 'Mayo', '06': 'Junio',
-      '07': 'Julio', '08': 'Agosto', '09': 'Septiembre',
-      '10': 'Octubre', '11': 'Noviembre', '12': 'Diciembre'
+      '01': 'Enero',
+      '02': 'Febrero',
+      '03': 'Marzo',
+      '04': 'Abril',
+      '05': 'Mayo',
+      '06': 'Junio',
+      '07': 'Julio',
+      '08': 'Agosto',
+      '09': 'Septiembre',
+      '10': 'Octubre',
+      '11': 'Noviembre',
+      '12': 'Diciembre'
     };
 
     try {
@@ -691,7 +754,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return '${months[month] ?? month} $year';
       }
     } catch (e) {
-      AppLogger.warning('Error formateando período $period', tag: 'HomeScreen', error: e);
+      AppLogger.warning('Error formateando período $period',
+          tag: 'HomeScreen', error: e);
     }
 
     return period; // Fallback: retornar el período original
@@ -705,7 +769,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required String periodLabel,
     required bool isCurrentMonth,
   }) {
-
     return InkWell(
       onTap: _showPeriodSelectorModal,
       borderRadius: AppTokens.borderRadiusMedium,
@@ -817,7 +880,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: this.context.colors.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: this
+                      .context
+                      .colors
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -836,8 +903,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Seleccionar Período',
                       style: this.context.textStyles.titleLarge?.copyWith(
-                        fontWeight: AppTokens.fontWeightBold,
-                      ),
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
                     ),
                   ],
                 ),
@@ -875,7 +942,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           ...FakePeriodsData.availablePeriods.map((period) {
             final metadata = FakePeriodsData.getPeriodMetadata(period.period);
-            final subtitle = metadata?['description'] ?? 'Datos de comunidad energética';
+            final subtitle =
+                metadata?['description'] ?? 'Datos de comunidad energética';
 
             // Determinar badge según estado
             String badge;
@@ -894,7 +962,10 @@ class _HomeScreenState extends State<HomeScreen> {
             return Column(
               children: [
                 if (FakePeriodsData.availablePeriods.indexOf(period) > 0)
-                  Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
+                  Divider(
+                      height: 1,
+                      color:
+                          this.context.colors.outline.withValues(alpha: 0.1)),
                 _buildModalPeriodOption(
                   period: period.period,
                   title: period.displayName,
@@ -931,15 +1002,17 @@ class _HomeScreenState extends State<HomeScreen> {
         // Verificar que el _pdePeriodStatus corresponde al período actual
         final isCurrentPeriodStatus = _pdePeriodStatus!.period == currentPeriod;
 
-        final subtitle = isCurrentPeriodStatus && _pdePeriodStatus!.canCreateOffers
-            ? 'PDE Disponible - Puedes crear ofertas'
-            : isCurrentPeriodStatus
-                ? 'Estado: ${_pdePeriodStatus!.statusName}'
-                : 'Sin datos disponibles';
+        final subtitle =
+            isCurrentPeriodStatus && _pdePeriodStatus!.canCreateOffers
+                ? 'PDE Disponible - Puedes crear ofertas'
+                : isCurrentPeriodStatus
+                    ? 'Estado: ${_pdePeriodStatus!.statusName}'
+                    : 'Sin datos disponibles';
 
         periodWidgets.add(
           _buildModalPeriodOption(
-            period: currentPeriod,  // Usar currentPeriod, NO _pdePeriodStatus.period
+            period:
+                currentPeriod, // Usar currentPeriod, NO _pdePeriodStatus.period
             title: _formatPeriodLabel(currentPeriod),
             subtitle: subtitle,
             icon: Icons.auto_awesome,
@@ -958,13 +1031,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Construir subtitle con datos energéticos
         final energyData = period.energyRecord;
-        final subtitle = 'Consumo: ${Formatters.formatEnergy(energyData.energyConsumed)} • '
+        final subtitle =
+            'Consumo: ${Formatters.formatEnergy(energyData.energyConsumed)} • '
             'Generación: ${Formatters.formatEnergy(energyData.energyGenerated)}';
 
         // Agregar divider si no es el primer elemento de la lista completa
         if (periodWidgets.isNotEmpty || i > 0) {
           periodWidgets.add(
-            Divider(height: 1, color: this.context.colors.outline.withValues(alpha: 0.1)),
+            Divider(
+                height: 1,
+                color: this.context.colors.outline.withValues(alpha: 0.1)),
           );
         }
 
@@ -1036,17 +1112,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSelected = _selectedPeriod == period;
 
     return InkWell(
-      onTap: enabled ? () {
-        setState(() {
-          _selectedPeriod = period;
-        });
-        Navigator.pop(context);
+      onTap: enabled
+          ? () {
+              setState(() {
+                _selectedPeriod = period;
+              });
+              Navigator.pop(context);
 
-        // Recargar estado PDE para el nuevo periodo
-        _loadPDEPeriodStatus();
+              // Recargar estado PDE para el nuevo periodo
+              _loadPDEPeriodStatus();
+              _loadPriceReferences();
 
-        context.showInfoSnackbar('Período cambiado a $title');
-      } : null,
+              context.showInfoSnackbar('Período cambiado a $title');
+            }
+          : null,
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppTokens.space20,
@@ -1145,7 +1224,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _btnActividadIcon(String nombre, BuildContext context, int onTap, IconData icon) {
+  Widget _btnActividadIcon(
+      String nombre, BuildContext context, int onTap, IconData icon) {
     return Expanded(
       flex: 1,
       child: InkWell(
@@ -1158,9 +1238,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context.push(const BolsaScreen());
               break;
             case 3:
-              context.push(
-                AprendeScreen(myUser: widget.myUser!)
-              );
+              context.push(AprendeScreen(myUser: widget.myUser!));
               break;
             default:
               context.push(const TradingScreen());
@@ -1257,54 +1335,62 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Botón de Gestión de la Comunidad
   Widget _buildCommunityManagementButton() {
     return InkWell(
-            onTap: () {
-              context.push(const CommunityManagementScreen());
-            },
-            borderRadius: AppTokens.borderRadiusMedium,
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: AppTokens.space16,
-                horizontal: AppTokens.space16,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTokens.primaryColor,
-                    AppTokens.primaryColor.withValues(alpha: 0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+      onTap: () {
+        context.push(CommunityManagementScreen(
+          communityId: _currentCommunityId,
+          communityName: _currentCommunityName,
+        ));
+      },
+      borderRadius: AppTokens.borderRadiusMedium,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          vertical: AppTokens.space16,
+          horizontal: AppTokens.space16,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTokens.primaryColor,
+              AppTokens.primaryColor.withValues(alpha: 0.8),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppTokens.borderRadiusMedium,
+          boxShadow: [
+            BoxShadow(
+              color: AppTokens.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.groups_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+            SizedBox(width: AppTokens.space12),
+            Flexible(
+              child: Text(
+                "Gestión de comunidad",
+                style: context.textStyles.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: AppTokens.fontWeightBold,
                 ),
-                borderRadius: AppTokens.borderRadiusMedium,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTokens.primaryColor.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.groups_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  SizedBox(width: AppTokens.space12),
-                  Text(
-                    "Gestión de la Comunidad",
-                    style: context.textStyles.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                ],
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
-          );
+          ],
+        ),
+      ),
+    );
   }
 
   // ignore: unused_element
@@ -1326,8 +1412,7 @@ class _HomeScreenState extends State<HomeScreen> {
               context.push(const TransactionDetailScreen());
             } else {
               context.showInfoSnackbar(
-                "Transacción #${transaction['numTransaccion']}"
-              );
+                  "Transacción #${transaction['numTransaccion']}");
             }
           },
           borderRadius: AppTokens.borderRadiusMedium,
@@ -1351,7 +1436,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: AppTokens.borderRadiusSmall,
                   ),
                   child: Icon(
-                    isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                    isIncome
+                        ? Icons.arrow_upward_rounded
+                        : Icons.arrow_downward_rounded,
                     size: 20,
                     color: color,
                   ),
@@ -1494,8 +1581,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return const SizedBox.shrink();
     }
 
-    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
-    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia - FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+    final minValue =
+        FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
+            FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) *
+        0.95;
     return GestureDetector(
       onTap: () {
         // Navegación según el rol del usuario
@@ -1505,6 +1595,8 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(
               builder: (context) => AdminCommunityOffersScreen(
                 period: _selectedPeriod,
+                communityId: _currentCommunityId,
+                communityName: _currentCommunityName,
               ),
             ),
           );
@@ -1516,7 +1608,7 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) => ConsumerMarketplaceScreen(
                 period: _selectedPeriod, // Pasar período seleccionado
                 myUser: widget.myUser!,
-                communityId: 1, // TODO: Obtener de backend o configuración
+                communityId: _currentCommunityId,
               ),
             ),
           );
@@ -1568,8 +1660,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         _isAdminView
-                          ? 'Revisar Ofertas'
-                          : _pdePeriodStatus!.getDisplayMessage(),
+                            ? 'Revisar Ofertas'
+                            : _pdePeriodStatus!.getDisplayMessage(),
                         style: context.textStyles.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: AppTokens.fontWeightBold,
@@ -1578,8 +1670,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: AppTokens.space4),
                       Text(
                         _isAdminView
-                          ? '$_selectedPeriodDisplayName - Gestión Comunitaria'
-                          : '$_selectedPeriodDisplayName - Modelo de Ofertas',
+                            ? '$_selectedPeriodDisplayName - Gestión Comunitaria'
+                            : '$_selectedPeriodDisplayName - Modelo de Ofertas',
                         style: context.textStyles.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.9),
                         ),
@@ -1595,7 +1687,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             SizedBox(height: AppTokens.space20),
-
 
             // Info footer
             Row(
@@ -1680,15 +1771,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    _isAdminView ? Icons.manage_search : Icons.add_shopping_cart,
+                    _isAdminView
+                        ? Icons.manage_search
+                        : Icons.add_shopping_cart,
                     color: AppTokens.primaryColor,
                     size: 20,
                   ),
                   SizedBox(width: AppTokens.space8),
                   Text(
                     _isAdminView
-                      ? 'Revisar Ofertas Comunitarias'
-                      : 'Crear Oferta de PDE',
+                        ? 'Revisar Ofertas Comunitarias'
+                        : 'Crear Oferta de PDE',
                     style: context.textStyles.bodyMedium?.copyWith(
                       color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
@@ -1726,6 +1819,8 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(
             builder: (context) => AdminCommunityOffersScreen(
               period: _selectedPeriod,
+              communityId: _currentCommunityId,
+              communityName: _currentCommunityName,
             ),
           ),
         );
@@ -2368,7 +2463,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Llamar al repositorio para actualizar el estado
       final nuevoStatus = await _pdePeriodRepository.updatePeriodStatus(
-        communityId: 1,
+        communityId: _currentCommunityId,
         period: _selectedPeriod,
         newStatusCode: nuevoEstado,
       );
@@ -2793,7 +2888,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Card de usuario para Estado 4: En Conciliación
   Widget _buildPDEEnConciliacionUsuarioCard() {
-
     final apiService = ConsumerOfferApiService();
     final userId = widget.myUser?.idUser ?? 0;
 
@@ -2960,68 +3054,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Tarjetas de precios de referencia para el gestor comunitario (admin)
   Widget _buildPriceCardsAdmin() {
-    final prices = [
-      {'label': 'Precio unitario de bolsa (MC)', 'value': FakeDataPhase2.mc},
-      {'label': 'Costo unitario de venta (CUV)', 'value': FakeDataPhase2.cuv},
-      {'label': 'Costo de comercialización', 'value': FakeDataPhase2.costoComercializacion},
-      {'label': 'Precio de transacción P2P', 'value': FakeDataPhase2.precioP2P},
-    ];
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: EdgeInsets.only(bottom: AppTokens.space12),
-            child: Text(
-              "Precios de referencia",
-              style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: AppTokens.fontWeightSemiBold,
-              ),
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.all(AppTokens.space16),
-            decoration: BoxDecoration(
-              color: context.colors.surface,
-              borderRadius: AppTokens.borderRadiusLarge,
-              border: Border.all(
-                color: context.colors.outline.withValues(alpha: 0.1),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              children: prices.asMap().entries.map((entry) {
-                final i = entry.key;
-                final price = entry.value;
-                return Column(children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        price['label'] as String,
-                        style: context.textStyles.bodyMedium?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                      ),
-                      Text(
-                        '${Formatters.formatCurrency(price['value'] as double, decimals: 0)} COP/kWh',
-                        style: context.textStyles.bodyMedium?.copyWith(
-                          fontWeight: AppTokens.fontWeightBold,
-                          color: context.colors.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (i < prices.length - 1)
-                    Divider(height: AppTokens.space24, color: context.colors.outline.withValues(alpha: 0.1)),
-                ]);
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
+    return PriceReferenceCards(
+      prices: _homeController.priceReferences,
+      isLoading: _homeController.isLoadingPriceReferences,
+      error: _homeController.priceReferencesError,
+      onRetry: _loadPriceReferences,
     );
   }
 
@@ -3090,7 +3127,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       backgroundColor: Colors.transparent,
       title: Container(
-        margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
+        margin:
+            const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
         child: Row(
           children: [
             // Avatar
@@ -3137,12 +3175,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       actions: [
         // Botón de cambio de vista Admin/Usuario (solo para role 3 - Admin o role 4 - SuperAdmin)
-        if (widget.myUser?.role != null && (widget.myUser!.role == 3 || widget.myUser!.role == 4))
+        if (widget.myUser?.role != null &&
+            (widget.myUser!.role == 3 || widget.myUser!.role == 4))
           Container(
             width: 45.0,
             height: 45.0,
             decoration: BoxDecoration(
-              color: _isAdminView ? AppTokens.primaryColor : AppTokens.primaryColor,
+              color: _isAdminView
+                  ? AppTokens.primaryColor
+                  : AppTokens.primaryColor,
               border: Border.all(width: 2.0, color: Colors.white),
               borderRadius: BorderRadius.circular(25.0),
             ),
@@ -3158,9 +3199,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() {
                   _isAdminView = !_isAdminView;
                 });
-                context.showInfoSnackbar(
-                  _isAdminView ? 'Vista: Administrador Comunitario' : 'Vista: Usuario'
-                );
+                // La vista admin necesita precios del periodo desde SQL; se cargan bajo demanda.
+                _loadPriceReferences();
+                context.showInfoSnackbar(_isAdminView
+                    ? 'Vista: $_currentCommunityName'
+                    : 'Vista: Usuario');
               },
             ),
           ),

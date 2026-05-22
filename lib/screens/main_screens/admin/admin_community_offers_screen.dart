@@ -8,6 +8,7 @@ import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/repositories/impl/consumer_offer_repository_api.dart';
 
 enum SortType { price, pde }
+
 enum SortOrder { asc, desc }
 
 /// Pantalla de gestión de ofertas comunitarias para administradores
@@ -18,13 +19,23 @@ enum SortOrder { asc, desc }
 /// - Opción para cerrar el periodo
 class AdminCommunityOffersScreen extends StatefulWidget {
   final String period;
-  const AdminCommunityOffersScreen({ super.key, required this.period });
+  final int communityId;
+  final String communityName;
+
+  const AdminCommunityOffersScreen({
+    super.key,
+    required this.period,
+    this.communityId = 1,
+    this.communityName = 'Comunidad',
+  });
 
   @override
-  State<AdminCommunityOffersScreen> createState() => _AdminCommunityOffersScreenState();
+  State<AdminCommunityOffersScreen> createState() =>
+      _AdminCommunityOffersScreenState();
 }
 
-class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen> {
+class _AdminCommunityOffersScreenState
+    extends State<AdminCommunityOffersScreen> {
   bool _isLoading = false;
   final _repository = ConsumerOfferRepositoryApi();
 
@@ -51,10 +62,11 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
     setState(() => _isLoading = true);
 
     try {
-      AppLogger.debug('Cargando ofertas para periodo: ${widget.period}', tag: 'AdminOffers');
+      AppLogger.debug('Cargando ofertas para periodo: ${widget.period}',
+          tag: 'AdminOffers');
 
       final offers = await _repository.getCommunityPeriodOffers(
-        communityId: 1, // UAO community
+        communityId: widget.communityId,
         period: widget.period,
       );
 
@@ -169,7 +181,8 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
 
                   // Lista de ofertas por miembro
                   SliverPadding(
-                    padding: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: AppTokens.space16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
@@ -183,7 +196,8 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
 
                   // Espaciado inferior para el FAB
                   SliverToBoxAdapter(
-                    child: SizedBox(height: AppTokens.space64 + AppTokens.space16),
+                    child:
+                        SizedBox(height: AppTokens.space64 + AppTokens.space16),
                   ),
                 ],
               ),
@@ -222,10 +236,11 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
         onPressed: () => Navigator.pop(context),
       ),
       title: Container(
-        margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
-        child:  const Text(
-          'Ofertas Comunitarias',
-          style: TextStyle(
+        margin:
+            const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
+        child: Text(
+          'Ofertas ${widget.communityName}',
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -604,7 +619,8 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
   Widget _buildMemberOffersCard(ConsumerOffer offer) {
     // Determinar color basado en ROL del usuario
     final isProsumidor = offer.buyerType == 'Prosumidor';
-    final roleColor = isProsumidor ? AppTokens.energyGreen : AppTokens.primaryColor;
+    final roleColor =
+        isProsumidor ? AppTokens.energyGreen : AppTokens.primaryColor;
 
     // Información del estado de la oferta
     final statusInfo = _getStatusInfo(offer.status.index);
@@ -647,7 +663,9 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
                       Row(
                         children: [
                           Icon(
-                            isProsumidor ? Icons.solar_power : Icons.electric_bolt,
+                            isProsumidor
+                                ? Icons.solar_power
+                                : Icons.electric_bolt,
                             size: 14,
                             color: roleColor,
                           ),
@@ -855,8 +873,10 @@ class _AdminCommunityOffersScreenState extends State<AdminCommunityOffersScreen>
               ),
             ),
             SizedBox(height: AppTokens.space8),
-            Text('• $_membersWithOffers de $_totalMembers miembros participaron'),
-            Text('• Total: ${Formatters.formatEnergy(_totalEnergyOffered)} ofertados'),
+            Text(
+                '• $_membersWithOffers de $_totalMembers miembros participaron'),
+            Text(
+                '• Total: ${Formatters.formatEnergy(_totalEnergyOffered)} ofertados'),
             Text('• $_membersWithOffers ofertas en total (1 por miembro)'),
           ],
         ),
