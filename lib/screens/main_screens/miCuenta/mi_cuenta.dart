@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/screens/main_screens/miCuenta/cambiarClave.dart';
+import 'package:be_energy/screens/auth/community_selection_screen.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/routes.dart';
+import '../../../models/community_models.dart';
 import '../../../models/my_user.dart';
 import '../../../data/database_Helper.dart';
+import '../../../services/community_service.dart';
+import '../../../services/community_theme_storage.dart';
 import '../community/communities_admin_screen.dart';
 
 class MicuentaScreen extends StatefulWidget {
@@ -17,17 +21,73 @@ class MicuentaScreen extends StatefulWidget {
 
 class _MicuentaScreenState extends State<MicuentaScreen> {
   Metodos metodos = Metodos();
+  final CommunityService _communityService = CommunityService();
+  late Future<List<Community>> _communitiesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _communitiesFuture = _communityService.getMyCommunities();
+  }
+
+  MyUser _applyCommunityToUser(Community community) {
+    return MyUser(
+      idUser: widget.myUser.idUser,
+      nombre: widget.myUser.nombre,
+      lastname: widget.myUser.lastname,
+      telefono: widget.myUser.telefono,
+      correo: widget.myUser.correo,
+      clave: widget.myUser.clave,
+      energia: widget.myUser.energia,
+      dinero: widget.myUser.dinero,
+      idCiudad: widget.myUser.idCiudad,
+      role: community.role ?? widget.myUser.role,
+      roleName: community.roleName ?? widget.myUser.roleName,
+      primaryColor: community.primaryColor ?? widget.myUser.primaryColor,
+      secondColor: community.secondColor ?? widget.myUser.secondColor,
+      urlImg: community.urlImg ?? widget.myUser.urlImg,
+      communityId: community.id,
+      communityName: community.name,
+    );
+  }
+
+  Future<void> _saveSelectedCommunity(
+      BuildContext context, Community community) async {
+    final selectedUser = _applyCommunityToUser(community);
+    final dbHelper = DatabaseHelper();
+    await dbHelper.addUser(selectedUser);
+
+    final primaryColor =
+        selectedUser.primaryColor ?? CommunityThemeStorage.defaultPrimaryColor;
+    final secondColor =
+        selectedUser.secondColor ?? CommunityThemeStorage.defaultSecondColor;
+    final urlImg = selectedUser.urlImg ?? CommunityThemeStorage.defaultUrlImg;
+
+    AppTokens.updateThemeColors(
+      primary: Color(CommunityThemeStorage.parseColorString(primaryColor)),
+      secondary: Color(CommunityThemeStorage.parseColorString(secondColor)),
+      imageUrl: urlImg,
+    );
+
+    if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => NavPages(myUser: selectedUser)),
+      (Route<dynamic> route) => false,
+    );
+  }
+
   IconButton _leading(BuildContext context, double width) {
     return IconButton(
-      icon: Icon(
-        Icons.logout_rounded,
-        color: Colors.white, size: 22,
-      ),
-      tooltip: "Cerrar Sesión",
-      onPressed: () async {
-        _showLogoutDialog(context, width);
-      }
-    );
+        icon: Icon(
+          Icons.logout_rounded,
+          color: Colors.white,
+          size: 22,
+        ),
+        tooltip: "Cerrar Sesión",
+        onPressed: () async {
+          _showLogoutDialog(context, width);
+        });
   }
 
   void _showLogoutDialog(BuildContext context, double width) {
@@ -103,7 +163,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context, false),
                       style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppTokens.space16),
                         side: BorderSide(
                           color: context.colors.outline.withValues(alpha: 0.3),
                           width: 1.5,
@@ -116,7 +177,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                         "Cancelar",
                         style: context.textStyles.bodyLarge?.copyWith(
                           fontWeight: AppTokens.fontWeightSemiBold,
-                          color: context.colors.onSurface.withValues(alpha: 0.7),
+                          color:
+                              context.colors.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -142,15 +204,16 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                         // Navegar a la pantalla de inicio
                         if (!context.mounted) return;
                         Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (context) => const Beenergy()),
-                          (Route<dynamic> route) => false
-                        );
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Beenergy()),
+                            (Route<dynamic> route) => false);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTokens.primaryColor,
                         foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
+                        padding:
+                            EdgeInsets.symmetric(vertical: AppTokens.space16),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -173,8 +236,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       ),
     );
   }
-  
-  Widget _contenPrincipalCard(){
+
+  Widget _contenPrincipalCard() {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: AppTokens.space16,
@@ -241,7 +304,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
     );
   }
 
-  Widget _sectionTitle(){
+  Widget _sectionTitle() {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: AppTokens.space16,
@@ -255,9 +318,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       ),
     );
   }
-  
 
-  Widget _optionButton(String title, IconData icon, int action){
+  Widget _optionButton(String title, IconData icon, int action) {
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: AppTokens.space16,
@@ -268,27 +330,34 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           switch (action) {
             case 1:
               context.push(EditarPerfilScreen(myUser: widget.myUser));
-            break;
+              break;
             case 2:
               context.push(CambiarClavePerfilScreen(myUser: widget.myUser));
-            break;
+              break;
             case 3:
-              context.push(CentroNotificacionesPerfilScreen(myUser: widget.myUser));
-            break;
+              context.push(
+                  CentroNotificacionesPerfilScreen(myUser: widget.myUser));
+              break;
             case 4:
               context.push(TutorialScreen(myUser: widget.myUser));
-            break;
+              break;
             case 5:
               context.push(AprendeScreen(myUser: widget.myUser));
-            break;
+              break;
             case 6:
               context.push(TutorialScreen(myUser: widget.myUser));
-            break;
+              break;
             case 7:
               context.push(CommunitiesAdminScreen(myUser: widget.myUser));
-            break;
+              break;
+            case 8:
+              context.push(CommunitySelectionScreen(
+                onCommunitySelected: (community) =>
+                    _saveSelectedCommunity(context, community),
+              ));
+              break;
             default:
-            break;
+              break;
           }
         },
         borderRadius: AppTokens.borderRadiusMedium,
@@ -315,7 +384,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                     Container(
                       padding: EdgeInsets.all(AppTokens.space8),
                       decoration: BoxDecoration(
-                        color: context.colors.primaryContainer.withValues(alpha: 0.3),
+                        color: context.colors.primaryContainer
+                            .withValues(alpha: 0.3),
                         borderRadius: AppTokens.borderRadiusSmall,
                       ),
                       child: Icon(
@@ -349,8 +419,27 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       ),
     );
   }
-  
-  Widget _cartaPrincipal(){
+
+  Widget _changeCommunityOption() {
+    return FutureBuilder<List<Community>>(
+      future: _communitiesFuture,
+      builder: (context, snapshot) {
+        final communities = snapshot.data ?? [];
+
+        if (communities.length <= 1) {
+          return const SizedBox.shrink();
+        }
+
+        return _optionButton(
+          "Cambiar Comunidad",
+          Icons.swap_horiz_rounded,
+          8,
+        );
+      },
+    );
+  }
+
+  Widget _cartaPrincipal() {
     return Container(
       width: MediaQuery.of(context).size.width,
       decoration: BoxDecoration(
@@ -367,8 +456,8 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       child: _contenPrincipalCard(),
     );
   }
-  
-  Widget _body(){
+
+  Widget _body() {
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -376,11 +465,13 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           SizedBox(height: AppTokens.space24),
           _sectionTitle(),
           _optionButton("Editar Perfil", Icons.person_outline, 1),
+          _changeCommunityOption(),
           _optionButton("Cambiar Clave", Icons.lock_outline, 2),
           _optionButton("Notificaciones", Icons.notifications_outlined, 3),
           _optionButton("Tutorial", Icons.help_outline, 4),
           _optionButton("Aprende sobre DERs", Icons.school_outlined, 5),
-          _optionButton("Política De Privacidad", Icons.privacy_tip_outlined, 6),
+          _optionButton(
+              "Política De Privacidad", Icons.privacy_tip_outlined, 6),
           // Opción de Manejo de Comunidades - solo para SuperAdmin (rol 4)
           if (widget.myUser.role == 4)
             _optionButton("Manejo de Comunidades", Icons.apartment_rounded, 7),
@@ -389,13 +480,9 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.colors.surface,
-      body: _body()
-    );
+    return Scaffold(backgroundColor: context.colors.surface, body: _body());
   }
 }
-
-

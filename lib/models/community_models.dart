@@ -8,6 +8,10 @@ class Community {
   final String? urlImg;
   final String? primaryColor;
   final String? secondColor;
+  final int? role;
+  final String? roleName;
+  final double? pdeShare;
+  final double? installedCapacity;
 
   Community({
     required this.id,
@@ -19,19 +23,29 @@ class Community {
     this.urlImg,
     this.primaryColor,
     this.secondColor,
+    this.role,
+    this.roleName,
+    this.pdeShare,
+    this.installedCapacity,
   });
 
   factory Community.fromJson(Map<String, dynamic> json) {
     return Community(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      location: json['location'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Comunidad',
+      description: json['description'] as String? ?? '',
+      location: json['location'] as String? ?? '',
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
       topologic: json['topologic'] as int?,
       urlImg: json['url_img'] as String?,
       primaryColor: json['primary_color'] as String?,
       secondColor: json['second_color'] as String?,
+      role: json['role'] as int?,
+      roleName: json['role_name'] as String?,
+      pdeShare: (json['pde_share'] as num?)?.toDouble(),
+      installedCapacity: (json['installed_capacity'] as num?)?.toDouble(),
     );
   }
 
@@ -46,6 +60,10 @@ class Community {
       'url_img': urlImg,
       'primary_color': primaryColor,
       'second_color': secondColor,
+      'role': role,
+      'role_name': roleName,
+      'pde_share': pdeShare,
+      'installed_capacity': installedCapacity,
     };
   }
 }
@@ -182,7 +200,8 @@ class CommunityStats {
       totalMembers: json['total_members'] as int,
       totalProsumers: json['total_prosumers'] as int,
       totalConsumers: json['total_consumers'] as int,
-      totalInstalledCapacity: (json['total_installed_capacity'] as num).toDouble(),
+      totalInstalledCapacity:
+          (json['total_installed_capacity'] as num).toDouble(),
       totalEnergyGenerated: (json['total_energy_generated'] as num).toDouble(),
       totalEnergyImported: (json['total_energy_imported'] as num).toDouble(),
       totalEnergyConsumed: (json['total_energy_consumed'] as num).toDouble(),

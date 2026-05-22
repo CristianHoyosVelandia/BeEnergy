@@ -9,12 +9,12 @@ import '../../core/utils/logger.dart';
 /// Pantalla de selección de comunidad
 /// Se muestra cuando el usuario pertenece a múltiples comunidades
 class CommunitySelectionScreen extends StatefulWidget {
-  final AuthUser user;
-  final Function(Community) onCommunitySelected;
+  final AuthUser? user;
+  final Future<void> Function(Community) onCommunitySelected;
 
   const CommunitySelectionScreen({
     Key? key,
-    required this.user,
+    this.user,
     required this.onCommunitySelected,
   }) : super(key: key);
 
@@ -28,6 +28,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
   late CommunityThemeStorage _themeStorage;
   List<Community> communities = [];
   bool isLoading = true;
+  int? selectingCommunityId;
   String? errorMessage;
 
   @override
@@ -45,21 +46,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
         errorMessage = null;
       });
 
-      final communityIds = widget.user.communities ?? [];
-
-      // Cargar datos de cada comunidad
-      final loadedCommunities = <Community>[];
-      for (int id in communityIds) {
-        try {
-          final data = await _communityService.getCommunityData(id);
-          loadedCommunities.add(Community.fromJson({...data, 'id': id}));
-        } catch (e) {
-          AppLogger.error(
-            'Error cargando comunidad $id',
-            error: e.toString(),
-          );
-        }
-      }
+      final loadedCommunities = await _communityService.getMyCommunities();
 
       setState(() {
         communities = loadedCommunities;
@@ -76,21 +63,35 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
 
   Future<void> _selectCommunity(Community community) async {
     try {
+      setState(() {
+        selectingCommunityId = community.id;
+      });
+
+      final selectedCommunity =
+          await _communityService.selectCommunity(community.id);
+
       // Guardar datos de tema en storage
       await _themeStorage.saveCommunityTheme(
-        primaryColor:
-            community.primaryColor ?? CommunityThemeStorage.defaultPrimaryColor,
-        secondColor:
-            community.secondColor ?? CommunityThemeStorage.defaultSecondColor,
-        urlImg: community.urlImg ?? CommunityThemeStorage.defaultUrlImg,
-        topology:
-            community.topologic ?? CommunityThemeStorage.defaultTopology,
-        communityId: community.id,
+        primaryColor: selectedCommunity.primaryColor ??
+            CommunityThemeStorage.defaultPrimaryColor,
+        secondColor: selectedCommunity.secondColor ??
+            CommunityThemeStorage.defaultSecondColor,
+        urlImg: selectedCommunity.urlImg ?? CommunityThemeStorage.defaultUrlImg,
+        topology: selectedCommunity.topologic ??
+            CommunityThemeStorage.defaultTopology,
+        communityId: selectedCommunity.id,
       );
 
       // Callback al parent
-      widget.onCommunitySelected(community);
+      await widget.onCommunitySelected(selectedCommunity);
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          selectingCommunityId = null;
+        });
+      }
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error seleccionando comunidad: $e'),
@@ -124,9 +125,10 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
                         Text(
                           errorMessage!,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: AppTokens.error,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: AppTokens.error,
+                                  ),
                         ),
                         SizedBox(height: AppTokens.space24),
                         ElevatedButton(
@@ -171,6 +173,8 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
                             final community = communities[index];
                             return _CommunityCard(
                               community: community,
+                              isLoading: selectingCommunityId == community.id,
+                              isDisabled: selectingCommunityId != null,
                               onSelected: () => _selectCommunity(community),
                             );
                           },
@@ -186,11 +190,15 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
 /// Widget de tarjeta para cada comunidad
 class _CommunityCard extends StatelessWidget {
   final Community community;
+  final bool isLoading;
+  final bool isDisabled;
   final VoidCallback onSelected;
 
   const _CommunityCard({
     Key? key,
     required this.community,
+    required this.isLoading,
+    required this.isDisabled,
     required this.onSelected,
   }) : super(key: key);
 
@@ -199,7 +207,7 @@ class _CommunityCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.only(bottom: AppTokens.space12),
       child: InkWell(
-        onTap: onSelected,
+        onTap: isDisabled ? null : onSelected,
         child: Padding(
           padding: EdgeInsets.all(AppTokens.space16),
           child: Column(
@@ -246,9 +254,10 @@ class _CommunityCard extends StatelessWidget {
                       children: [
                         Text(
                           community.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -279,7 +288,7 @@ class _CommunityCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: onSelected,
+                  onPressed: isDisabled ? null : onSelected,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(
                       CommunityThemeStorage.parseColorString(
@@ -288,7 +297,21 @@ class _CommunityCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: const Text('Seleccionar'),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Seleccionar',
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
             ],

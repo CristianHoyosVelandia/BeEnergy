@@ -14,12 +14,11 @@ class Beenergy extends StatefulWidget {
 }
 
 class _BeenergyState extends State<Beenergy> {
-
   //Objetos de clases
-  late  Future<MyUser> myUser;
+  late Future<MyUser> myUser;
   BlocBeenergy blockBeEnergy = BlocBeenergy();
-  
-  //se inicializa el estado y junto a el los futuros, 
+
+  //se inicializa el estado y junto a el los futuros,
   //el futuro de usuario me trae los datos de ser el caso, de un usuario que ya se encuentre logueado dentro de la app
   @override
   void initState() {
@@ -27,14 +26,14 @@ class _BeenergyState extends State<Beenergy> {
     myUser = blockBeEnergy.getUserFromDB();
     // _checkVersion();
   }
+
   @override
-  void dispose(){
+  void dispose() {
     super.dispose();
   }
 
-
   //futuro de la clase con el fin de conocer si existe un usuario logueado en la base de datos.
-  Widget futureUser(){
+  Widget futureUser() {
     return FutureBuilder<MyUser>(
       future: myUser,
       // ignore: missing_return
@@ -47,29 +46,25 @@ class _BeenergyState extends State<Beenergy> {
           case ConnectionState.active:
             return const MyProgressIndicator();
           case ConnectionState.done:
-            //una vez se consumen ambos futuros, se procede a preguntar si hay un usuario logueado, 
+            //una vez se consumen ambos futuros, se procede a preguntar si hay un usuario logueado,
             //de ser el caso cargamos los datos en el menu de codigo de usuario, codigo ciudad y nomCiudad y redirigimos.
             if (snapshotUser.hasData) {
-
               // AppLogger.debug('User snapshot: ${snapshotUser.data.toMap()}', tag: 'MainScreen');
 
-              if (snapshotUser.data.idUser != 0) {
-                return NavPages( myUser: snapshotUser.data);
-                
+              if (snapshotUser.data.idUser != 0 &&
+                  snapshotUser.data.communityId != null) {
+                return NavPages(myUser: snapshotUser.data);
               } else {
                 //de no encontrar un usuario logueado, procedemos a cargar pintar la pantall.
                 return const LoginScreen();
               }
-            }
-
-            else {
+            } else {
               return const LoginScreen();
-            } 
+            }
         }
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {

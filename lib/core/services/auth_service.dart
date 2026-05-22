@@ -4,9 +4,8 @@ import '../api/api_client.dart';
 import '../api/api_exceptions.dart';
 import '../constants/api_endpoints.dart';
 import '../utils/logger.dart';
-import '../../services/community_theme_storage.dart';
-import 'package:flutter/material.dart' show Color;
 import '../theme/app_tokens.dart';
+import '../../services/community_theme_storage.dart';
 
 /// Servicio de autenticación para la aplicación BeEnergy
 /// Integrado con Volt Platform Services API
@@ -59,7 +58,8 @@ class AuthService {
           _apiClient.setAuthToken(userData['token']);
           await _saveToken(userData['token']);
 
-          // Guardar datos de tema en storage
+          // Persistir referencia de comunidad, pero no reconstruir el tema aquí.
+          // El flujo de login decide si debe abrir selección de comunidades primero.
           await _saveThemeDataFromLogin(userData);
         }
 
@@ -114,8 +114,8 @@ class AuthService {
           CommunityThemeStorage.defaultSecondColor;
       final urlImg =
           userData['url_img'] as String? ?? CommunityThemeStorage.defaultUrlImg;
-      final topology =
-          userData['topologic'] as int? ?? CommunityThemeStorage.defaultTopology;
+      final topology = userData['topologic'] as int? ??
+          CommunityThemeStorage.defaultTopology;
 
       // Si hay comunidades, guardar la primera
       int? communityId;
@@ -132,13 +132,6 @@ class AuthService {
         communityId: communityId ?? 0,
       );
 
-      // Actualizar AppTokens en tiempo real
-      AppTokens.updateThemeColors(
-        primary: Color(CommunityThemeStorage.parseColorString(primaryColor)),
-        secondary: Color(CommunityThemeStorage.parseColorString(secondColor)),
-        imageUrl: urlImg,
-      );
-
       AppLogger.debug(
         'Theme data saved: primary=$primaryColor, second=$secondColor',
         tag: _tag,
@@ -151,7 +144,6 @@ class AuthService {
       );
     }
   }
-
 
   /// Registra un nuevo usuario
   ///
@@ -197,7 +189,8 @@ class AuthService {
 
         return {
           'success': true,
-          'message': responseData['message'] ?? 'Usuario registrado exitosamente',
+          'message':
+              responseData['message'] ?? 'Usuario registrado exitosamente',
           'data': responseData['data'],
           'token': responseData['token'],
         };
