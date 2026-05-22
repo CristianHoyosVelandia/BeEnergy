@@ -66,14 +66,14 @@ class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 2.5,
             ),

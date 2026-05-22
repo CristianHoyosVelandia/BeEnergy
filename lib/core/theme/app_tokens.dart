@@ -7,9 +7,34 @@ class AppTokens {
 
   // ==================== COLORES ====================
 
+  /// Colores por defecto
+  static const Color defaultPrimaryColor = Color(0xFF891427);
+  static const Color defaultSecondaryColor = Color(0xFF0070C0);
+  static const String defaultUrlImg = '';
+
   /// Paleta de colores primarios - Energía y sostenibilidad
-  static const Color secondaryColor = Color(0xFF0070C0);
-  static const Color primaryColor = Color(0xFF891427);
+  static Color secondaryColor = defaultSecondaryColor;
+  static Color primaryColor = defaultPrimaryColor;
+  static String urlImg = defaultUrlImg;
+  static final ValueNotifier<int> themeVersion = ValueNotifier<int>(0);
+
+  static void updateThemeColors({
+    required Color primary,
+    required Color secondary,
+    required String imageUrl,
+  }) {
+    primaryColor = primary;
+    secondaryColor = secondary;
+    urlImg = imageUrl;
+    themeVersion.value++;
+  }
+
+  static void resetToDefaultColors() {
+    primaryColor = defaultPrimaryColor;
+    secondaryColor = defaultSecondaryColor;
+    urlImg = defaultUrlImg;
+    themeVersion.value++;
+  }
   static const Color primaryPurple = Color(0xFF7E57C2);
   static const Color primaryYellow = Color(0xFFFFD966);
 
@@ -242,10 +267,10 @@ class AppTokens {
   // ==================== GRADIENTES ====================
 
   /// Gradientes predefinidos
-  static LinearGradient get gradientPrimary => const LinearGradient(
+  static LinearGradient get gradientPrimary => LinearGradient(
         colors: [primaryColor, black],
-        begin: AlignmentDirectional(0.94, -1),
-        end: AlignmentDirectional(-0.94, 1),
+        begin: const AlignmentDirectional(0.94, -1),
+        end: const AlignmentDirectional(-0.94, 1),
       );
 
   static LinearGradient get gradientEnergy => const LinearGradient(

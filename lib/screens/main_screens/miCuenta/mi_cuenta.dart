@@ -6,6 +6,7 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/routes.dart';
 import '../../../models/my_user.dart';
 import '../../../data/database_Helper.dart';
+import '../community/communities_admin_screen.dart';
 
 class MicuentaScreen extends StatefulWidget {
   final MyUser myUser;
@@ -136,6 +137,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
                         // Eliminar usuario de la base de datos
                         DatabaseHelper dbHelper = DatabaseHelper();
                         dbHelper.deleteUserLocal(widget.myUser.idUser);
+                        AppTokens.resetToDefaultColors();
 
                         // Navegar a la pantalla de inicio
                         if (!context.mounted) return;
@@ -282,6 +284,9 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
             case 6:
               context.push(TutorialScreen(myUser: widget.myUser));
             break;
+            case 7:
+              context.push(CommunitiesAdminScreen(myUser: widget.myUser));
+            break;
             default:
             break;
           }
@@ -376,6 +381,9 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           _optionButton("Tutorial", Icons.help_outline, 4),
           _optionButton("Aprende sobre DERs", Icons.school_outlined, 5),
           _optionButton("Política De Privacidad", Icons.privacy_tip_outlined, 6),
+          // Opción de Manejo de Comunidades - solo para SuperAdmin (rol 4)
+          if (widget.myUser.role == 4)
+            _optionButton("Manejo de Comunidades", Icons.apartment_rounded, 7),
           SizedBox(height: AppTokens.space32),
         ],
       ),

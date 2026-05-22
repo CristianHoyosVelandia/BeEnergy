@@ -678,7 +678,7 @@ class _OfferDetailAcceptanceScreenState extends State<OfferDetailAcceptanceScree
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: AppTokens.primaryColor),
+          Icon(Icons.error, color: AppTokens.primaryColor),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(

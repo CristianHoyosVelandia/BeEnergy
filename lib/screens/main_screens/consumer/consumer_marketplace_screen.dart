@@ -323,11 +323,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.help_outline, color: AppTokens.primaryColor),
-            SizedBox(width: 12),
-            Text('¿Qué son los PDE?'),
+            const SizedBox(width: 12),
+            const Text('¿Qué son los PDE?'),
           ],
         ),
         content: SingleChildScrollView(
@@ -393,7 +393,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   Widget _buildCreateOfferTab() {
     // Mostrar loading mientras se verifica
     if (_isCheckingOffer) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),
@@ -536,11 +536,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
             Icon(Icons.info_outline, color: AppTokens.primaryColor),
-            SizedBox(width: 12),
-            Text('¿Cómo funciona?'),
+            const SizedBox(width: 12),
+            const Text('¿Cómo funciona?'),
           ],
         ),
         content: SingleChildScrollView(
@@ -798,7 +798,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
 
   Widget _buildMyOffersTab() {
     if (_isLoadingOffers) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),

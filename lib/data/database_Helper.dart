@@ -22,7 +22,7 @@ class DatabaseHelper{
   initDB() async {
     final databasesPath = await getDatabasesPath();
     String path = join(databasesPath, "beEnergy.db");
-    var db = await openDatabase(path, version: 3, onCreate: onCreate, onUpgrade: onUpgrade);
+    var db = await openDatabase(path, version: 4, onCreate: onCreate, onUpgrade: onUpgrade);
     // var version = await db.getVersion();
     // print("-------------------> Database version: $version");
     return db;
@@ -31,8 +31,8 @@ class DatabaseHelper{
   //Crea la base de datos del usuario
   void onCreate(Database db, int version) async {
     // se crean las tablas
-    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn(idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT);');
-    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios    (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT);');
+    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn(idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT, primaryColor TEXT, secondColor TEXT, urlImg TEXT);');
+    await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios    (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT, primaryColor TEXT, secondColor TEXT, urlImg TEXT);');
   }
 
   //Actualiza la base de datos interna del usuario
@@ -43,8 +43,8 @@ class DatabaseHelper{
       await db.execute('DROP TABLE IF EXISTS $tbUsuarioLogIn');
       await db.execute('DROP TABLE IF EXISTS $tbUsuarios');
       //CREATEE
-      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT);');
-      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT);');
+      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarioLogIn (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT, primaryColor TEXT, secondColor TEXT, urlImg TEXT);');
+      await db.execute('CREATE TABLE IF NOT EXISTS $tbUsuarios (idUser INTEGER PRIMARY KEY, nombre TEXT, lastname TEXT, telefono TEXT, correo TEXT, clave TEXT, energia TEXT, dinero TEXT, idCiudad INTEGER, role INTEGER, roleName TEXT, primaryColor TEXT, secondColor TEXT, urlImg TEXT);');
     }
   }
 
@@ -68,6 +68,9 @@ class DatabaseHelper{
       idCiudad: 0,
       role: null,
       roleName: null,
+      primaryColor: null,
+      secondColor: null,
+      urlImg: null,
     );
 
     if(maps.isNotEmpty){
@@ -84,6 +87,9 @@ class DatabaseHelper{
           idCiudad  : maps[i]['idCiudad'],
           role      : maps[i]['role'],
           roleName  : maps[i]['roleName'],
+          primaryColor: maps[i]['primaryColor'],
+          secondColor: maps[i]['secondColor'],
+          urlImg: maps[i]['urlImg'],
         );
       })[0];
     }else {
@@ -96,7 +102,7 @@ class DatabaseHelper{
     var dbConnection = await db;
     int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarioLogIn'));
     if(nUsers! < 1){
-      String query = 'INSERT INTO $tbUsuarioLogIn (idUser, nombre, lastname, telefono, correo, clave, energia, dinero, idCiudad, role, roleName) VALUES(\'${usuarioLocal.idUser}\', \'${usuarioLocal.nombre}\', \'${usuarioLocal.lastname}\', \'${usuarioLocal.telefono}\', \'${usuarioLocal.correo}\', \'${usuarioLocal.clave}\', \'${usuarioLocal.energia}\',\'${usuarioLocal.dinero}\', \'${usuarioLocal.idCiudad}\', \'${usuarioLocal.role}\', \'${usuarioLocal.roleName}\')';
+      String query = 'INSERT INTO $tbUsuarioLogIn (idUser, nombre, lastname, telefono, correo, clave, energia, dinero, idCiudad, role, roleName, primaryColor, secondColor, urlImg) VALUES(\'${usuarioLocal.idUser}\', \'${usuarioLocal.nombre}\', \'${usuarioLocal.lastname}\', \'${usuarioLocal.telefono}\', \'${usuarioLocal.correo}\', \'${usuarioLocal.clave}\', \'${usuarioLocal.energia}\',\'${usuarioLocal.dinero}\', \'${usuarioLocal.idCiudad}\', \'${usuarioLocal.role}\', \'${usuarioLocal.roleName}\', \'${usuarioLocal.primaryColor}\', \'${usuarioLocal.secondColor}\', \'${usuarioLocal.urlImg}\')';
       await dbConnection.transaction((transaction) async {
         return await transaction.rawInsert(query);
       });
@@ -106,36 +112,14 @@ class DatabaseHelper{
   // Agrega el usuario para mantenerlo Log
   Future<void> addUser(MyUser usuarioLocal) async {
     final Database? dbConnection = await db;
-    int? nUsers = Sqflite.firstIntValue(await dbConnection!.rawQuery('SELECT COUNT(*) FROM $tbUsuarioLogIn'));
-    final user = await getUser();
-    // final users = await getUsers();
-    // print("--> ${users.usuarios.toMap()}");
-    // print("---> ${user.toMap()}");
-    // print("---> ${usuarioLocal.toMap()}");
-    // print("---> $nUsers");
-    if(nUsers! < 1){
-      await dbConnection.insert(
+    await dbConnection!.transaction((transaction) async {
+      await transaction.delete(tbUsuarioLogIn);
+      await transaction.insert(
         tbUsuarioLogIn,
         usuarioLocal.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
-    } 
-    if (nUsers == 1) {
-      if(user.idUser == 0) {
-        // print("-----> Borrando registros");
-        await dbConnection.delete(
-          tbUsuarioLogIn,
-          where: "idUser = 0"
-        );
-
-        // print("-----> Creando nuevo registros");
-        await dbConnection.insert(
-          tbUsuarioLogIn,
-          usuarioLocal.toMap(),
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
-      }
-    }
+    });
   }
 
   // Acualiza los datos del usuario
@@ -184,6 +168,9 @@ class DatabaseHelper{
       idCiudad: 0,
       role: null,
       roleName: null,
+      primaryColor: null,
+      secondColor: null,
+      urlImg: null,
     );
 
     if(maps.isNotEmpty){
@@ -204,6 +191,9 @@ class DatabaseHelper{
           idCiudad  : maps[i]['idCiudad'],
           role      : maps[i]['role'],
           roleName  : maps[i]['roleName'],
+          primaryColor: maps[i]['primaryColor'],
+          secondColor: maps[i]['secondColor'],
+          urlImg: maps[i]['urlImg'],
         );
         usersList.add(usuario);
       }

@@ -32,6 +32,7 @@ class Metodos {
         case 3:
           DatabaseHelper dbHelper = DatabaseHelper();
           dbHelper.deleteUserLocal(1);
+          AppTokens.resetToDefaultColors();
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const Beenergy()),

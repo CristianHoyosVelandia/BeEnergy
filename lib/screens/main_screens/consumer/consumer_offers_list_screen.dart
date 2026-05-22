@@ -80,7 +80,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               foregroundColor: AppTokens.primaryColor,
-              side: const BorderSide(color: AppTokens.primaryColor),
+              side: BorderSide(color: AppTokens.primaryColor),
             ),
             child: const Text('Sí, Cancelar'),
           ),
@@ -147,7 +147,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
               ),
@@ -431,7 +431,7 @@ class _ConsumerOffersListScreenState extends State<ConsumerOffersListScreen> {
                   label: const Text('Cancelar Oferta'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppTokens.primaryColor,
-                    side: const BorderSide(color: AppTokens.primaryColor),
+                    side: BorderSide(color: AppTokens.primaryColor),
                   ),
                 ),
               ),

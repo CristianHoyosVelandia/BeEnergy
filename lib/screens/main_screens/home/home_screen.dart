@@ -3136,8 +3136,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       actions: [
-        // Botón de cambio de vista Admin/Usuario (solo para role 3 - Admin)
-        if (widget.myUser?.role != null && widget.myUser!.role == 3)
+        // Botón de cambio de vista Admin/Usuario (solo para role 3 - Admin o role 4 - SuperAdmin)
+        if (widget.myUser?.role != null && (widget.myUser!.role == 3 || widget.myUser!.role == 4))
           Container(
             width: 45.0,
             height: 45.0,

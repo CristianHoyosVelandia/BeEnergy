@@ -3,7 +3,6 @@ library;
 
 import '../core/api/api_client.dart';
 import '../core/api/api_exceptions.dart';
-import '../core/constants/api_endpoints.dart';
 import '../core/utils/logger.dart';
 
 class CommunityService {
@@ -31,8 +30,8 @@ class CommunityService {
         return data;
       } else {
         throw ApiException(
-          'Error al obtener datos de comunidad',
-          statusCode: response.statusCode,
+          message: 'Error al obtener datos de comunidad',
+          statusCode: response.statusCode ?? 0,
         );
       }
     } on ApiException catch (e) {
@@ -48,20 +47,18 @@ class CommunityService {
         tag: _tag,
         error: e.toString(),
       );
-      throw ApiException('Error inesperado: ${e.toString()}');
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
     }
   }
 
-  /// Obtiene la lista de comunidades del usuario actual
-  /// Retorna lista de comunidades con sus datos
-  Future<List<Map<String, dynamic>>> getUserCommunities() async {
+  /// Obtiene todas las comunidades (solo rol 4)
+  Future<List<Map<String, dynamic>>> getAllCommunities() async {
     try {
-      final response = await _apiClient.get('/community/my-communities');
+      final response = await _apiClient.get('/community');
 
-      AppLogger.debug(
-        'getUserCommunities response: ${response.data}',
-        tag: _tag,
-      );
+      AppLogger.debug('getAllCommunities response: ${response.data}', tag: _tag);
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -74,20 +71,171 @@ class CommunityService {
         return <Map<String, dynamic>>[];
       } else {
         throw ApiException(
-          'Error al obtener comunidades',
-          statusCode: response.statusCode,
+          message: 'Error al obtener comunidades',
+          statusCode: response.statusCode ?? 0,
         );
       }
     } on ApiException catch (e) {
-      AppLogger.error('Error en getUserCommunities', tag: _tag, error: e.message);
+      AppLogger.error('Error en getAllCommunities', tag: _tag, error: e.message);
       rethrow;
     } catch (e) {
       AppLogger.error(
-        'Error inesperado en getUserCommunities',
+        'Error inesperado en getAllCommunities',
         tag: _tag,
         error: e.toString(),
       );
-      throw ApiException('Error inesperado: ${e.toString()}');
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Obtiene una comunidad específica (solo rol 4)
+  Future<Map<String, dynamic>> getCommunityById(int communityId) async {
+    try {
+      final response = await _apiClient.get('/community/$communityId');
+
+      AppLogger.debug('getCommunityById response: ${response.data}', tag: _tag);
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+
+        if (data.containsKey('data')) {
+          return data['data'] as Map<String, dynamic>;
+        }
+
+        return data;
+      } else {
+        throw ApiException(
+          message: 'Error al obtener comunidad',
+          statusCode: response.statusCode ?? 0,
+        );
+      }
+    } on ApiException catch (e) {
+      AppLogger.error('Error en getCommunityById', tag: _tag, error: e.message);
+      rethrow;
+    } catch (e) {
+      AppLogger.error(
+        'Error inesperado en getCommunityById',
+        tag: _tag,
+        error: e.toString(),
+      );
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Crea una nueva comunidad (solo rol 4)
+  Future<Map<String, dynamic>> createCommunity(Map<String, dynamic> communityData) async {
+    try {
+      final response = await _apiClient.post(
+        '/community',
+        data: communityData,
+      );
+
+      AppLogger.debug('createCommunity response: ${response.data}', tag: _tag);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data as Map<String, dynamic>;
+
+        if (data.containsKey('data')) {
+          return data['data'] as Map<String, dynamic>;
+        }
+
+        return data;
+      } else {
+        throw ApiException(
+          message: 'Error al crear comunidad',
+          statusCode: response.statusCode ?? 0,
+        );
+      }
+    } on ApiException catch (e) {
+      AppLogger.error('Error en createCommunity', tag: _tag, error: e.message);
+      rethrow;
+    } catch (e) {
+      AppLogger.error(
+        'Error inesperado en createCommunity',
+        tag: _tag,
+        error: e.toString(),
+      );
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Actualiza una comunidad existente (solo rol 4)
+  Future<Map<String, dynamic>> updateCommunity(
+    int communityId,
+    Map<String, dynamic> communityData,
+  ) async {
+    try {
+      final response = await _apiClient.put(
+        '/community/$communityId',
+        data: communityData,
+      );
+
+      AppLogger.debug('updateCommunity response: ${response.data}', tag: _tag);
+
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+
+        if (data.containsKey('data')) {
+          return data['data'] as Map<String, dynamic>;
+        }
+
+        return data;
+      } else {
+        throw ApiException(
+          message: 'Error al actualizar comunidad',
+          statusCode: response.statusCode ?? 0,
+        );
+      }
+    } on ApiException catch (e) {
+      AppLogger.error('Error en updateCommunity', tag: _tag, error: e.message);
+      rethrow;
+    } catch (e) {
+      AppLogger.error(
+        'Error inesperado en updateCommunity',
+        tag: _tag,
+        error: e.toString(),
+      );
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Elimina una comunidad (solo rol 4)
+  Future<bool> deleteCommunity(int communityId) async {
+    try {
+      final response = await _apiClient.delete('/community/$communityId');
+
+      AppLogger.debug('deleteCommunity response: ${response.data}', tag: _tag);
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw ApiException(
+          message: 'Error al eliminar comunidad',
+          statusCode: response.statusCode ?? 0,
+        );
+      }
+    } on ApiException catch (e) {
+      AppLogger.error('Error en deleteCommunity', tag: _tag, error: e.message);
+      rethrow;
+    } catch (e) {
+      AppLogger.error(
+        'Error inesperado en deleteCommunity',
+        tag: _tag,
+        error: e.toString(),
+      );
+      throw ApiException(
+        message: 'Error inesperado: ${e.toString()}',
+      );
     }
   }
 }
+
+

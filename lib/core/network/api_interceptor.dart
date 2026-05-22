@@ -1,15 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../utils/logger.dart';
 
 /// Interceptor personalizado para manejar requests y responses del API
-/// Agrega headers comunes y maneja errores de forma centralizada
+/// Agrega headers comunes, token Bearer, y maneja errores de forma centralizada
 class ApiInterceptor extends Interceptor {
   static const String _tag = 'API';
+  static const String _tokenKey = 'auth_token';
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     // Agregar headers personalizados de la aplicación
     options.headers['codApp'] = dotenv.env['APP_CODE'] ?? '0';
     options.headers['codVersion'] = dotenv.env['APP_VERSION'] ?? '1.0.0';
@@ -17,6 +19,17 @@ class ApiInterceptor extends Interceptor {
     // Si necesitas agregar código de ciudad por defecto
     if (!options.headers.containsKey('codCiudad')) {
       options.headers['codCiudad'] = dotenv.env['DEFAULT_CITY_CODE'] ?? '4110';
+    }
+
+    // Agregar token Bearer si existe en SharedPreferences
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_tokenKey);
+      if (token != null && token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+    } catch (e) {
+      AppLogger.warning('Error obteniendo token del storage', tag: _tag, error: e.toString());
     }
 
     // AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}', tag: _tag);

@@ -106,7 +106,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
+        builder: (context) => Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
           ),
@@ -198,7 +198,7 @@ class _MyOffersScreenState extends State<MyOffersScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(AppTokens.primaryColor),
         ),

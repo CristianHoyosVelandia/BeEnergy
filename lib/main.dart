@@ -5,6 +5,10 @@ import 'routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/config/data_source_config.dart';
 
+import 'data/database_Helper.dart';
+import 'services/community_theme_storage.dart';
+import 'core/theme/app_tokens.dart';
+
 void main() async {
   // Inicialización de Flutter
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +27,21 @@ void main() async {
   // Inicializar configuración de data source (mocks vs API)
   await DataSourceConfig.initFromEnvironment();
 
+  // Cargar tema dinámico desde la base de datos local
+  try {
+    final dbHelper = DatabaseHelper();
+    final user = await dbHelper.getUser();
+    if (user.idUser != 0 && user.primaryColor != null && user.secondColor != null) {
+      AppTokens.updateThemeColors(
+        primary: Color(CommunityThemeStorage.parseColorString(user.primaryColor!)),
+        secondary: Color(CommunityThemeStorage.parseColorString(user.secondColor!)),
+        imageUrl: user.urlImg ?? '',
+      );
+    }
+  } catch (e) {
+    debugPrint('⚠️ No se pudo cargar el tema dinámico desde la BD: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -31,39 +50,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Be Energy',
+    return ValueListenableBuilder<int>(
+      valueListenable: AppTokens.themeVersion,
+      builder: (context, _, __) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Be Energy',
 
-      // Nuevo tema usando AppTheme
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Respeta la preferencia del sistema
+          // Nuevo tema usando AppTheme
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeMode.system, // Respeta la preferencia del sistema
 
-      // Rutas
-      initialRoute: 'beEnergy',
-      routes: {
-        // Main Route:
-        'beEnergy'        : (context) => const Beenergy(),
-        //others routes
-        'configuration'   : (context) => const ConfiguracionScreen(),
-        'energy'          : (context) => const EnergyScreen(),
-        'historial'       : (context) => const HistorialScreen(),
-        'home'            : (context) => const HomeScreen(),
-        'login'           : (context) => const LoginScreen(),
-        'notificaciones'  : (context) => const NotificacionesScreen(),
-        'register'        : (context) => const RegisterScreen(),
-        'trading'         : (context) => const TradingScreen(),
-        'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
+          // Rutas
+          initialRoute: 'beEnergy',
+          routes: {
+            // Main Route:
+            'beEnergy'        : (context) => const Beenergy(),
+            //others routes
+            'configuration'   : (context) => const ConfiguracionScreen(),
+            'energy'          : (context) => const EnergyScreen(),
+            'historial'       : (context) => const HistorialScreen(),
+            'home'            : (context) => const HomeScreen(),
+            'login'           : (context) => const LoginScreen(),
+            'notificaciones'  : (context) => const NotificacionesScreen(),
+            'register'        : (context) => const RegisterScreen(),
+            'trading'         : (context) => const TradingScreen(),
+            'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
 
-        // Community Routes (nuevas pantallas):
-        'communityManagement' : (context) => const CommunityManagementScreen(),
-        'energyRecords'       : (context) => const EnergyRecordsScreen(),
-        'pdeAllocation'       : (context) => const PDEAllocationScreen(),
-        'p2pMarket'           : (context) => const P2PMarketScreen(),
-        'energyCredits'       : (context) => const EnergyCreditsScreen(),
-        'monthlyBilling'      : (context) => const MonthlyBillingScreen(),
-        'reports'             : (context) => const ReportsScreen(),
+            // Community Routes (nuevas pantallas):
+            'communityManagement' : (context) => const CommunityManagementScreen(),
+            'energyRecords'       : (context) => const EnergyRecordsScreen(),
+            'pdeAllocation'       : (context) => const PDEAllocationScreen(),
+            'p2pMarket'           : (context) => const P2PMarketScreen(),
+            'energyCredits'       : (context) => const EnergyCreditsScreen(),
+            'monthlyBilling'      : (context) => const MonthlyBillingScreen(),
+            'reports'             : (context) => const ReportsScreen(),
+          },
+        );
       },
     );
   }

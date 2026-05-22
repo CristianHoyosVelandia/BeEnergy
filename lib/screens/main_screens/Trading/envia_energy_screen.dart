@@ -229,7 +229,7 @@ class _EEscreenState extends State<EEscreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           errorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 0.25,
             ),

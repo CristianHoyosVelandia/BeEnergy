@@ -157,14 +157,14 @@ class _CambiarClavePerfilScreenState extends State<CambiarClavePerfilScreen> {
                   borderRadius: AppTokens.borderRadiusMedium,
                 ),
                 errorBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
+                  borderSide: BorderSide(
                     color: AppTokens.primaryColor,
                     width: 1.5,
                   ),
                   borderRadius: AppTokens.borderRadiusMedium,
                 ),
                 focusedErrorBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
+                  borderSide: BorderSide(
                     color: AppTokens.primaryColor,
                     width: 2,
                   ),

@@ -262,8 +262,8 @@ class _CardscreenState extends State<Cardscreen> {
                   textAlign: TextAlign.start,
                   style: Metodos.subtitulosInformativosFondoNegro(context),
                 ),
-                const Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(0, 8, 0, 12),
+                Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(0, 8, 0, 12),
                   child: Text(
                     '-\$8.392',
                     textAlign: TextAlign.start,
@@ -292,7 +292,7 @@ class _CardscreenState extends State<Cardscreen> {
                         textAlign: TextAlign.start,
                         style: Metodos.subtitulosInformativosFondoNegro(context)
                       ),
-                      const Icon(
+                      Icon(
                         Icons.trending_up_rounded,
                         color: AppTokens.primaryColor,
                         size: 24,

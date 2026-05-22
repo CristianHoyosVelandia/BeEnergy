@@ -12,6 +12,9 @@ class MyUser {
   final int?    idCiudad;
   final int?    role;
   final String? roleName;
+  final String? primaryColor;
+  final String? secondColor;
+  final String? urlImg;
 
   //Constructor de la clase
   MyUser({
@@ -26,6 +29,9 @@ class MyUser {
     this.idCiudad,
     this.role,
     this.roleName,
+    this.primaryColor,
+    this.secondColor,
+    this.urlImg,
   });
 
   //Conversión a Map
@@ -42,6 +48,9 @@ class MyUser {
       'idCiudad': idCiudad,
       'role': role,
       'roleName': roleName,
+      'primaryColor': primaryColor,
+      'secondColor': secondColor,
+      'urlImg': urlImg,
     };
   }
 

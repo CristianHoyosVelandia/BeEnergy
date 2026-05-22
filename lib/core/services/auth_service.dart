@@ -1,13 +1,18 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../api/api_client.dart';
 import '../api/api_exceptions.dart';
 import '../constants/api_endpoints.dart';
 import '../utils/logger.dart';
 import '../../services/community_theme_storage.dart';
+import 'package:flutter/material.dart' show Color;
+import '../theme/app_tokens.dart';
 
 /// Servicio de autenticación para la aplicación BeEnergy
 /// Integrado con Volt Platform Services API
 class AuthService {
   static const String _tag = 'AuthService';
+  static const String _tokenKey = 'auth_token';
   final ApiClient _apiClient = ApiClient.instance;
   final CommunityThemeStorage _themeStorage = CommunityThemeStorage();
 
@@ -52,6 +57,7 @@ class AuthService {
         if (data['data'] != null) {
           final userData = data['data'] as Map<String, dynamic>;
           _apiClient.setAuthToken(userData['token']);
+          await _saveToken(userData['token']);
 
           // Guardar datos de tema en storage
           await _saveThemeDataFromLogin(userData);
@@ -88,6 +94,17 @@ class AuthService {
     }
   }
 
+  /// Guarda el token en SharedPreferences
+  Future<void> _saveToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_tokenKey, token);
+      AppLogger.debug('Token guardado en storage', tag: _tag);
+    } catch (e) {
+      AppLogger.error('Error guardando token', tag: _tag, error: e.toString());
+    }
+  }
+
   /// Guarda los datos de tema de comunidad en storage durante el login
   Future<void> _saveThemeDataFromLogin(Map<String, dynamic> userData) async {
     try {
@@ -113,6 +130,13 @@ class AuthService {
         urlImg: urlImg,
         topology: topology,
         communityId: communityId ?? 0,
+      );
+
+      // Actualizar AppTokens en tiempo real
+      AppTokens.updateThemeColors(
+        primary: Color(CommunityThemeStorage.parseColorString(primaryColor)),
+        secondary: Color(CommunityThemeStorage.parseColorString(secondColor)),
+        imageUrl: urlImg,
       );
 
       AppLogger.debug(
@@ -168,6 +192,7 @@ class AuthService {
         // Si hay token, guardarlo en el cliente
         if (responseData['token'] != null) {
           _apiClient.setAuthToken(responseData['token']);
+          await _saveToken(responseData['token']);
         }
 
         return {
@@ -316,8 +341,11 @@ class AuthService {
     try {
       final response = await _apiClient.post(ApiEndpoints.logout);
 
-      // Remover token del cliente
+      // Remover token del cliente y storage
       _apiClient.removeAuthToken();
+      await _removeToken();
+      await _themeStorage.clearThemeData();
+      AppTokens.resetToDefaultColors();
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -335,6 +363,9 @@ class AuthService {
     } on ApiException {
       // Aunque falle, removemos el token localmente
       _apiClient.removeAuthToken();
+      await _removeToken();
+      await _themeStorage.clearThemeData();
+      AppTokens.resetToDefaultColors();
 
       return {
         'success': true,
@@ -343,11 +374,25 @@ class AuthService {
     } catch (_) {
       // Aunque falle, removemos el token localmente
       _apiClient.removeAuthToken();
+      await _removeToken();
+      await _themeStorage.clearThemeData();
+      AppTokens.resetToDefaultColors();
 
       return {
         'success': true,
         'message': 'Sesión cerrada localmente',
       };
+    }
+  }
+
+  /// Remueve el token de SharedPreferences
+  Future<void> _removeToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+      AppLogger.debug('Token removido del storage', tag: _tag);
+    } catch (e) {
+      AppLogger.error('Error removiendo token', tag: _tag, error: e.toString());
     }
   }
 }

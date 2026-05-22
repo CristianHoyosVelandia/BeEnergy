@@ -2,6 +2,7 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/services/auth_service.dart';
+import 'package:be_energy/services/community_theme_storage.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
@@ -33,6 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
         else  { val = false; }
       });
     };
+  }
+
+  String _themeValue(Map<String, dynamic> userData, String key, String fallback) {
+    final value = userData[key]?.toString();
+    return value == null || value.isEmpty ? fallback : value;
   }
   
   Widget imagenLogin(BuildContext context){
@@ -133,14 +139,14 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 1.5,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 2.5,
             ),
@@ -208,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
   //comparador para iniciar session en la App de Kupi. si hay un error por medio de
   // un flus bar indica el error al usuario (usuario no existente, password incorrecta). entre otros.
   // de ser el caso al iniciar la sesión por primera vez, desplega el tutorial.
-  void iniciarSesion(MyUser usuario) async {
+  Future<void> iniciarSesion(MyUser usuario) async {
 
     DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -224,10 +230,11 @@ class _LoginScreenState extends State<LoginScreen> {
       idCiudad  : usuario.idCiudad,
       role      : usuario.role,
       roleName  : usuario.roleName,
+      primaryColor: usuario.primaryColor,
+      secondColor: usuario.secondColor,
+      urlImg: usuario.urlImg,
     );
-
-
-    dbHelper.addUser(usuariolocal);
+    await dbHelper.addUser(usuariolocal);
   }
   
 
@@ -257,8 +264,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
               if (response['success']) {
                 // Login exitoso con el API
-                final userData = response['data'];
+                final userData = response['data'] as Map<String, dynamic>;
                 final token = response['token'];
+                final primaryColor = _themeValue(
+                  userData,
+                  'primary_color',
+                  CommunityThemeStorage.defaultPrimaryColor,
+                );
+                final secondColor = _themeValue(
+                  userData,
+                  'second_color',
+                  CommunityThemeStorage.defaultSecondColor,
+                );
+                final urlImg = _themeValue(
+                  userData,
+                  'url_img',
+                  CommunityThemeStorage.defaultUrlImg,
+                );
 
                 // Crear usuario local con los datos del API
                 MyUser usuario = MyUser(
@@ -273,6 +295,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   idCiudad: userData['city_id'] ?? 0,
                   role: userData['role'],
                   roleName: userData['role_name'],
+                  primaryColor: primaryColor,
+                  secondColor: secondColor,
+                  urlImg: urlImg,
                 );
 
                 // Debug: imprimir datos del usuario
@@ -283,7 +308,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 debugPrint('  Role Name: ${usuario.roleName}');
 
                 // Guardar en base de datos local
-                iniciarSesion(usuario);
+                await iniciarSesion(usuario);
+
+                AppTokens.updateThemeColors(
+                  primary: Color(CommunityThemeStorage.parseColorString(primaryColor)),
+                  secondary: Color(CommunityThemeStorage.parseColorString(secondColor)),
+                  imageUrl: urlImg,
+                );
 
                 // Guardar token si es necesario
                 if (token != null) {

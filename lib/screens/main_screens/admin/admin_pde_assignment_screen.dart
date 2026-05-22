@@ -484,7 +484,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
         backgroundColor: AppTokens.secondaryColor.withValues(alpha: 0.2),
         child: Text(
           consumer.userName[0].toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppTokens.secondaryColor,
             fontWeight: AppTokens.fontWeightBold,
           ),
@@ -524,7 +524,7 @@ class _AdminPDEAssignmentScreenState extends State<AdminPDEAssignmentScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error, color: AppTokens.primaryColor),
+          Icon(Icons.error, color: AppTokens.primaryColor),
           SizedBox(width: AppTokens.space12),
           Expanded(
             child: Text(

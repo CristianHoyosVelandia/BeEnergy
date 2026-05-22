@@ -230,7 +230,7 @@ class _ConfirmchangeScreenState extends State<ConfirmchangeScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           errorBorder: OutlineInputBorder(
-            borderSide: const BorderSide(
+            borderSide: BorderSide(
               color: AppTokens.primaryColor,
               width: 0.25,
             ),
