@@ -4,6 +4,38 @@ import 'package:intl/intl.dart';
 class Formatters {
   Formatters._(); // Constructor privado
 
+  static const List<String> _monthNames = [
+    '',
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
+
+  static const List<String> _shortMonthNames = [
+    '',
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic',
+  ];
+
   // ==================== NÚMEROS ====================
 
   /// Formatea un número con separadores de miles y decimales en formato español
@@ -23,25 +55,39 @@ class Formatters {
     if (number == null) return value;
     return formatNumber(number);
   }
-    /// Formatea el período YYYY-MM a nombre legible (ej: "2026-03" → "Marzo 2026")
-  static String formatPeriodToDisplayName(String _currentPeriod) {
+  /// Retorna el nombre largo del mes en español.
+  static String monthName(int month) {
+    if (month < 1 || month > 12) return '';
+    return _monthNames[month];
+  }
+
+  /// Retorna el nombre corto del mes en español.
+  static String shortMonthName(int month) {
+    if (month < 1 || month > 12) return '';
+    return _shortMonthNames[month];
+  }
+
+  /// Formatea el período actual con el mismo estándar usado por el Home.
+  static String formatCurrentPeriodDisplayName() {
+    final now = DateTime.now();
+    return '${monthName(now.month)} ${now.year}';
+  }
+
+  /// Formatea el período YYYY-MM a nombre legible (ej: "2026-03" → "Marzo 2026")
+  static String formatPeriodToDisplayName(String currentPeriod) {
     try {
-      final parts = _currentPeriod.split('-');
-      if (parts.length != 2) return _currentPeriod;
+      final parts = currentPeriod.split('-');
+      if (parts.length != 2) return currentPeriod;
 
       final year = parts[0];
       final month = int.parse(parts[1]);
 
-      const months = [
-        '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-      ];
+      final monthLabel = monthName(month);
+      if (monthLabel.isEmpty) return currentPeriod;
 
-      if (month < 1 || month > 12) return _currentPeriod;
-
-      return '${months[month]} $year';
+      return '$monthLabel $year';
     } catch (e) {
-      return _currentPeriod;
+      return currentPeriod;
     }
   }
   // ==================== MONEDA ====================

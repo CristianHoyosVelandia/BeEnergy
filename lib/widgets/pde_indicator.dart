@@ -289,7 +289,7 @@ class PDEAvailabilitySummary extends StatelessWidget {
           
           SizedBox(height: AppTokens.space8),
           Text(
-            'Hasta un máximo del 10 % disponible',
+            'Hasta un máximo del 9.99 % disponible',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.8),
               fontSize: 12,

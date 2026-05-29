@@ -6,7 +6,6 @@ import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/utils/metodos.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../services/consumer_offer_api_service.dart';
-import '../../../widgets/pde_indicator.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../models/my_user.dart';
 
@@ -36,7 +35,8 @@ class ConsumerCreateOfferScreen extends StatefulWidget {
   });
 
   @override
-  State<ConsumerCreateOfferScreen> createState() => _ConsumerCreateOfferScreenState();
+  State<ConsumerCreateOfferScreen> createState() =>
+      _ConsumerCreateOfferScreenState();
 }
 
 class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
@@ -46,7 +46,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
 
   // Controles del formulario
   double _pdePercentageRequested = 5.0; // 5% por defecto (rango 0-9.99)
-  double _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor; // Precio mínimo
+  double _pricePerKwh =
+      FakeDataJanuary2026.precioMinimoConsumidor; // Precio mínimo
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -58,7 +59,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   String get _currentPeriod => widget.period ?? '2026-01';
 
   /// Obtiene el nombre formateado del período actual
-  String get _currentPeriodDisplayName => Formatters.formatPeriodToDisplayName(_currentPeriod);
+  String get _currentPeriodDisplayName =>
+      Formatters.formatPeriodToDisplayName(_currentPeriod);
 
   @override
   void initState() {
@@ -67,7 +69,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     // Si existe oferta, pre-llenar el formulario
     if (_isEditMode) {
       final offer = widget.existingOffer!;
-      _pdePercentageRequested = offer.pdePercentageRequested * 100; // Convertir decimal a porcentaje
+      _pdePercentageRequested =
+          offer.pdePercentageRequested * 100; // Convertir decimal a porcentaje
       _pricePerKwh = offer.pricePerKwh;
     } else {
       // Inicializar con precio mínimo (MC_m × 1.1 = 330 COP)
@@ -133,7 +136,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         offer = await _apiService.createOffer(
           buyerId: widget.myUser.idUser!,
           communityId: widget.communityId,
-          period: widget.period ?? '2026-01', // Usar período del widget o default
+          period:
+              widget.period ?? '2026-01', // Usar período del widget o default
           pdePercentageRequested: _pdePercentageRequested,
           pricePerKwh: _pricePerKwh,
         );
@@ -165,7 +169,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppTokens.energyGreen, size: 32),
+            const Icon(Icons.check_circle,
+                color: AppTokens.energyGreen, size: 32),
             SizedBox(width: AppTokens.space12),
             Text(_isEditMode ? 'Oferta Actualizada' : 'Oferta Publicada'),
           ],
@@ -192,7 +197,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               'PDE Solicitado',
               '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
             ),
-            _buildInfoRow('Precio', '${Formatters.formatCurrency(_pricePerKwh, decimals: 0)} COP/kWh'),
+            _buildInfoRow('Precio',
+                '${Formatters.formatCurrency(_pricePerKwh, decimals: 0)} COP/kWh'),
             // _buildInfoRow('Valor estimado', '\$${_totalValue.toStringAsFixed(0)}'),
             SizedBox(height: AppTokens.space16),
             Container(
@@ -200,11 +206,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               decoration: BoxDecoration(
                 color: AppTokens.primaryColor.withValues(alpha: 0.1),
                 borderRadius: AppTokens.borderRadiusMedium,
-                border: Border.all(color: AppTokens.primaryColor.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: AppTokens.primaryColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTokens.primaryColor.withValues(alpha: 0.7), size: 20),
+                  Icon(Icons.info_outline,
+                      color: AppTokens.primaryColor.withValues(alpha: 0.7),
+                      size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
@@ -269,37 +278,36 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Header: PDE Disponible
-                  _buildPDEAvailabilityCard(),
+          : Column(
+              children: [
+                _buildOfferPreview(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // kWh del PDE solicitado
+                        _buildPDEKwhSlider(),
 
-                  // kWh del PDE solicitado
-                  _buildPDEKwhSlider(),
+                        // Precio por kWh
+                        _buildPriceSlider(),
 
-                  // Precio por kWh
-                  _buildPriceSlider(),
+                        // Mensajes de error
+                        if (_errorMessage != null) _buildErrorMessage(),
 
-                  // Validación de precio
-                  _buildPriceValidationCard(),
-
-                  // Preview de la oferta
-                  _buildOfferPreview(),
-
-                  // Mensajes de error
-                  if (_errorMessage != null) _buildErrorMessage(),
-
-                  SizedBox(height: AppTokens.space64),
-                ],
-              ),
+                        SizedBox(height: AppTokens.space64),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
       floatingActionButton: Tooltip(
         message: 'Publicar oferta',
         child: FloatingActionButton(
-          onPressed: _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
-              ? null
-              : _submitOffer,
+          onPressed:
+              _isLoading || !_isPriceValid || _pdePercentageRequested <= 0.0
+                  ? null
+                  : _submitOffer,
           backgroundColor: _isPriceValid && _pdePercentageRequested > 0.0
               ? AppTokens.primaryColor
               : Colors.grey,
@@ -312,20 +320,10 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
     );
   }
 
-  Widget _buildPDEAvailabilityCard() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      child: PDEAvailabilitySummary(
-        totalPDEAvailable: _totalPDEAvailable,
-        period: _currentPeriodDisplayName, // Usar período dinámico
-        showHelp: true,
-      ),
-    );
-  }
-
   Widget _buildPDEKwhSlider() {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
+      margin: EdgeInsets.symmetric(
+          horizontal: AppTokens.space16, vertical: AppTokens.space8),
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space16),
         child: Column(
@@ -343,7 +341,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                 SizedBox(
                   width: 120,
                   child: TextField(
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
@@ -366,7 +365,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
-                        borderSide: BorderSide(color: AppTokens.primaryColor, width: 2),
+                        borderSide:
+                            BorderSide(color: AppTokens.primaryColor, width: 2),
                       ),
                       suffixText: '%',
                       suffixStyle: context.textStyles.bodyMedium?.copyWith(
@@ -374,9 +374,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       ),
                     ),
                     controller: TextEditingController(
-                      text: Formatters.formatNumber(_pdePercentageRequested, decimals: 2),
+                      text: Formatters.formatNumber(_pdePercentageRequested,
+                          decimals: 2),
                     )..selection = TextSelection.fromPosition(
-                        TextPosition(offset: Formatters.formatNumber(_pdePercentageRequested, decimals: 2).length),
+                        TextPosition(
+                            offset: Formatters.formatNumber(
+                                    _pdePercentageRequested,
+                                    decimals: 2)
+                                .length),
                       ),
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
@@ -396,7 +401,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               min: 0.01,
               max: 9.99,
               divisions: 998,
-              label: '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
+              label:
+                  '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
               activeColor: AppTokens.primaryColor,
               onChanged: (value) {
                 setState(() {
@@ -420,7 +426,9 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppTokens.primaryColor.withValues(alpha: 0.7), size: 20),
+                  Icon(Icons.info_outline,
+                      color: AppTokens.primaryColor.withValues(alpha: 0.7),
+                      size: 20),
                   SizedBox(width: AppTokens.space8),
                   Expanded(
                     child: Text(
@@ -440,11 +448,13 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   }
 
   Widget _buildPriceSlider() {
-    final minPrice = FakeDataJanuary2026.precioMinimoConsumidor; // MC_m × 1.1 = 330
+    final minPrice =
+        FakeDataJanuary2026.precioMinimoConsumidor; // MC_m × 1.1 = 330
     final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor; // 693.5
 
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
+      margin: EdgeInsets.symmetric(
+          horizontal: AppTokens.space16, vertical: AppTokens.space8),
       child: Padding(
         padding: EdgeInsets.all(AppTokens.space16),
         child: Column(
@@ -462,11 +472,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                 SizedBox(
                   width: 140,
                   child: TextField(
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     textAlign: TextAlign.center,
                     style: context.textStyles.bodyLarge?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                      color: _isPriceValid
+                          ? AppTokens.primaryColor
+                          : context.colors.error,
                     ),
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.symmetric(
@@ -480,39 +493,54 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
                       border: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                          color: _isPriceValid
+                              ? AppTokens.primaryColor
+                              : context.colors.error,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                          color: _isPriceValid
+                              ? AppTokens.primaryColor
+                              : context.colors.error,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: AppTokens.borderRadiusMedium,
                         borderSide: BorderSide(
-                          color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                          color: _isPriceValid
+                              ? AppTokens.primaryColor
+                              : context.colors.error,
                           width: 2,
                         ),
                       ),
                       prefixText: '\$',
                       suffixText: ' COP/kWh',
                       prefixStyle: context.textStyles.bodyMedium?.copyWith(
-                        color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                        color: _isPriceValid
+                            ? AppTokens.primaryColor
+                            : context.colors.error,
                       ),
                       suffixStyle: context.textStyles.bodySmall?.copyWith(
-                        color: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+                        color: _isPriceValid
+                            ? AppTokens.primaryColor
+                            : context.colors.error,
                       ),
                     ),
                     controller: TextEditingController(
                       text: Formatters.formatNumber(_pricePerKwh, decimals: 0),
                     )..selection = TextSelection.fromPosition(
-                        TextPosition(offset: Formatters.formatNumber(_pricePerKwh, decimals: 0).length),
+                        TextPosition(
+                            offset: Formatters.formatNumber(_pricePerKwh,
+                                    decimals: 0)
+                                .length),
                       ),
                     onChanged: (value) {
                       final parsed = double.tryParse(value);
-                      if (parsed != null && parsed >= minPrice && parsed <= maxPrice) {
+                      if (parsed != null &&
+                          parsed >= minPrice &&
+                          parsed <= maxPrice) {
                         setState(() {
                           _pricePerKwh = parsed;
                         });
@@ -530,9 +558,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             SizedBox(height: AppTokens.space8),
             Text(
               'Rango válido:',
-              style: context.textStyles.titleSmall?.copyWith(
-                fontWeight: AppTokens.fontWeightMedium
-              ),
+              style: context.textStyles.titleSmall
+                  ?.copyWith(fontWeight: AppTokens.fontWeightMedium),
             ),
             SizedBox(height: AppTokens.space16),
             Slider(
@@ -541,7 +568,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               max: maxPrice,
               divisions: ((maxPrice - minPrice) / 5).toInt(),
               label: Formatters.formatCurrency(_pricePerKwh, decimals: 0),
-              activeColor: _isPriceValid ? AppTokens.primaryColor : context.colors.error,
+              activeColor:
+                  _isPriceValid ? AppTokens.primaryColor : context.colors.error,
               onChanged: (value) {
                 setState(() {
                   _pricePerKwh = value;
@@ -551,170 +579,77 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(Formatters.formatCurrency(minPrice, decimals: 0), style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(minPrice, decimals: 0),
+                    style: context.textStyles.bodySmall),
                 // Text('MC_m×1.1', style: context.textStyles.bodySmall?.copyWith(color: Colors.grey)),
-                Text(Formatters.formatCurrency(maxPrice, decimals: 0), style: context.textStyles.bodySmall),
+                Text(Formatters.formatCurrency(maxPrice, decimals: 0),
+                    style: context.textStyles.bodySmall),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPriceValidationCard() {
-    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
-    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      padding: EdgeInsets.all(AppTokens.space20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTokens.primaryColor,
-            AppTokens.primaryColor.withValues(alpha: 0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: AppTokens.borderRadiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: AppTokens.primaryColor.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _isPriceValid ? Icons.check_circle : Icons.warning,
-                color: Colors.white,
-                size: 28,
-              ),
-              SizedBox(width: AppTokens.space12),
-              Text(
-                _isPriceValid ? 'Precio Válido' : 'Precio Fuera de Rango',
-                style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightBold,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: AppTokens.space16),
-          Container(
-            padding: EdgeInsets.all(AppTokens.space12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: AppTokens.borderRadiusMedium,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Rango de Precios',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12,
-                    fontWeight: AppTokens.fontWeightSemiBold,
-                  ),
-                ),
-                SizedBox(height: AppTokens.space12),
-                Row(
-                  children: [
-                    // Columna Precio Mínimo
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Precio Mínimo',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 11,
-                            ),
-                          ),
-                          SizedBox(height: AppTokens.space4),
-                          Text(
-                            '${Formatters.formatCurrencyES(minValue)} COP/kWh',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Columna Precio Máximo
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Precio Máximo',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 11,
-                            ),
-                          ),
-                          SizedBox(height: AppTokens.space4),
-                          Text(
-                            '${Formatters.formatCurrencyES(maxValue)} COP/kWh',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppTokens.space12),
-                Text(
-                  'CREG 101 072 - Art 3.4',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildOfferPreview() {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16, vertical: AppTokens.space8),
-      child: Padding(
+      color: Colors.transparent,
+      elevation: AppTokens.elevation6,
+      margin: EdgeInsets.fromLTRB(
+        AppTokens.space16,
+        AppTokens.space8,
+        AppTokens.space16,
+        AppTokens.space4,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+      child: Container(
         padding: EdgeInsets.all(AppTokens.space16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppTokens.primaryColor,
+              AppTokens.primaryColor.withValues(alpha: 0.82),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: AppTokens.borderRadiusLarge,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Vista Previa de Oferta PDE',
-              style: context.textStyles.titleMedium?.copyWith(
-                fontWeight: AppTokens.fontWeightBold,
-                color: AppTokens.primaryColor,
-              ),
+            _buildPDEPreviewHeader(),
+            SizedBox(height: AppTokens.space12),
+            _buildPreviewSupportMessage(),
+            SizedBox(height: AppTokens.space12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Vista Previa de Oferta',
+                    style: context.textStyles.titleMedium?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _isPriceValid ? Icons.check_circle : Icons.warning,
+                  color: _isPriceValid ? Colors.white : AppTokens.primaryYellow,
+                  size: 20,
+                ),
+              ],
             ),
-            SizedBox(height: AppTokens.space16),
-            _buildPreviewRow('PDE Solicitado', Formatters.formatPercentageES(_pdePercentageRequested)),
-            _buildPreviewRow('Precio Ofertado', '${Formatters.formatCurrencyES(_pricePerKwh)} COP/kWh'),
-            Divider(height: AppTokens.space24),
+            SizedBox(height: AppTokens.space12),
+            _buildPreviewRow('PDE Solicitado',
+                Formatters.formatPercentageES(_pdePercentageRequested)),
+            _buildPreviewRow('Precio Ofertado',
+                '${Formatters.formatCurrencyES(_pricePerKwh)} COP/kWh'),
+            Divider(
+              height: AppTokens.space16,
+              color: Colors.white.withValues(alpha: 0.25),
+            ),
             _buildPreviewRow(
               'Energía estimada',
               Formatters.formatEnergyES(_totalEnergyKwh),
@@ -725,34 +660,74 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               Formatters.formatCurrencyES(_totalValue),
               isBold: true,
             ),
-            SizedBox(height: AppTokens.space16),
-            Container(
-              padding: EdgeInsets.all(AppTokens.space12),
-              decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.1),
-                borderRadius: AppTokens.borderRadiusSmall,
-                border: Border.all(
-                  color: Colors.amber.withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.schedule, color: Colors.amber[700], size: 18),
-                  SizedBox(width: AppTokens.space8),
-                  Expanded(
-                    child: Text(
-                      'Oferta válida hasta: 31/01/2026 - Pendiente de liquidación\n\nRecuerda que estos valores son un estimado',
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: Colors.amber[900],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            SizedBox(height: AppTokens.space8),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPDEPreviewHeader() {
+    return Row(
+      children: [
+        const Icon(Icons.bolt, color: Colors.white, size: 28),
+        SizedBox(width: AppTokens.space12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PDE Disponible - $_currentPeriodDisplayName',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.help_outline,
+          color: Colors.white.withValues(alpha: 0.9),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewSupportMessage() {
+    final minValue = FakeDataJanuary2026.precioMinimoConsumidor;
+    final maxValue = FakeDataJanuary2026.precioMaximoConsumidor;
+    final color = _isPriceValid ? Colors.white : AppTokens.primaryYellow;
+
+    return Container(
+      padding: EdgeInsets.all(AppTokens.space12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: AppTokens.borderRadiusSmall,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            _isPriceValid ? Icons.touch_app : Icons.info_outline,
+            color: color,
+            size: 18,
+          ),
+          SizedBox(width: AppTokens.space8),
+          Expanded(
+            child: Text(
+              'Usa los sliders para modificartu oferta.'
+              '\n\n${_isPriceValid ? 'Precio válido' : 'Precio fuera de rango'}: ${Formatters.formatCurrencyES(minValue)} - ${Formatters.formatCurrencyES(maxValue)} COP/kWh. '
+              '\nOferta válida hasta: 31/05/2026',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: color,
+                height: 1.25,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -767,12 +742,16 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             label,
             style: context.textStyles.bodyMedium?.copyWith(
               fontWeight: isBold ? AppTokens.fontWeightBold : null,
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
           Text(
             value,
             style: context.textStyles.bodyMedium?.copyWith(
-              fontWeight: isBold ? AppTokens.fontWeightBold : AppTokens.fontWeightSemiBold,
+              fontWeight: isBold
+                  ? AppTokens.fontWeightBold
+                  : AppTokens.fontWeightSemiBold,
+              color: Colors.white,
             ),
           ),
         ],
@@ -796,7 +775,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           Expanded(
             child: Text(
               _errorMessage!,
-              style: context.textStyles.bodyMedium?.copyWith(color: context.colors.error),
+              style: context.textStyles.bodyMedium
+                  ?.copyWith(color: context.colors.error),
             ),
           ),
         ],

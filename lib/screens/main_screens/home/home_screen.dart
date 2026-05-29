@@ -19,6 +19,7 @@ import '../../../services/consumer_offer_api_service.dart';
 import 'controllers/home_controller.dart';
 import 'widgets/price_reference_cards.dart';
 import '../consumer/consumer_marketplace_screen.dart';
+import '../consumer/pde_suggestion_selection_screen.dart';
 import '../admin/admin_community_offers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -64,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initializeData() async {
     // 1. Primero cargar el historial de períodos (para obtener currentPeriod)
     await _loadUserPeriods();
-    // 2. Luego cargar el estado PDE del período actual (ya tenemos _selectedPeriod correcto)
-    _loadPDEPeriodStatus();
+    // 2. Este WS trae codEstado/canCreateOffers y debe ejecutarse siempre para saber si hay PDE disponible.
+    await _loadPDEPeriodStatus();
   }
 
   Future<void> _loadPriceReferences() async {
@@ -139,6 +140,84 @@ class _HomeScreenState extends State<HomeScreen> {
       AppLogger.error('Error cargando estado PDE',
           tag: 'HomeScreen', error: e, stackTrace: stackTrace);
       setState(() => _isLoadingPDEStatus = false);
+    }
+  }
+
+  void _navigateToConsumerMarketplace() {
+    if (widget.myUser == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConsumerMarketplaceScreen(
+          period: _selectedPeriod,
+          myUser: widget.myUser!,
+          communityId: _currentCommunityId,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToPdeSuggestions() {
+    if (widget.myUser == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdeSuggestionSelectionScreen(
+          period: _selectedPeriod,
+          myUser: widget.myUser!,
+          communityId: _currentCommunityId,
+          energyConsumed: _selectedPeriodEnergyData['consumed'] ?? 0,
+          totalPDEAvailable: FakeDataJanuary2026.pdeJan2026.allocatedEnergy,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleConsumerPDETap() async {
+    final userId = widget.myUser?.idUser;
+    if (userId == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    if (_pdePeriodStatus?.isPDEAvailable != true) {
+      _navigateToConsumerMarketplace();
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final apiService = ConsumerOfferApiService();
+      final offer = await apiService.getBuyerOfferForPeriod(
+        userId,
+        _selectedPeriod,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+
+      if (offer?.status == ConsumerOfferStatus.pending) {
+        _navigateToConsumerMarketplace();
+      } else {
+        _navigateToPdeSuggestions();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      _navigateToConsumerMarketplace();
     }
   }
 
@@ -216,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'imported': periodData.energyRecord.energyImported,
       };
     }
-    
+
     return {
       'generated': 0,
       'consumed': 0,
@@ -261,13 +340,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final isIncome = contract.sellerId == (widget.myUser?.idUser ?? 24);
       final nombre = isIncome ? contract.buyerName : contract.sellerName;
 
-      final months = [
-        'Ene', 'Feb', 'Mar',
-        'Abr', 'May', 'Jun',
-        'Jul', 'Ago', 'Sep',
-        'Oct', 'Nov', 'Dic'
-      ];
-      final fecha = '${contract.createdAt.day}-${months[contract.createdAt.month - 1]}';
+      final fecha =
+          '${contract.createdAt.day}-${Formatters.shortMonthName(contract.createdAt.month)}';
 
       return {
         'numTransaccion': index + 1,
@@ -711,54 +785,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Formatea el período actual en español
   String _formatCurrentPeriod() {
-    final now = DateTime.now();
-    final months = [
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre'
-    ];
-    return '${months[now.month - 1]} ${now.year}';
+    return Formatters.formatCurrentPeriodDisplayName();
   }
 
   /// Formatea un período YYYY-MM a formato legible (ej: "Marzo 2026")
   String _formatPeriodLabel(String period) {
-    final months = {
-      '01': 'Enero',
-      '02': 'Febrero',
-      '03': 'Marzo',
-      '04': 'Abril',
-      '05': 'Mayo',
-      '06': 'Junio',
-      '07': 'Julio',
-      '08': 'Agosto',
-      '09': 'Septiembre',
-      '10': 'Octubre',
-      '11': 'Noviembre',
-      '12': 'Diciembre'
-    };
-
-    try {
-      final parts = period.split('-');
-      if (parts.length == 2) {
-        final year = parts[0];
-        final month = parts[1];
-        return '${months[month] ?? month} $year';
-      }
-    } catch (e) {
-      AppLogger.warning('Error formateando período $period',
-          tag: 'HomeScreen', error: e);
-    }
-
-    return period; // Fallback: retornar el período original
+    return Formatters.formatPeriodToDisplayName(period);
   }
 
   /// Widget del indicador de estado (extraído para reutilización)
@@ -1601,17 +1633,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         } else {
-          // Usuario: Navegar al marketplace para crear oferta
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ConsumerMarketplaceScreen(
-                period: _selectedPeriod, // Pasar período seleccionado
-                myUser: widget.myUser!,
-                communityId: _currentCommunityId,
-              ),
-            ),
-          );
+          _handleConsumerPDETap();
         }
       },
       child: Container(
