@@ -11,6 +11,7 @@ export 'my_credentials.dart';
 export 'community_models.dart';
 export 'community_price_reference.dart';
 export 'pde_period_status.dart';
+export 'pde_renuncia.dart';
 export 'user_period_history.dart';
 
 // Energy models

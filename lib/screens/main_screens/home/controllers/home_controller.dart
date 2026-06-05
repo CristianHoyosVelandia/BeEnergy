@@ -2,27 +2,32 @@ import 'package:be_energy/models/community_price_reference.dart';
 import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/models/my_user.dart';
 import 'package:be_energy/models/pde_period_status.dart';
+import 'package:be_energy/models/pde_renuncia.dart';
 import 'package:be_energy/models/user_period_history.dart';
 import 'package:be_energy/repositories/domain/pde_period_repository.dart';
 import 'package:be_energy/repositories/impl/pde_period_repository_api.dart';
 import 'package:be_energy/services/consumer_offer_api_service.dart';
 import 'package:be_energy/services/community_price_reference_service.dart';
+import 'package:be_energy/services/pde_renuncia_service.dart';
 import 'package:flutter/foundation.dart';
 
 class HomeController extends ChangeNotifier {
   final CommunityPriceReferenceService _priceReferenceService;
   final PDEPeriodRepository _pdePeriodRepository;
   final ConsumerOfferApiService _consumerOfferService;
+  final PdeRenunciaService _pdeRenunciaService;
 
   HomeController({
     CommunityPriceReferenceService? priceReferenceService,
     PDEPeriodRepository? pdePeriodRepository,
     ConsumerOfferApiService? consumerOfferService,
+    PdeRenunciaService? pdeRenunciaService,
   })  : _priceReferenceService =
             priceReferenceService ?? CommunityPriceReferenceService(),
         _pdePeriodRepository = pdePeriodRepository ?? PDEPeriodRepositoryApi(),
         _consumerOfferService =
-            consumerOfferService ?? ConsumerOfferApiService();
+            consumerOfferService ?? ConsumerOfferApiService(),
+        _pdeRenunciaService = pdeRenunciaService ?? PdeRenunciaService();
 
   String selectedPeriod = '';
   bool isAdminView = false;
@@ -30,10 +35,12 @@ class HomeController extends ChangeNotifier {
   PDEPeriodStatus? pdePeriodStatus;
   UserPeriodHistory? userPeriodHistory;
   ConsumerOffer? buyerOffer;
+  PdeRenunciaStatus? pdeRenunciaStatus;
 
   bool isLoadingPDEStatus = false;
   bool isLoadingPeriods = false;
   bool isLoadingBuyerOffer = false;
+  bool isLoadingPdeRenuncia = false;
 
   List<CommunityPriceReference> priceReferences = [];
   bool isLoadingPriceReferences = false;
@@ -103,7 +110,98 @@ class HomeController extends ChangeNotifier {
       notifyListeners();
     }
 
-    await loadBuyerOffer(user: user);
+    if (pdePeriodStatus?.statusCode == 6) {
+      await loadPdeRenunciaStatus(user: user, communityId: communityId);
+    } else {
+      pdeRenunciaStatus = null;
+      await loadBuyerOffer(user: user);
+    }
+  }
+
+  Future<void> loadPdeRenunciaStatus({
+    required MyUser? user,
+    required int communityId,
+  }) async {
+    final userId = user?.idUser;
+    if (userId == null) {
+      pdeRenunciaStatus = null;
+      return;
+    }
+
+    isLoadingPdeRenuncia = true;
+    notifyListeners();
+
+    try {
+      pdeRenunciaStatus = await _pdeRenunciaService.getUserStatus(
+        comunidadId: communityId,
+        usuarioId: userId,
+        periodo: selectedPeriod,
+      );
+    } finally {
+      isLoadingPdeRenuncia = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> createPdeRenuncia({
+    required MyUser? user,
+    required int communityId,
+    required double pdeRenunciado,
+    String? motivo,
+  }) async {
+    final userId = user?.idUser;
+    if (userId == null) {
+      throw Exception('Usuario no identificado');
+    }
+
+    isLoadingPdeRenuncia = true;
+    notifyListeners();
+
+    try {
+      await _pdeRenunciaService.createRenuncia(
+        comunidadId: communityId,
+        usuarioId: userId,
+        periodo: selectedPeriod,
+        pdeRenunciado: pdeRenunciado,
+        motivo: motivo,
+      );
+      pdeRenunciaStatus = await _pdeRenunciaService.getUserStatus(
+        comunidadId: communityId,
+        usuarioId: userId,
+        periodo: selectedPeriod,
+      );
+    } finally {
+      isLoadingPdeRenuncia = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> closePdeRenunciaFlow({
+    required MyUser? user,
+    required int communityId,
+  }) async {
+    final adminId = user?.idUser;
+    if (adminId == null) {
+      throw Exception('Administrador no identificado');
+    }
+
+    isLoadingPdeRenuncia = true;
+    notifyListeners();
+
+    try {
+      await _pdeRenunciaService.closeFlow(
+        comunidadId: communityId,
+        periodo: selectedPeriod,
+        adminId: adminId,
+      );
+      pdePeriodStatus = await _pdePeriodRepository.getPeriodStatus(
+        communityId: communityId,
+        period: selectedPeriod,
+      );
+    } finally {
+      isLoadingPdeRenuncia = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadBuyerOffer({required MyUser? user}) async {

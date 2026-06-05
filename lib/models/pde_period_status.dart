@@ -59,6 +59,8 @@ class PDEPeriodStatus {
         return 'En conciliación';
       case 5:
         return 'Periodo histórico';
+      case 6:
+        return 'Renuncia voluntaria PDE';
       default:
         return 'No disponible';
     }

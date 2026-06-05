@@ -640,14 +640,184 @@ class _HomeScreenState extends State<HomeScreen> {
     return PdeStateMachineCard(
       isLoadingStatus: _controller.isLoadingPDEStatus,
       isLoadingOffer: _controller.isLoadingBuyerOffer,
+      isLoadingPdeRenuncia: _controller.isLoadingPdeRenuncia,
       isAdminView: _isAdminView,
       periodDisplayName: _selectedPeriodDisplayName,
       status: _controller.pdePeriodStatus,
       buyerOffer: _controller.buyerOffer,
+      pdeRenunciaStatus: _controller.pdeRenunciaStatus,
       onAvailableTap: _handleAvailablePdeTap,
       onAdminClosedTap: _navigateToAdminOffers,
       onMoveToReconciliationTap: _showConfirmReconciliationModal,
+      onCloseRenunciationFlowTap: _showConfirmCloseRenunciationFlowModal,
+      onSuggestedWaiverTap: _submitSuggestedPdeWaiver,
+      onManualWaiverTap: _showManualPdeWaiverModal,
+      onFullWaiverTap: _submitFullPdeWaiver,
+      onKeepPdeTap: () {
+        context
+            .showInfoSnackbar('Conservas tu PDE completo para este periodo.');
+      },
     );
+  }
+
+  Future<void> _submitSuggestedPdeWaiver() async {
+    final suggested = _controller.pdeRenunciaStatus?.pdeSugeridoRenuncia ?? 0;
+    await _submitPdeWaiver(
+      pdeRenunciado: suggested,
+      motivo: 'Renuncia sugerida por bajo consumo del periodo',
+    );
+  }
+
+  Future<void> _submitFullPdeWaiver() async {
+    final current = _controller.pdeRenunciaStatus?.pdeActual ?? 0;
+    await _submitPdeWaiver(
+      pdeRenunciado: current,
+      motivo: 'Renuncia total voluntaria del PDE asignado',
+    );
+  }
+
+  void _showManualPdeWaiverModal() {
+    final controller = TextEditingController();
+    final current = _controller.pdeRenunciaStatus?.pdeActual ?? 0;
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+          title: const Text('Renuncia manual PDE'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PDE disponible para renunciar: ${Formatters.formatNumber(current * 100, decimals: 2)}%',
+              ),
+              SizedBox(height: AppTokens.space12),
+              TextField(
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Porcentaje a renunciar',
+                  hintText: 'Ej: 4.99',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = double.tryParse(
+                  controller.text.trim().replaceAll(',', '.'),
+                );
+                if (value == null) {
+                  context.showInfoSnackbar('Ingresa un porcentaje válido.');
+                  return;
+                }
+                Navigator.of(dialogContext).pop();
+                _submitPdeWaiver(
+                  pdeRenunciado: value / 100,
+                  motivo: 'Renuncia manual voluntaria',
+                );
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitPdeWaiver({
+    required double pdeRenunciado,
+    required String motivo,
+  }) async {
+    final current = _controller.pdeRenunciaStatus?.pdeActual ?? 0;
+    if (pdeRenunciado <= 0 || pdeRenunciado > current) {
+      context.showInfoSnackbar('El porcentaje de renuncia no es válido.');
+      return;
+    }
+
+    try {
+      await _controller.createPdeRenuncia(
+        user: widget.myUser,
+        communityId: _currentCommunityId,
+        pdeRenunciado: pdeRenunciado,
+        motivo: motivo,
+      );
+      if (mounted) {
+        context.showInfoSnackbar('Renuncia PDE enviada para revisión.');
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error enviando renuncia PDE',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        context.showInfoSnackbar('Error enviando renuncia PDE: $e');
+      }
+    }
+  }
+
+  void _showConfirmCloseRenunciationFlowModal() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+          title: const Text('Cerrar Renuncias PDE'),
+          content: Text(
+            '¿Desea cerrar la renuncia voluntaria de $_selectedPeriodDisplayName y abrir el periodo para ofertas PDE?',
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _closeRenunciationFlow();
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _closeRenunciationFlow() async {
+    try {
+      await _controller.closePdeRenunciaFlow(
+        user: widget.myUser,
+        communityId: _currentCommunityId,
+      );
+      if (mounted) {
+        context.showInfoSnackbar(
+            'Renuncias cerradas. Periodo abierto para ofertas.');
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error cerrando renuncias PDE',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        context.showInfoSnackbar('Error cerrando renuncias PDE: $e');
+      }
+    }
   }
 
   void _handleAvailablePdeTap() {

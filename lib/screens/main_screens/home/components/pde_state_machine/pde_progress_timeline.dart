@@ -20,6 +20,7 @@ class PdeProgressTimeline extends StatelessWidget {
       MapEntry(3, 'Asignado'),
       MapEntry(4, 'Conciliación'),
       MapEntry(5, 'Histórico'),
+      MapEntry(6, 'Renuncia'),
     ];
     final baseColor = onDark ? Colors.white : AppTokens.primaryColor;
     final mutedColor =
@@ -43,8 +44,11 @@ class PdeProgressTimeline extends StatelessWidget {
         spacing: AppTokens.space8,
         runSpacing: AppTokens.space8,
         children: steps.map((step) {
+          final currentIndex =
+              steps.indexWhere((item) => item.key == currentStatus);
+          final stepIndex = steps.indexOf(step);
           final isCurrent = step.key == currentStatus;
-          final isDone = step.key < currentStatus;
+          final isDone = currentIndex != -1 && stepIndex < currentIndex;
 
           return Container(
             padding: EdgeInsets.symmetric(
