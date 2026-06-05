@@ -56,6 +56,29 @@ class PdeRenunciaService {
     return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>);
   }
 
+  Future<PdeRenuncia> updateRenuncia({
+    required int renunciaId,
+    required int usuarioId,
+    required double pdeRenunciado,
+    String? motivo,
+  }) async {
+    final response = await _client.put(
+      '/community/pde-renuncias/$renunciaId',
+      data: {
+        'pde_renunciado': pdeRenunciado,
+        'motivo': motivo,
+        'actualizado_por': usuarioId,
+      },
+    );
+
+    final body = response.data as Map<String, dynamic>;
+    if (body['success'] != true) {
+      throw Exception(body['message'] ?? 'Error actualizando renuncia PDE');
+    }
+
+    return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
   Future<void> closeFlow({
     required int comunidadId,
     required String periodo,
