@@ -4,7 +4,6 @@ import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/data/fake_data_january_2026.dart';
 import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/models/pde_period_status.dart';
-import 'package:be_energy/models/pde_renuncia.dart';
 import 'package:flutter/material.dart';
 
 import 'pde_progress_timeline.dart';
@@ -12,39 +11,27 @@ import 'pde_progress_timeline.dart';
 class PdeStateMachineCard extends StatelessWidget {
   final bool isLoadingStatus;
   final bool isLoadingOffer;
-  final bool isLoadingPdeRenuncia;
   final bool isAdminView;
   final String periodDisplayName;
   final PDEPeriodStatus? status;
   final ConsumerOffer? buyerOffer;
-  final PdeRenunciaStatus? pdeRenunciaStatus;
   final VoidCallback onAvailableTap;
   final VoidCallback onAdminClosedTap;
   final VoidCallback onMoveToReconciliationTap;
-  final VoidCallback onCloseRenunciationFlowTap;
-  final VoidCallback onSuggestedWaiverTap;
-  final VoidCallback onManualWaiverTap;
-  final VoidCallback onFullWaiverTap;
-  final VoidCallback onKeepPdeTap;
+  final VoidCallback onVoluntaryWaiverTap;
 
   const PdeStateMachineCard({
     super.key,
     required this.isLoadingStatus,
     required this.isLoadingOffer,
-    required this.isLoadingPdeRenuncia,
     required this.isAdminView,
     required this.periodDisplayName,
     required this.status,
     required this.buyerOffer,
-    required this.pdeRenunciaStatus,
     required this.onAvailableTap,
     required this.onAdminClosedTap,
     required this.onMoveToReconciliationTap,
-    required this.onCloseRenunciationFlowTap,
-    required this.onSuggestedWaiverTap,
-    required this.onManualWaiverTap,
-    required this.onFullWaiverTap,
-    required this.onKeepPdeTap,
+    required this.onVoluntaryWaiverTap,
   });
 
   @override
@@ -135,26 +122,18 @@ class PdeStateMachineCard extends StatelessWidget {
                 rowsBuilder: _reconciliationRows,
               );
       case 6:
-        return isAdminView
-            ? _InfoCard(
-                statusCode: 6,
-                title: 'Renuncia Voluntaria',
-                periodDisplayName: periodDisplayName,
-                message:
-                    'Los miembros pueden renunciar PDE asignado. Al cerrar este flujo se abriran las ofertas del PDE liberado.',
-                ctaLabel: 'Cerrar Renuncias y Abrir Ofertas',
-                icon: Icons.volunteer_activism,
-                onTap: onCloseRenunciationFlowTap,
-              )
-            : _VoluntaryWaiverCard(
-                loading: isLoadingPdeRenuncia,
-                status: pdeRenunciaStatus,
-                periodDisplayName: periodDisplayName,
-                onSuggestedWaiverTap: onSuggestedWaiverTap,
-                onManualWaiverTap: onManualWaiverTap,
-                onFullWaiverTap: onFullWaiverTap,
-                onKeepPdeTap: onKeepPdeTap,
-              );
+        return _InfoCard(
+          statusCode: 6,
+          title: 'Renuncia Voluntaria',
+          periodDisplayName: periodDisplayName,
+          message: isAdminView
+              ? 'Revisa las renuncias PDE de la comunidad y cierra el flujo para abrir ofertas.'
+              : 'Puedes renunciar parte del PDE asignado para liberarlo a la comunidad.',
+          ctaLabel:
+              isAdminView ? 'Gestionar Renuncias PDE' : 'Ir a Renuncia PDE',
+          icon: Icons.volunteer_activism,
+          onTap: onVoluntaryWaiverTap,
+        );
       default:
         return _HistoricalCard(
           isAdminView: isAdminView,
@@ -213,163 +192,6 @@ class PdeStateMachineCard extends StatelessWidget {
               : '${Formatters.formatNumber(offer.pdePercentageAssigned! * 100, decimals: 2)}%',
         ),
       ];
-}
-
-class _VoluntaryWaiverCard extends StatelessWidget {
-  final bool loading;
-  final PdeRenunciaStatus? status;
-  final String periodDisplayName;
-  final VoidCallback onSuggestedWaiverTap;
-  final VoidCallback onManualWaiverTap;
-  final VoidCallback onFullWaiverTap;
-  final VoidCallback onKeepPdeTap;
-
-  const _VoluntaryWaiverCard({
-    required this.loading,
-    required this.status,
-    required this.periodDisplayName,
-    required this.onSuggestedWaiverTap,
-    required this.onManualWaiverTap,
-    required this.onFullWaiverTap,
-    required this.onKeepPdeTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (loading || status == null) {
-      return _LoadingCard();
-    }
-
-    final data = status!;
-    final renuncia = data.renuncia;
-    final rows = [
-      MapEntry('PDE actual', _formatPercent(data.pdeActual)),
-      MapEntry('Consumo del mes', Formatters.formatEnergy(data.consumoKwh)),
-      MapEntry('Renuncia sugerida', _formatPercent(data.pdeSugeridoRenuncia)),
-      MapEntry('PDE conservado sugerido',
-          _formatPercent(data.pdeSugeridoConservado)),
-    ];
-
-    if (renuncia != null) {
-      rows.addAll([
-        MapEntry('Renuncia registrada', _formatPercent(renuncia.pdeRenunciado)),
-        MapEntry('Estado', renuncia.estado),
-      ]);
-    }
-
-    return _GradientCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _Header(
-            icon: Icons.volunteer_activism,
-            title: 'Renuncia Voluntaria PDE',
-            subtitle: periodDisplayName,
-          ),
-          SizedBox(height: AppTokens.space20),
-          const PdeProgressTimeline(currentStatus: 6),
-          SizedBox(height: AppTokens.space16),
-          _MessageBox(
-            message: renuncia == null
-                ? 'Puedes liberar parte de tu PDE para que otros miembros oferten por el cuando el admin abra el periodo.'
-                : 'Tu renuncia fue registrada y queda pendiente de revision del administrador.',
-          ),
-          SizedBox(height: AppTokens.space16),
-          _RowsBox(rows: rows),
-          if (renuncia == null) ...[
-            SizedBox(height: AppTokens.space16),
-            _WaiverActionButton(
-              label: 'Renunciar sugerido',
-              description: _formatPercent(data.pdeSugeridoRenuncia),
-              onTap: data.pdeSugeridoRenuncia > 0 ? onSuggestedWaiverTap : null,
-            ),
-            SizedBox(height: AppTokens.space8),
-            _WaiverActionButton(
-              label: 'Renunciar manualmente',
-              description: 'Elegir porcentaje',
-              onTap: onManualWaiverTap,
-            ),
-            SizedBox(height: AppTokens.space8),
-            _WaiverActionButton(
-              label: 'Renunciar todo',
-              description: _formatPercent(data.pdeActual),
-              onTap: data.pdeActual > 0 ? onFullWaiverTap : null,
-            ),
-            SizedBox(height: AppTokens.space8),
-            _WaiverActionButton(
-              label: 'Conservar todo mi PDE',
-              description: 'No liberar porcentaje',
-              onTap: onKeepPdeTap,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _formatPercent(double value) {
-    return '${Formatters.formatNumber(value * 100, decimals: 2)}%';
-  }
-}
-
-class _WaiverActionButton extends StatelessWidget {
-  final String label;
-  final String description;
-  final VoidCallback? onTap;
-
-  const _WaiverActionButton({
-    required this.label,
-    required this.description,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppTokens.borderRadiusMedium,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(AppTokens.space12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: onTap == null ? 0.08 : 0.16),
-          borderRadius: AppTokens.borderRadiusMedium,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    description,
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color:
-                  Colors.white.withValues(alpha: onTap == null ? 0.25 : 0.75),
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _LoadingCard extends StatelessWidget {
