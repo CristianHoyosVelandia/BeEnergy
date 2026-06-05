@@ -393,9 +393,10 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
     final renuncia = status.renuncia;
     final pdeBase = renuncia?.pdeOriginal ?? status.pdeActual;
-    final pdeRenunciado = renuncia?.pdeRenunciado;
+    final pdeRenunciado =
+        renuncia?.pdeRenunciado ?? _selectedRenunciaValue(status);
     final pdeConservado = renuncia == null
-        ? status.pdeSugeridoConservado
+        ? (pdeBase - pdeRenunciado).clamp(0, pdeBase).toDouble()
         : (pdeBase - renuncia.pdeRenunciado).clamp(0, pdeBase).toDouble();
 
     return _CardContainer(
@@ -412,13 +413,15 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             MapEntry('PDE actual', _formatPercent(pdeBase)),
             MapEntry(
                 'Consumo del mes', Formatters.formatEnergy(status.consumoKwh)),
-            MapEntry('Renuncia sugerida',
-                _formatPercent(status.pdeSugeridoRenuncia)),
+            MapEntry(
+              renuncia == null ? 'Renuncia seleccionada' : 'Renuncia sugerida',
+              _formatPercent(pdeRenunciado),
+            ),
             MapEntry(
               renuncia == null ? 'PDE conservado sugerido' : 'Nuevo PDE',
               _formatPercent(pdeConservado),
             ),
-            if (pdeRenunciado != null)
+            if (renuncia != null)
               MapEntry('Renuncia registrada', _formatPercent(pdeRenunciado)),
             if (renuncia != null) MapEntry('Estado', renuncia.estado),
           ]),
@@ -519,6 +522,17 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
   String _formatPercent(double value) {
     return '${Formatters.formatNumber(value * 100, decimals: 2)}%';
+  }
+
+  double _selectedRenunciaValue(PdeRenunciaStatus status) {
+    switch (_selectedOptionIndex) {
+      case 1:
+        return status.pdeActual * 0.25;
+      case 2:
+        return status.pdeActual;
+      default:
+        return status.pdeSugeridoRenuncia;
+    }
   }
 }
 
