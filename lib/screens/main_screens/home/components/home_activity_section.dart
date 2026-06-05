@@ -23,7 +23,17 @@ class HomeActivitySection extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: AppTokens.space12),
+            child: Text(
+              'Actividades',
+              style: context.textStyles.titleMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
+              ),
+            ),
+          ),
           if (isAdminView) ...[
             _CommunityManagementButton(onTap: onCommunityManagementTap),
             SizedBox(height: AppTokens.space12),

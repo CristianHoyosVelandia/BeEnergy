@@ -15,6 +15,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import '../admin/admin_community_offers_screen.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 import '../consumer/pde_suggestion_selection_screen.dart';
+// import 'components/home_activity_section.dart';
 import 'components/home_activity_section.dart';
 import 'components/home_app_bar.dart';
 import 'components/home_energy_card.dart';
@@ -33,6 +34,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const bool _showActivities = false;
+
   final HomeController _controller = HomeController();
 
   int get _currentCommunityId => widget.myUser?.communityId ?? 1;
@@ -799,36 +802,25 @@ class _HomeScreenState extends State<HomeScreen> {
           _priceCardsAdmin(),
           SizedBox(height: AppTokens.space24),
         ],
-        Padding(
-          padding: EdgeInsets.only(
-            left: AppTokens.space16,
-            bottom: AppTokens.space12,
+        if (_showActivities)
+          HomeActivitySection(
+            isAdminView: _isAdminView,
+            onCommunityManagementTap: () =>
+                context.push(CommunityManagementScreen(
+              communityId: _currentCommunityId,
+              communityName: _currentCommunityName,
+            )),
+            onTransferTap: () => context.push(const TradingScreen()),
+            onBolsaTap: () => context.push(const BolsaScreen()),
+            onLearnTap: () {
+              if (widget.myUser == null) {
+                context.showInfoSnackbar(
+                    'No se pudo identificar el usuario actual.');
+                return;
+              }
+              context.push(AprendeScreen(myUser: widget.myUser!));
+            },
           ),
-          child: Text(
-            'Actividades',
-            style: context.textStyles.titleMedium?.copyWith(
-              fontWeight: AppTokens.fontWeightSemiBold,
-            ),
-          ),
-        ),
-        HomeActivitySection(
-          isAdminView: _isAdminView,
-          onCommunityManagementTap: () =>
-              context.push(CommunityManagementScreen(
-            communityId: _currentCommunityId,
-            communityName: _currentCommunityName,
-          )),
-          onTransferTap: () => context.push(const TradingScreen()),
-          onBolsaTap: () => context.push(const BolsaScreen()),
-          onLearnTap: () {
-            if (widget.myUser == null) {
-              context.showInfoSnackbar(
-                  'No se pudo identificar el usuario actual.');
-              return;
-            }
-            context.push(AprendeScreen(myUser: widget.myUser!));
-          },
-        ),
         SizedBox(height: AppTokens.space64),
       ],
     );
