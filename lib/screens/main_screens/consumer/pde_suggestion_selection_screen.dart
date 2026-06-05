@@ -28,10 +28,12 @@ class PdeSuggestionSelectionScreen extends StatefulWidget {
   });
 
   @override
-  State<PdeSuggestionSelectionScreen> createState() => _PdeSuggestionSelectionScreenState();
+  State<PdeSuggestionSelectionScreen> createState() =>
+      _PdeSuggestionSelectionScreenState();
 }
 
-class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScreen> {
+class _PdeSuggestionSelectionScreenState
+    extends State<PdeSuggestionSelectionScreen> {
   final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
   bool _isCreatingOffer = false;
   String? _errorMessage;
@@ -53,7 +55,7 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
 
   List<_PdeSuggestion> get _suggestions {
     // final available = math.max(_availablePDE, 0.01);
-    final available = _availablePDE*100;
+    final available = _availablePDE * 100;
     // print('Available PDE: $available kWh');
     final consumption =
         widget.energyConsumed > 0 ? widget.energyConsumed : available;
@@ -61,7 +63,7 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
 
     return [
       _buildSuggestion(
-        name: 'Escenario bajo',
+        name: 'Escenario 2',
         factor: 0.35,
         pricePerKwh: 550,
         icon: Icons.bolt_outlined,
@@ -72,9 +74,9 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
         available: available,
       ),
       _buildSuggestion(
-        name: 'Escenario medio',
+        name: 'Escenario 1',
         factor: 0.65,
-        pricePerKwh: 545.0,
+        pricePerKwh: 550.0,
         icon: Icons.offline_bolt,
         color: AppTokens.primaryColor,
         explanation:
@@ -83,12 +85,13 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
         available: available,
       ),
       _buildSuggestion(
-        name: 'Escenario alto',
+        name: 'Escenario 3',
         factor: 1,
-        pricePerKwh: 540,
+        pricePerKwh: 550,
         icon: Icons.flash_on,
         color: AppTokens.primaryColor,
-        explanation: 'Busca una mayor cobertura PDE aprovechando la disponibilidad actual.',
+        explanation:
+            'Busca una mayor cobertura PDE aprovechando la disponibilidad actual.',
         maxUsefulEnergy: maxUsefulEnergy,
         available: available,
       ),
@@ -223,7 +226,11 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
                   ),
                 ),
                 SizedBox(height: AppTokens.space12),
-                ...suggestions.map(_buildSuggestionCard),
+                for (var i = 0; i < suggestions.length; i++)
+                  _buildSuggestionCard(
+                    suggestions[i],
+                    highlight: i == 1,
+                  ),
                 SizedBox(height: AppTokens.space8),
                 _buildManualOption(),
                 if (_errorMessage != null) ...[
@@ -282,64 +289,21 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
           ),
           SizedBox(height: AppTokens.space16),
           Text(
-            'Hola $_firstName, de acuerdo con tu consumo y la generación comunitaria disponible, para este periodo te recomendamos solicitar un PDE que podría generarte un ahorro aproximado de ${Formatters.formatCurrency(recommendedSavings, decimals: 0)}.',
-            style: context.textStyles.bodyLarge?.copyWith(
-              height: 1.4,
-              color: AppTokens.grey800,
-            ),
-          ),
-          SizedBox(height: AppTokens.space16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetric(
-                  'Consumo',
-                  Formatters.formatEnergy(widget.energyConsumed),
-                ),
-              ),
-              SizedBox(width: AppTokens.space8),
-              Expanded(
-                child: _buildMetric(
-                  'PDE disponible',
-                  Formatters.formatEnergy(_availablePDE),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetric(String label, String value) {
-    return Container(
-      padding: EdgeInsets.all(AppTokens.space12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F7F9),
-        borderRadius: AppTokens.borderRadiusMedium,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: context.textStyles.bodySmall?.copyWith(
-              color: AppTokens.grey600,
-            ),
-          ),
-          SizedBox(height: AppTokens.space4),
-          Text(
-            value,
+            'Hola $_firstName, de acuerdo con tu consumo y la generación comunitaria disponible, para este periodo te recomendamos solicitar un PDE de:',
             style: context.textStyles.bodyMedium?.copyWith(
-              fontWeight: AppTokens.fontWeightBold,
+              height: 1.4,
+              color: AppTokens.black,
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildSuggestionCard(_PdeSuggestion suggestion) {
+  Widget _buildSuggestionCard(
+    _PdeSuggestion suggestion, {
+    bool highlight = false,
+  }) {
     return Padding(
       padding: EdgeInsets.only(bottom: AppTokens.space8),
       child: Material(
@@ -357,7 +321,10 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: AppTokens.borderRadiusLarge,
-              border: Border.all(color: AppTokens.grey300),
+              border: Border.all(
+                color: highlight ? AppTokens.primaryColor : AppTokens.grey300,
+                width: highlight ? 2 : 1,
+              ),
             ),
             child: Row(
               children: [
@@ -383,7 +350,7 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
                       Text(
                         suggestion.name,
                         style: context.textStyles.bodySmall?.copyWith(
-                          color: AppTokens.grey600,
+                          color: AppTokens.black,
                           fontWeight: AppTokens.fontWeightSemiBold,
                         ),
                       ),
@@ -396,11 +363,11 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
                       ),
                       SizedBox(height: AppTokens.space4),
                       Text(
-                        'Ahorro ${Formatters.formatCurrency(suggestion.estimatedSavings, decimals: 0)}',
+                        '${Formatters.formatCurrency(suggestion.pricePerKwh, decimals: 0)} COP/kWh',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: context.textStyles.bodySmall?.copyWith(
-                          color: AppTokens.grey600,
+                          color: AppTokens.black,
                         ),
                       ),
                     ],
@@ -413,19 +380,19 @@ class _PdeSuggestionSelectionScreenState extends State<PdeSuggestionSelectionScr
                   children: [
                     Text(
                       Formatters.formatCurrency(
-                        suggestion.pricePerKwh,
+                        suggestion.estimatedSavings,
                         decimals: 0,
                       ),
                       style: context.textStyles.titleMedium?.copyWith(
                         fontWeight: AppTokens.fontWeightBold,
-                        color: AppTokens.grey900,
+                        color: AppTokens.primaryColor,
                       ),
                     ),
                     SizedBox(height: AppTokens.space4),
                     Text(
-                      'COP/kWh',
+                      'Ahorro Potencial',
                       style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.grey600,
+                        color: AppTokens.black,
                       ),
                     ),
                   ],

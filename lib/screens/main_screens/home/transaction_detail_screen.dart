@@ -36,10 +36,16 @@ class TransactionDetailScreen extends StatelessWidget {
                   _sectionTitle(context, 'Energía'),
                   SizedBox(height: AppTokens.space12),
                   _dataCard(context, [
-                    _row(context, 'Energía importada desde la red',
-                        Formatters.formatEnergy(energyRecord.energyImported), ' kWh/mes'),
-                    _row(context, 'Energía exportada a la red',
-                        Formatters.formatEnergy(energyRecord.energyExported), ' kWh/mes'),
+                    _row(
+                        context,
+                        'Energía importada desde la red',
+                        Formatters.formatEnergy(energyRecord.energyImported),
+                        ' kWh/mes'),
+                    _row(
+                        context,
+                        'Energía exportada a la red',
+                        Formatters.formatEnergy(energyRecord.energyExported),
+                        ' kWh/mes'),
                   ]),
 
                   SizedBox(height: AppTokens.space20),
@@ -48,14 +54,27 @@ class TransactionDetailScreen extends StatelessWidget {
                   _sectionTitle(context, 'PDE – Distribución de Excedentes'),
                   SizedBox(height: AppTokens.space12),
                   _dataCard(context, [
-                    _row(context, 'Participación en el PDE',
-                        Formatters.formatNumber(pde.sharePercentage * 100, decimals: 2), '%'),
-                    _row(context, 'Energía asignada por PDE',
-                        Formatters.formatEnergy(pde.allocatedEnergy), ' kWh/mes'),
-                    _row(context, 'Excedentes Tipo 1 por PDE',
-                        Formatters.formatEnergy(energyRecord.surplusType1), ' kWh/mes'),
-                    _row(context, 'Excedentes Tipo 2 por PDE',
-                        Formatters.formatEnergy(energyRecord.surplusType2), ' kWh/mes'),
+                    _row(
+                        context,
+                        'Participación en el PDE',
+                        Formatters.formatNumber(pde.sharePercentage * 100,
+                            decimals: 2),
+                        '%'),
+                    _row(
+                        context,
+                        'Energía asignada por PDE',
+                        Formatters.formatEnergy(pde.allocatedEnergy),
+                        ' kWh/mes'),
+                    _row(
+                        context,
+                        'Excedentes Tipo 1 por PDE',
+                        Formatters.formatEnergy(energyRecord.surplusType1),
+                        ' kWh/mes'),
+                    _row(
+                        context,
+                        'Excedentes Tipo 2 por PDE',
+                        Formatters.formatEnergy(energyRecord.surplusType2),
+                        ' kWh/mes'),
                   ]),
 
                   SizedBox(height: AppTokens.space20),
@@ -64,10 +83,12 @@ class TransactionDetailScreen extends StatelessWidget {
                   _sectionTitle(context, 'Mercado P2P'),
                   SizedBox(height: AppTokens.space12),
                   _dataCard(context, [
-                    _row(context, 'Rol en el mercado P2P',
-                        'Comprador', ''),
-                    _row(context, 'Precio de transacción P2P',
-                        '\$${Formatters.formatNumber(FakeDataPhase2.precioP2P.toInt())}', ' COP/kWh'),
+                    _row(context, 'Rol en el mercado P2P', 'Comprador', ''),
+                    _row(
+                        context,
+                        'Precio de transacción P2P',
+                        '\$${Formatters.formatNumber(FakeDataPhase2.precioP2P.toInt())}',
+                        ' COP/kWh'),
                   ]),
 
                   SizedBox(height: AppTokens.space20),
@@ -76,11 +97,17 @@ class TransactionDetailScreen extends StatelessWidget {
                   _sectionTitle(context, 'Económico'),
                   SizedBox(height: AppTokens.space12),
                   _dataCard(context, [
-                    _row(context, 'Costo P2P mensual',
-                        '–\$${Formatters.formatNumber((liquidation['p2pCost'] as double).toInt())}', ' COP',
+                    _row(
+                        context,
+                        'Costo P2P mensual',
+                        '–\$${Formatters.formatNumber((liquidation['p2pCost'] as double).toInt())}',
+                        ' COP',
                         isNegative: true),
-                    _row(context, 'Valor económico mensual (VE)',
-                        '\$${Formatters.formatNumber((liquidation['veMensual'] as double).toInt())}', ' COP',
+                    _row(
+                        context,
+                        'Valor económico mensual (VE)',
+                        '\$${Formatters.formatNumber((liquidation['veMensual'] as double).toInt())}',
+                        ' COP',
                         isNegative: false),
                   ]),
 
@@ -100,7 +127,8 @@ class TransactionDetailScreen extends StatelessWidget {
   }
 
   // ─── AppBar con gradiente ────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar(BuildContext context, String nombre, String apellido) {
+  PreferredSizeWidget _buildAppBar(
+      BuildContext context, String nombre, String apellido) {
     return AppBar(
       toolbarHeight: 60,
       elevation: 0,
@@ -163,7 +191,9 @@ class TransactionDetailScreen extends StatelessWidget {
           for (int i = 0; i < rows.length; i++) ...[
             rows[i],
             if (i < rows.length - 1)
-              Divider(height: 1, color: context.colors.outline.withValues(alpha: 0.1)),
+              Divider(
+                  height: 1,
+                  color: context.colors.outline.withValues(alpha: 0.1)),
           ],
         ],
       ),
@@ -211,8 +241,14 @@ class TransactionDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isNegative
-              ? [AppTokens.primaryColor, AppTokens.primaryColor.withValues(alpha: 0.75)]
-              : [AppTokens.energyGreen, AppTokens.energyGreen.withValues(alpha: 0.75)],
+              ? [
+                  AppTokens.primaryColor,
+                  AppTokens.primaryColor.withValues(alpha: 0.75)
+                ]
+              : [
+                  AppTokens.energyGreen,
+                  AppTokens.energyGreen.withValues(alpha: 0.75)
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

@@ -1,146 +1,681 @@
-import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/config/data_source_config.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/core/utils/logger.dart';
+import 'package:be_energy/data/fake_data.dart';
+import 'package:be_energy/data/fake_data_january_2026.dart';
+import 'package:be_energy/data/fake_data_phase2.dart';
+import 'package:be_energy/data/fake_periods_data.dart';
+import 'package:be_energy/models/models.dart';
 import 'package:be_energy/routes.dart';
-import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
-import '../../../models/models.dart';
-import '../../../data/fake_data.dart';
-import '../../../data/fake_data_phase2.dart';
-import '../../../data/fake_data_january_2026.dart';
-import '../../../data/fake_periods_data.dart';
-import '../../../repositories/domain/pde_period_repository.dart';
-import '../../../repositories/impl/pde_period_repository_api.dart';
-import '../../../core/config/data_source_config.dart';
-import '../../../services/consumer_offer_api_service.dart';
-import 'controllers/home_controller.dart';
-import 'widgets/price_reference_cards.dart';
+import '../admin/admin_community_offers_screen.dart';
 import '../consumer/consumer_marketplace_screen.dart';
 import '../consumer/pde_suggestion_selection_screen.dart';
-import '../admin/admin_community_offers_screen.dart';
+import 'components/home_activity_section.dart';
+import 'components/home_app_bar.dart';
+import 'components/home_energy_card.dart';
+import 'components/home_header.dart';
+import 'components/pde_state_machine/pde_state_machine_card.dart';
+import 'controllers/home_controller.dart';
+import 'widgets/price_reference_cards.dart';
 
 class HomeScreen extends StatefulWidget {
   final MyUser? myUser;
+
   const HomeScreen({super.key, this.myUser});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Metodos metodos = Metodos();
-  String _selectedPeriod =
-      FakePeriodsData.currentPeriod; // Período actual por defecto
-  bool _isAdminView = false; // Vista de usuario por defecto
-  final HomeController _homeController = HomeController();
-
-  // PDE Period Status (API data)
-  PDEPeriodStatus? _pdePeriodStatus;
-  bool _isLoadingPDEStatus = true;
-  final PDEPeriodRepository _pdePeriodRepository = PDEPeriodRepositoryApi();
-
-  // User Period History (API data)
-  UserPeriodHistory? _userPeriodHistory;
-  bool _isLoadingPeriods = true;
+  final HomeController _controller = HomeController();
 
   int get _currentCommunityId => widget.myUser?.communityId ?? 1;
 
   String get _currentCommunityName {
     final name = widget.myUser?.communityName;
-    if (name == null || name.trim().isEmpty) {
-      return 'Comunidad';
-    }
-    return name.trim();
+    return name == null || name.trim().isEmpty ? 'Comunidad' : name.trim();
   }
+
+  String get _selectedPeriod => _controller.selectedPeriod.isEmpty
+      ? FakePeriodsData.currentPeriod
+      : _controller.selectedPeriod;
+
+  bool get _isAdminView => _controller.isAdminView;
 
   @override
   void initState() {
     super.initState();
+    _controller.addListener(_refresh);
     _initializeData();
   }
 
-  /// Inicializa los datos del HomeScreen de forma secuencial
-  Future<void> _initializeData() async {
-    // 1. Primero cargar el historial de períodos (para obtener currentPeriod)
-    await _loadUserPeriods();
-    // 2. Este WS trae codEstado/canCreateOffers y debe ejecutarse siempre para saber si hay PDE disponible.
-    await _loadPDEPeriodStatus();
+  @override
+  void dispose() {
+    _controller.removeListener(_refresh);
+    _controller.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadPriceReferences() async {
-    if (DataSourceConfig.isFake || !_isAdminView || !_isCurrentPeriod) {
-      return;
-    }
-
-    setState(() => _homeController.isLoadingPriceReferences = true);
-
-    await _homeController.loadPriceReferences(
-      communityId: _currentCommunityId,
-      period: _selectedPeriod,
-    );
-
+  void _refresh() {
     if (mounted) {
       setState(() {});
     }
   }
 
-  /// Carga el historial de períodos del usuario desde la API o usa mock data
-  Future<void> _loadUserPeriods() async {
-    // Si ENABLE_MOCKS=true, no llamar al backend
-    if (DataSourceConfig.isFake) {
-      setState(() {
-        _isLoadingPeriods = false;
-      });
-      return;
-    }
-
-    setState(() => _isLoadingPeriods = true);
-
+  Future<void> _initializeData() async {
     try {
-      final userId = widget.myUser?.idUser ?? 1;
-      final history = await _pdePeriodRepository.getUserPeriodHistory(
-        userId: userId,
+      await _controller.initialize(
+        user: widget.myUser,
         communityId: _currentCommunityId,
-        limit: 4,
+        fallbackPeriod: FakePeriodsData.currentPeriod,
+        useFakeData: DataSourceConfig.isFake,
       );
-
-      setState(() {
-        _userPeriodHistory = history;
-        AppLogger.debug('UserPeriodHistory: $history', tag: 'HomeScreen');
-        // SIEMPRE seleccionar el período actual del sistema (viene del backend)
-        _selectedPeriod = history.currentPeriod;
-        _isLoadingPeriods = false;
-      });
-    } catch (e) {
-      setState(() => _isLoadingPeriods = false);
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error inicializando Home',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  /// Carga el estado del periodo PDE desde la API
-  Future<void> _loadPDEPeriodStatus() async {
-    setState(() => _isLoadingPDEStatus = true);
-
-    try {
-      // print('🔍 Cargando estado PDE para periodo: $_selectedPeriod');
-      final status = await _pdePeriodRepository.getPeriodStatus(
-        communityId: _currentCommunityId,
-        period: _selectedPeriod,
-      );
-      // print('✅ Estado PDE recibido: ${status.statusName} (code: ${status.statusCode})');
-      // print('   Puede crear ofertas: ${status.canCreateOffers}');
-      // print('   isPDEAvailable: ${status.isPDEAvailable}');
-
-      setState(() {
-        _pdePeriodStatus = status;
-        _isLoadingPDEStatus = false;
-      });
-    } catch (e, stackTrace) {
-      AppLogger.error('Error cargando estado PDE',
-          tag: 'HomeScreen', error: e, stackTrace: stackTrace);
-      setState(() => _isLoadingPDEStatus = false);
+  Future<void> _reloadPriceReferences() async {
+    if (DataSourceConfig.isFake || !_isAdminView || !_isCurrentPeriod) {
+      return;
     }
+
+    await _controller.loadPriceReferences(
+      communityId: _currentCommunityId,
+      period: _selectedPeriod,
+    );
+  }
+
+  MonthPeriod get _currentPeriodData {
+    return FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
+        FakePeriodsData.currentPeriodData;
+  }
+
+  String get _selectedPeriodDisplayName {
+    final history = _controller.userPeriodHistory;
+    if (!DataSourceConfig.isFake && history != null) {
+      final periodItem = history.periods.firstWhere(
+        (p) => p.period == _selectedPeriod,
+        orElse: () => UserPeriodItem(
+          period: _selectedPeriod,
+          displayName: Formatters.formatPeriodToDisplayName(_selectedPeriod),
+          status: 'current',
+          hasData: false,
+          pdeStatusCode: 0,
+          pdeAvailable: false,
+          energyRecord: EnergyRecordSummary(
+            energyGenerated: 0,
+            energyConsumed: 0,
+            energyExported: 0,
+            energyImported: 0,
+          ),
+        ),
+      );
+      return periodItem.displayName;
+    }
+
+    return _currentPeriodData.displayName;
+  }
+
+  bool get _isCurrentPeriod => _isCurrentPeriodFor(_selectedPeriod);
+
+  bool _isCurrentPeriodFor(String period) {
+    final history = _controller.userPeriodHistory;
+    if (!DataSourceConfig.isFake && history != null) {
+      return period == history.currentPeriod;
+    }
+
+    final periodData = FakePeriodsData.getPeriodByKey(period);
+    return periodData?.status == PeriodStatus.current;
+  }
+
+  Map<String, double> get _selectedPeriodEnergyData {
+    final history = _controller.userPeriodHistory;
+    if (!DataSourceConfig.isFake && history != null) {
+      final periodData = history.periods.firstWhere(
+        (p) => p.period == _selectedPeriod,
+        orElse: () => UserPeriodItem(
+          period: _selectedPeriod,
+          displayName: '',
+          status: 'current',
+          hasData: false,
+          pdeStatusCode: 0,
+          pdeAvailable: false,
+          energyRecord: EnergyRecordSummary(
+            energyGenerated: 0,
+            energyConsumed: 0,
+            energyExported: 0,
+            energyImported: 0,
+          ),
+        ),
+      );
+
+      return {
+        'generated': periodData.energyRecord.energyGenerated,
+        'consumed': periodData.energyRecord.energyConsumed,
+        'exported': periodData.energyRecord.energyExported,
+        'imported': periodData.energyRecord.energyImported,
+      };
+    }
+
+    return {
+      'generated': 0,
+      'consumed': 0,
+      'exported': 0,
+      'imported': 0,
+    };
+  }
+
+  List<GGData> _getChartData() {
+    if (!DataSourceConfig.isFake && _controller.userPeriodHistory != null) {
+      final energyData = _selectedPeriodEnergyData;
+      final chartData = <GGData>[];
+
+      if (energyData['generated']! > 0) {
+        chartData.add(GGData('Generada', energyData['generated']!.toInt()));
+      }
+      if (energyData['consumed']! > 0) {
+        chartData.add(GGData('Consumida', energyData['consumed']!.toInt()));
+      }
+      if (energyData['exported']! > 0) {
+        chartData.add(GGData('Exportada', energyData['exported']!.toInt()));
+      }
+      if (energyData['imported']! > 0) {
+        chartData.add(GGData('Importada', energyData['imported']!.toInt()));
+      }
+
+      return chartData.isEmpty ? [GGData('Sin datos', 1)] : chartData;
+    }
+
+    late dynamic stats;
+    late int p2pEnergy;
+    double? gridImportOverride;
+
+    switch (_selectedPeriod) {
+      case '2026-01':
+        stats = _isAdminView
+            ? FakeDataPhase2.communityStats
+            : FakeDataPhase2.cristianIndividualStatsDec2025;
+        p2pEnergy = FakeDataPhase2.allContracts
+            .fold<double>(0, (sum, c) => sum + c.energyCommitted)
+            .toInt();
+        gridImportOverride = _isAdminView ? 120 : 0;
+        break;
+      case '2025-12':
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+        p2pEnergy = _isAdminView ? 650 : 30;
+        break;
+      default:
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+        p2pEnergy = _isAdminView ? 650 : 30;
+    }
+
+    return [
+      GGData('Directa Solar', stats.totalEnergyGenerated.toInt()),
+      GGData('Red', (gridImportOverride ?? stats.totalEnergyImported).toInt()),
+      GGData('Intercambios P2P', p2pEnergy),
+    ];
+  }
+
+  Widget _energyChart() {
+    return SfCircularChart(
+      legend: Legend(
+        isVisible: true,
+        overflowMode: LegendItemOverflowMode.wrap,
+        textStyle: context.textStyles.bodySmall?.copyWith(
+          fontSize: AppTokens.fontSize10,
+        ),
+        position: LegendPosition.bottom,
+      ),
+      series: <CircularSeries>[
+        DoughnutSeries<GGData, String>(
+          dataSource: _getChartData(),
+          xValueMapper: (data, _) => data.source,
+          yValueMapper: (data, _) => data.value,
+          dataLabelSettings: DataLabelSettings(
+            isVisible: true,
+            labelPosition: ChartDataLabelPosition.outside,
+            connectorLineSettings: const ConnectorLineSettings(
+              type: ConnectorType.curve,
+              length: '10%',
+            ),
+            textStyle: TextStyle(
+              color: context.colors.onSurface,
+              fontSize: AppTokens.fontSize10,
+              fontWeight: AppTokens.fontWeightMedium,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _energyCards() {
+    if (!DataSourceConfig.isFake) {
+      final energyData = _selectedPeriodEnergyData;
+      return Column(
+        children: [
+          HomeEnergyCard(
+            title: 'Generada',
+            energy: energyData['generated']!,
+            amount: 0,
+            icon: Icons.wb_sunny_rounded,
+            color: AppTokens.primaryColor,
+            hideAmount: true,
+          ),
+          SizedBox(height: AppTokens.space8),
+          HomeEnergyCard(
+            title: 'Consumida',
+            energy: energyData['consumed']!,
+            amount: 0,
+            icon: Icons.electric_bolt_rounded,
+            color: AppTokens.primaryColor,
+            hideAmount: true,
+          ),
+          SizedBox(height: AppTokens.space8),
+          HomeEnergyCard(
+            title: 'Exportada',
+            energy: energyData['exported']!,
+            amount: 0,
+            icon: Icons.trending_up_rounded,
+            color: AppTokens.primaryColor,
+            hideAmount: true,
+          ),
+          SizedBox(height: AppTokens.space8),
+          HomeEnergyCard(
+            title: 'Importada',
+            energy: energyData['imported']!,
+            amount: 0,
+            icon: Icons.trending_down_rounded,
+            color: AppTokens.primaryColor,
+            hideAmount: true,
+          ),
+        ],
+      );
+    }
+
+    late CommunityStats stats;
+    late double costPerKwh;
+
+    switch (_selectedPeriod) {
+      case '2026-01':
+        stats = _isAdminView
+            ? FakeDataPhase2.communityStats
+            : FakeDataPhase2.cristianIndividualStatsDec2025;
+        costPerKwh = FakeDataPhase2.mc;
+        break;
+      default:
+        stats = _isAdminView
+            ? FakeData.communityStats
+            : FakeData.cristianIndividualStatsNov2025;
+        costPerKwh = FakeData.regulatedCosts.totalCostPerKwh;
+    }
+
+    final isJan2026 = _selectedPeriod == '2026-01';
+    final firstTitle = isJan2026
+        ? (_isAdminView ? 'Importada de red' : 'Autoconsumo solar')
+        : 'Importe';
+    final firstEnergy =
+        isJan2026 ? (_isAdminView ? 120.0 : 107.7) : stats.totalEnergyImported;
+    final firstIcon = isJan2026 && !_isAdminView
+        ? Icons.light_mode_rounded
+        : Icons.trending_down_rounded;
+    final firstColor =
+        isJan2026 && !_isAdminView ? AppTokens.energyGreen : AppTokens.error;
+
+    return Column(
+      children: [
+        HomeEnergyCard(
+          title: firstTitle,
+          energy: firstEnergy,
+          amount: firstEnergy * costPerKwh,
+          icon: firstIcon,
+          color: firstColor,
+        ),
+        SizedBox(height: AppTokens.space8),
+        HomeEnergyCard(
+          title: 'Exportada',
+          energy: stats.totalEnergyExported,
+          amount: stats.totalEnergyExported * costPerKwh,
+          icon: Icons.trending_up_rounded,
+          color: AppTokens.primaryColor,
+        ),
+        if (isJan2026) ...[
+          SizedBox(height: AppTokens.space8),
+          HomeEnergyCard(
+            title: 'Excedentes totales',
+            energy: FakeDataPhase2.pdeDec2025.excessEnergy,
+            amount: 0,
+            icon: Icons.bolt_rounded,
+            color: AppTokens.primaryPurple,
+            subtitle: 'Disponibles para la comunidad',
+            hideAmount: true,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _energySummary() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space12),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
+        border:
+            Border.all(color: context.colors.outline.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Expanded(flex: 2, child: _energyChart()),
+          SizedBox(width: AppTokens.space12),
+          Expanded(flex: 3, child: _energyCards()),
+        ],
+      ),
+    );
+  }
+
+  Widget _header() {
+    final periodLabel = _currentPeriodData.status == PeriodStatus.current
+        ? 'Actual'
+        : 'Histórico';
+    final title = _isAdminView ? _currentCommunityName : 'Mi Energía';
+    final totalMembers = _isAdminView
+        ? (_selectedPeriod == '2026-01'
+            ? FakeDataPhase2.allMembers.length
+            : FakeData.communityStats.totalMembers)
+        : 1;
+
+    return HomeHeader(
+      title: title,
+      periodLabel: periodLabel,
+      membersLabel:
+          _isAdminView ? '$totalMembers miembros' : 'Vista Individual',
+    );
+  }
+
+  Widget _periodStatusIndicator() {
+    if (DataSourceConfig.isFake) {
+      final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
+          FakePeriodsData.currentPeriodData;
+      return _StatusIndicator(
+        statusColor: periodData.getStatusColor(),
+        statusIcon: periodData.getStatusIcon(),
+        statusText: periodData.getStatusText(),
+        periodLabel: periodData.displayName,
+        isCurrentMonth: periodData.status == PeriodStatus.current,
+        onTap: _showPeriodSelectorModal,
+      );
+    }
+
+    final history = _controller.userPeriodHistory;
+    if (history == null) {
+      return _StatusIndicator(
+        statusColor: context.colors.onSurfaceVariant,
+        statusIcon: Icons.calendar_month_outlined,
+        statusText: 'SIN DATOS',
+        periodLabel: Formatters.formatCurrentPeriodDisplayName(),
+        isCurrentMonth: false,
+        onTap: _showPeriodSelectorModal,
+      );
+    }
+
+    final periodIndex =
+        history.periods.indexWhere((p) => p.period == _selectedPeriod);
+    if (periodIndex != -1) {
+      final periodItem = history.periods[periodIndex];
+      return _StatusIndicator(
+        statusColor: periodItem.getStatusColor(),
+        statusIcon: periodItem.getStatusIcon(),
+        statusText: periodItem.getStatusText(),
+        periodLabel: periodItem.displayName,
+        isCurrentMonth: periodItem.isCurrentPeriod,
+        onTap: _showPeriodSelectorModal,
+      );
+    }
+
+    final isCurrent = _selectedPeriod == history.currentPeriod;
+    return _StatusIndicator(
+      statusColor:
+          isCurrent ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
+      statusIcon:
+          isCurrent ? Icons.auto_awesome : Icons.calendar_month_outlined,
+      statusText: isCurrent ? 'NUEVO MODELO' : 'MES CERRADO',
+      periodLabel: Formatters.formatPeriodToDisplayName(_selectedPeriod),
+      isCurrentMonth: isCurrent,
+      onTap: _showPeriodSelectorModal,
+    );
+  }
+
+  void _showPeriodSelectorModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.45),
+          decoration: BoxDecoration(
+            color: this.context.colors.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(AppTokens.space20),
+              topRight: Radius.circular(AppTokens.space20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: EdgeInsets.only(top: AppTokens.space12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: this
+                      .context
+                      .colors
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: AppTokens.space16),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppTokens.space20),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month_rounded,
+                        color: this.context.colors.primary),
+                    SizedBox(width: AppTokens.space12),
+                    Text(
+                      'Seleccionar Período',
+                      style: this.context.textStyles.titleLarge?.copyWith(
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: AppTokens.space20),
+              Expanded(
+                child: _controller.isLoadingPeriods
+                    ? const Center(child: CircularProgressIndicator())
+                    : _periodsList(),
+              ),
+              SizedBox(height: AppTokens.space20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _periodsList() {
+    if (DataSourceConfig.isFake) {
+      return SingleChildScrollView(
+        child: Column(
+          children: FakePeriodsData.availablePeriods.map((period) {
+            final metadata = FakePeriodsData.getPeriodMetadata(period.period);
+            return _PeriodOption(
+              period: period.period,
+              selectedPeriod: _selectedPeriod,
+              title: period.displayName,
+              subtitle:
+                  metadata?['description'] ?? 'Datos de comunidad energética',
+              icon: period.getStatusIcon(),
+              iconColor: period.getStatusColor(),
+              badge: _fakePeriodBadge(period),
+              enabled: period.hasData,
+              onTap: _selectPeriod,
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    final history = _controller.userPeriodHistory;
+    final options = <Widget>[];
+
+    if (history != null) {
+      final hasCurrentData =
+          history.periods.any((p) => p.period == history.currentPeriod);
+      if (!hasCurrentData) {
+        options.add(_PeriodOption(
+          period: history.currentPeriod,
+          selectedPeriod: _selectedPeriod,
+          title: Formatters.formatPeriodToDisplayName(history.currentPeriod),
+          subtitle: _controller.pdePeriodStatus?.canCreateOffers == true
+              ? 'PDE Disponible - Puedes crear ofertas'
+              : 'Sin datos disponibles',
+          icon: Icons.auto_awesome,
+          iconColor: AppTokens.primaryColor,
+          badge: '✨',
+          onTap: _selectPeriod,
+        ));
+      }
+
+      for (final period in history.periods) {
+        options.add(_PeriodOption(
+          period: period.period,
+          selectedPeriod: _selectedPeriod,
+          title: period.displayName,
+          subtitle:
+              'Consumo: ${Formatters.formatEnergy(period.energyRecord.energyConsumed)} • Generación: ${Formatters.formatEnergy(period.energyRecord.energyGenerated)}',
+          icon: period.getStatusIcon(),
+          iconColor: period.getStatusColor(),
+          badge: period.getStatusBadge(),
+          enabled: period.hasData,
+          onTap: _selectPeriod,
+        ));
+      }
+    }
+
+    if (options.isEmpty) {
+      return Center(
+        child: Text(
+          'Sin períodos disponibles',
+          style: context.textStyles.bodyLarge?.copyWith(
+            color: context.colors.onSurfaceVariant,
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(child: Column(children: options));
+  }
+
+  String _fakePeriodBadge(MonthPeriod period) {
+    switch (period.status) {
+      case PeriodStatus.current:
+        return '✨';
+      case PeriodStatus.historical:
+        return period.hasData ? '🔄' : '📊';
+      case PeriodStatus.future:
+        return '🔒';
+    }
+  }
+
+  Future<void> _selectPeriod(String period, String title) async {
+    Navigator.pop(context);
+    try {
+      await _controller.changePeriod(
+        period: period,
+        user: widget.myUser,
+        communityId: _currentCommunityId,
+        shouldLoadPriceReferences: _isAdminView && _isCurrentPeriodFor(period),
+      );
+      if (mounted) {
+        context.showInfoSnackbar('Período cambiado a $title');
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error cambiando período',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Widget _pdeCard() {
+    return PdeStateMachineCard(
+      isLoadingStatus: _controller.isLoadingPDEStatus,
+      isLoadingOffer: _controller.isLoadingBuyerOffer,
+      isAdminView: _isAdminView,
+      periodDisplayName: _selectedPeriodDisplayName,
+      status: _controller.pdePeriodStatus,
+      buyerOffer: _controller.buyerOffer,
+      onAvailableTap: _handleAvailablePdeTap,
+      onAdminClosedTap: _navigateToAdminOffers,
+      onMoveToReconciliationTap: _showConfirmReconciliationModal,
+    );
+  }
+
+  void _handleAvailablePdeTap() {
+    if (_isAdminView) {
+      _navigateToAdminOffers();
+      return;
+    }
+
+    if (widget.myUser == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    if (_controller.buyerOffer?.status == ConsumerOfferStatus.pending) {
+      _navigateToConsumerMarketplace();
+    } else {
+      _navigateToPdeSuggestions();
+    }
+  }
+
+  void _navigateToAdminOffers() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdminCommunityOffersScreen(
+          period: _selectedPeriod,
+          communityId: _currentCommunityId,
+          communityName: _currentCommunityName,
+        ),
+      ),
+    );
   }
 
   void _navigateToConsumerMarketplace() {
@@ -181,628 +716,174 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _handleConsumerPDETap() async {
-    final userId = widget.myUser?.idUser;
-    if (userId == null) {
-      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
-      return;
-    }
-
-    if (_pdePeriodStatus?.isPDEAvailable != true) {
-      _navigateToConsumerMarketplace();
-      return;
-    }
-
-    showDialog<void>(
+  void _showConfirmReconciliationModal() {
+    showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final apiService = ConsumerOfferApiService();
-      final offer = await apiService.getBuyerOfferForPeriod(
-        userId,
-        _selectedPeriod,
-      );
-
-      if (!mounted) return;
-      Navigator.of(context).pop();
-
-      if (offer?.status == ConsumerOfferStatus.pending) {
-        _navigateToConsumerMarketplace();
-      } else {
-        _navigateToPdeSuggestions();
-      }
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      _navigateToConsumerMarketplace();
-    }
-  }
-
-  /// Obtiene el período seleccionado como objeto MonthPeriod
-  MonthPeriod get _currentPeriodData {
-    return FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
-        FakePeriodsData.currentPeriodData;
-  }
-
-  /// Obtiene el nombre formateado del período seleccionado
-  String get _selectedPeriodDisplayName {
-    // Si estamos usando datos del backend
-    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
-      final periodItem = _userPeriodHistory!.periods.firstWhere(
-        (p) => p.period == _selectedPeriod,
-        orElse: () => UserPeriodItem(
-          period: _selectedPeriod,
-          displayName: Formatters.formatPeriodToDisplayName(_selectedPeriod),
-          status: 'current',
-          hasData: false,
-          pdeStatusCode: 0,
-          pdeAvailable: false,
-          energyRecord: EnergyRecordSummary(
-            energyGenerated: 0,
-            energyConsumed: 0,
-            energyExported: 0,
-            energyImported: 0,
-          ),
-        ),
-      );
-      return periodItem.displayName;
-    }
-
-    // Si estamos usando mock data
-    return _currentPeriodData.displayName;
-  }
-
-  /// Verifica si el período seleccionado es el actual
-  bool get _isCurrentPeriod {
-    // Si estamos usando datos del backend
-    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
-      return _selectedPeriod == _userPeriodHistory!.currentPeriod;
-    }
-    // Si estamos usando mock data
-    return _currentPeriodData.status == PeriodStatus.current;
-  }
-
-  /// Obtiene los datos energéticos del período seleccionado (desde backend o mock)
-  Map<String, double> get _selectedPeriodEnergyData {
-    // Si ENABLE_MOCKS=false, buscar datos en UserPeriodHistory
-    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
-      // Buscar el período seleccionado en la lista de períodos con datos
-      final periodData = _userPeriodHistory!.periods.firstWhere(
-        (p) => p.period == _selectedPeriod,
-        orElse: () => UserPeriodItem(
-          period: _selectedPeriod,
-          displayName: '',
-          status: 'current',
-          hasData: false,
-          pdeStatusCode: 0,
-          pdeAvailable: false,
-          energyRecord: EnergyRecordSummary(
-            energyGenerated: 0,
-            energyConsumed: 0,
-            energyExported: 0,
-            energyImported: 0,
-          ),
-        ),
-      );
-
-      return {
-        'generated': periodData.energyRecord.energyGenerated,
-        'consumed': periodData.energyRecord.energyConsumed,
-        'exported': periodData.energyRecord.energyExported,
-        'imported': periodData.energyRecord.energyImported,
-      };
-    }
-
-    return {
-      'generated': 0,
-      'consumed': 0,
-      'exported': 0,
-      'imported': 0,
-    };
-  }
-
-  // Transacciones P2P según período seleccionado
-  List<Map<String, dynamic>> get data {
-    // Enero 2026: ingreso por PDE del consumidor
-    if (_selectedPeriod == '2026-01') {
-      final pde = FakeDataPhase2.pdeDec2025;
-      final totalCost =
-          pde.allocatedEnergy * FakeDataPhase2.precioP2P; // 41.21 × 400 = 16484
-      final consumer = FakeDataPhase2.cristianHoyos;
-      return [
-        {
-          'numTransaccion': 1,
-          'entrada': true,
-          'nombre': '${consumer.userName} ${consumer.userLastName}',
-          'dinero': Formatters.formatCurrency(totalCost),
-          'energia': Formatters.formatEnergy(pde.allocatedEnergy),
-          'fecha': 'Ene 2026',
-          'fuente': 'PDE',
-        },
-      ];
-    }
-
-    // Períodos históricos: mapear desde contratos
-    List contracts;
-    switch (_selectedPeriod) {
-      case '2025-12': // Diciembre 2025 - Modelo antiguo
-        contracts = FakeDataPhase2.allContracts.take(5).toList();
-        break;
-      default: // Históricos
-        contracts = FakeData.p2pContracts.take(5).toList();
-    }
-    return contracts.asMap().entries.map((entry) {
-      final index = entry.key;
-      final contract = entry.value;
-      final isIncome = contract.sellerId == (widget.myUser?.idUser ?? 24);
-      final nombre = isIncome ? contract.buyerName : contract.sellerName;
-
-      final fecha =
-          '${contract.createdAt.day}-${Formatters.shortMonthName(contract.createdAt.month)}';
-
-      return {
-        'numTransaccion': index + 1,
-        'entrada': isIncome,
-        'nombre': nombre,
-        'dinero': Formatters.formatCurrency(contract.totalValue),
-        'energia': Formatters.formatEnergy(contract.energyCommitted),
-        'fecha': fecha,
-        'fuente': 'P2P'
-      };
-    }).toList();
-  }
-
-  List<GGData> _getChartData() {
-    // Si ENABLE_MOCKS=false, usar datos del backend
-    if (!DataSourceConfig.isFake && _userPeriodHistory != null) {
-      final energyData = _selectedPeriodEnergyData;
-
-      // Verificar si todos los valores son 0
-      final allZero = energyData['generated'] == 0 &&
-          energyData['consumed'] == 0 &&
-          energyData['exported'] == 0 &&
-          energyData['imported'] == 0;
-
-      // Si todos son 0, retornar datos con un valor mínimo para mostrar el gráfico
-      if (allZero) {
-        return [
-          GGData('Sin datos', 1),
-        ];
-      }
-
-      // Filtrar solo valores mayores a 0 para el gráfico
-      final List<GGData> chartData = [];
-
-      if (energyData['generated']! > 0) {
-        chartData.add(GGData('Generada', energyData['generated']!.toInt()));
-      }
-      if (energyData['consumed']! > 0) {
-        chartData.add(GGData('Consumida', energyData['consumed']!.toInt()));
-      }
-      if (energyData['exported']! > 0) {
-        chartData.add(GGData('Exportada', energyData['exported']!.toInt()));
-      }
-      if (energyData['imported']! > 0) {
-        chartData.add(GGData('Importada', energyData['imported']!.toInt()));
-      }
-
-      return chartData.isNotEmpty ? chartData : [GGData('Sin datos', 1)];
-    }
-
-    // Mock data logic - solo cuando ENABLE_MOCKS=true
-    late dynamic stats;
-    late int p2pEnergy;
-    double? gridImportOverride;
-
-    switch (_selectedPeriod) {
-      case '2026-01':
-        stats = _isAdminView
-            ? FakeDataPhase2.communityStats
-            : FakeDataPhase2.cristianIndividualStatsDec2025;
-
-        p2pEnergy = FakeDataPhase2.allContracts
-            .fold<double>(0, (sum, c) => sum + c.energyCommitted)
-            .toInt();
-
-        gridImportOverride = _isAdminView ? 120.0 : 0.0;
-        break;
-
-      case '2025-12':
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-
-        p2pEnergy = _isAdminView ? 650 : 30;
-        break;
-
-      default:
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-
-        p2pEnergy = _isAdminView ? 650 : 30;
-    }
-
-    final List<GGData> chartData = [
-      GGData('Directa Solar', stats.totalEnergyGenerated.toInt()),
-      GGData('Red', (gridImportOverride ?? stats.totalEnergyImported).toInt()),
-      GGData('Intercambios P2P', p2pEnergy),
-    ];
-    return chartData;
-  }
-
-  Widget _grafico() {
-    List<GGData> dataCircularSeries = _getChartData();
-    return SfCircularChart(
-      legend: Legend(
-        isVisible: true,
-        overflowMode: LegendItemOverflowMode.wrap,
-        textStyle: context.textStyles.bodySmall?.copyWith(
-          fontSize: AppTokens.fontSize10,
-        ),
-        position: LegendPosition.bottom,
-      ),
-      series: <CircularSeries>[
-        DoughnutSeries<GGData, String>(
-          dataSource: dataCircularSeries,
-          xValueMapper: (data, _) => data.fuente,
-          yValueMapper: (datum, _) => datum.consumo,
-          dataLabelSettings: DataLabelSettings(
-            isVisible: true,
-            labelPosition: ChartDataLabelPosition.outside,
-            connectorLineSettings: ConnectorLineSettings(
-              type: ConnectorType.curve,
-              length: '10%',
-            ),
-            textStyle: TextStyle(
-              color: context.colors.onSurface,
-              fontSize: AppTokens.fontSize10,
-              fontWeight: AppTokens.fontWeightMedium,
-            ),
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _trData() {
-    // Si ENABLE_MOCKS=false, usar datos del backend
-    if (!DataSourceConfig.isFake) {
-      final energyData = _selectedPeriodEnergyData;
-
-      return Column(
-        children: [
-          _energyCard(
-            title: "Generada",
-            energy: energyData['generated']!,
-            amount: 0,
-            icon: Icons.wb_sunny_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          _energyCard(
-            title: "Consumida",
-            energy: energyData['consumed']!,
-            amount: 0,
-            icon: Icons.electric_bolt_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          _energyCard(
-            title: "Exportada",
-            energy: energyData['exported']!,
-            amount: 0,
-            icon: Icons.trending_up_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          _energyCard(
-            title: "Importada",
-            energy: energyData['imported']!,
-            amount: 0,
-            icon: Icons.trending_down_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-        ],
-      );
-    }
-
-    // Si ENABLE_MOCKS=true, usar datos mock (lógica existente)
-    late CommunityStats stats;
-    late double costPerKwh;
-
-    switch (_selectedPeriod) {
-      case '2026-01':
-        stats = _isAdminView
-            ? FakeDataPhase2.communityStats
-            : FakeDataPhase2.cristianIndividualStatsDec2025;
-        costPerKwh = FakeDataPhase2.mc; // MC = 300 COP/kWh
-        break;
-      default:
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-        costPerKwh = FakeData.regulatedCosts.totalCostPerKwh;
-    }
-
-    // Para 2026-01: la primera tarjeta depende de la vista
-    // Prosumidor: Autoconsumo (107.7 kWh desde solar, no es importación de red)
-    // Admin: Importada de red (120 kWh, solo el consumidor k₁)
-    final bool isJan2026 = _selectedPeriod == '2026-01';
-    final String firstTitle = isJan2026
-        ? (_isAdminView ? "Importada de red" : "Autoconsumo solar")
-        : "Importe";
-    final double firstEnergy = isJan2026
-        ? (_isAdminView
-            ? 120.0
-            : 107.7) // Admin: red del consumidor | Prosumidor: autoconsumo
-        : stats.totalEnergyImported;
-    final IconData firstIcon = isJan2026 && !_isAdminView
-        ? Icons.light_mode_rounded // sol para autoconsumo
-        : Icons.trending_down_rounded;
-    final Color firstColor = isJan2026 && !_isAdminView
-        ? AppTokens.energyGreen // verde para autoconsumo solar
-        : AppTokens.error;
-
-    final exportEnergy = stats.totalEnergyExported;
-
-    return Column(
-      children: [
-        _energyCard(
-          title: firstTitle,
-          energy: firstEnergy,
-          amount: firstEnergy * costPerKwh,
-          icon: firstIcon,
-          color: firstColor,
-        ),
-        SizedBox(height: AppTokens.space8),
-        _energyCard(
-          title: "Exportada",
-          energy: exportEnergy,
-          amount: exportEnergy * costPerKwh,
-          icon: Icons.trending_up_rounded,
-          color: AppTokens.primaryColor,
-        ),
-        // Excedentes totales – solo para enero 2026
-        if (isJan2026) ...[
-          SizedBox(height: AppTokens.space8),
-          _energyCard(
-            title: "Excedentes totales",
-            energy: FakeDataPhase2.pdeDec2025.excessEnergy, // 412.5 kWh
-            amount: 0, // No tiene valor monetario directo; se oculta en el card
-            icon: Icons.bolt_rounded,
-            color: AppTokens.primaryPurple,
-            subtitle: "Disponibles para la comunidad",
-            hideAmount: true,
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Widget reutilizable para mostrar tarjetas de energía (import/export)
-  Widget _energyCard({
-    required String title,
-    required double energy,
-    required double amount,
-    required IconData icon,
-    required Color color,
-    String? subtitle,
-    bool hideAmount = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(AppTokens.space12),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(AppTokens.space8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: AppTokens.borderRadiusSmall,
-            ),
-            child: Icon(
-              icon,
-              size: 18,
-              color: color,
-            ),
-          ),
-          SizedBox(width: AppTokens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: context.textStyles.labelSmall?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                    fontWeight: AppTokens.fontWeightMedium,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    subtitle,
-                    style: context.textStyles.labelSmall?.copyWith(
-                      color: context.colors.onSurfaceVariant,
-                      fontSize: AppTokens.fontSize10,
-                    ),
-                  ),
-                ],
-                SizedBox(height: AppTokens.space4),
-                Text(
-                  Formatters.formatEnergy(energy, decimals: 2),
-                  style: context.textStyles.titleMedium?.copyWith(
-                    color: color,
-                    fontWeight: AppTokens.fontWeightBold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (!hideAmount) ...[
-                  SizedBox(height: AppTokens.space4),
-                  Text(
-                    Formatters.formatCurrency(amount),
-                    style: context.textStyles.titleMedium?.copyWith(
-                      color: color,
-                      fontWeight: AppTokens.fontWeightSemiBold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _saludoText() {
-    // Determinar datos según vista (Admin/Usuario) y período seleccionado
-    final periodData = _currentPeriodData;
-    final periodLabel =
-        periodData.status == PeriodStatus.current ? 'Actual' : 'Histórico';
-
-    // Texto descriptivo según vista
-    final viewLabel = _isAdminView ? _currentCommunityName : 'Mi Energía';
-
-    // Determinar total de miembros según período
-    late int totalMembers;
-    if (_isAdminView) {
-      totalMembers = _selectedPeriod == '2026-01'
-          ? FakeDataPhase2.allMembers.length
-          : FakeData.communityStats.totalMembers;
-    } else {
-      totalMembers = 1; // Vista usuario: solo 1 (usuario individual)
-    }
-
-    final membersLabel =
-        _isAdminView ? '$totalMembers miembros' : 'Vista Individual';
-
-    return Container(
-      width: context.width,
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTokens.space16,
-        vertical: AppTokens.space12,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            viewLabel,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+          title: Text(
+            'Confirmar Cambio de Estado',
             style: context.textStyles.titleLarge?.copyWith(
               fontWeight: AppTokens.fontWeightBold,
             ),
           ),
-          SizedBox(height: AppTokens.space4),
-          Text(
-            "$periodLabel • $membersLabel",
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
-            ),
+          content: Text(
+            '¿Desea pasar el periodo $_selectedPeriodDisplayName a estado "En Conciliación"?',
           ),
-        ],
-      ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _updatePeriodStatus(4);
+              },
+              child: const Text('Confirmar'),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  /// Indicador visual compacto de estado mensual con botón para cambiar período
-  Widget _buildMonthlyStatusIndicator() {
-    // Si ENABLE_MOCKS=true, usar FakePeriodsData
-    if (DataSourceConfig.isFake) {
-      final periodData = FakePeriodsData.getPeriodByKey(_selectedPeriod) ??
-          FakePeriodsData.currentPeriodData;
-
-      return _buildStatusIndicatorWidget(
-        statusColor: periodData.getStatusColor(),
-        statusIcon: periodData.getStatusIcon(),
-        statusText: periodData.getStatusText(),
-        periodLabel: periodData.displayName,
-        isCurrentMonth: periodData.status == PeriodStatus.current,
+  Future<void> _updatePeriodStatus(int newStatusCode) async {
+    try {
+      context.showInfoSnackbar('Actualizando estado del periodo...');
+      final status = await _controller.updatePeriodStatus(
+        communityId: _currentCommunityId,
+        newStatusCode: newStatusCode,
       );
-    }
-
-    // Si ENABLE_MOCKS=false, verificar si el período seleccionado tiene datos
-    if (_userPeriodHistory != null) {
-      // Buscar si el período seleccionado está en la lista de períodos con datos
-      final periodIndex = _userPeriodHistory!.periods.indexWhere(
-        (p) => p.period == _selectedPeriod,
+      if (mounted) {
+        context.showInfoSnackbar('Estado actualizado a: ${status.statusName}');
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error actualizando estado del periodo',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
       );
-
-      if (periodIndex != -1) {
-        // El período seleccionado tiene datos históricos
-        final periodItem = _userPeriodHistory!.periods[periodIndex];
-        return _buildStatusIndicatorWidget(
-          statusColor: periodItem.getStatusColor(),
-          statusIcon: periodItem.getStatusIcon(),
-          statusText: periodItem.getStatusText(),
-          periodLabel: periodItem.displayName,
-          isCurrentMonth: periodItem.isCurrentPeriod,
-        );
-      } else {
-        // El período seleccionado NO tiene datos (ej: período actual sin registros)
-        // Verificar si es el período actual del sistema
-        final isCurrentPeriod =
-            _selectedPeriod == _userPeriodHistory!.currentPeriod;
-
-        return _buildStatusIndicatorWidget(
-          statusColor: isCurrentPeriod
-              ? AppTokens.primaryColor
-              : context.colors.onSurfaceVariant,
-          statusIcon: isCurrentPeriod
-              ? Icons.auto_awesome
-              : Icons.calendar_month_outlined,
-          statusText: isCurrentPeriod ? 'NUEVO MODELO' : 'MES CERRADO',
-          periodLabel: _formatPeriodLabel(_selectedPeriod),
-          isCurrentMonth: isCurrentPeriod,
-        );
+      if (mounted) {
+        context.showInfoSnackbar('Error al actualizar estado: $e');
       }
     }
+  }
 
-    // Si ENABLE_MOCKS=false PERO _userPeriodHistory es null (error de carga)
-    return _buildStatusIndicatorWidget(
-      statusColor: context.colors.onSurfaceVariant,
-      statusIcon: Icons.calendar_month_outlined,
-      statusText: 'SIN DATOS',
-      periodLabel: _formatCurrentPeriod(),
-      isCurrentMonth: false,
+  Widget _priceCardsAdmin() {
+    return PriceReferenceCards(
+      prices: _controller.priceReferences,
+      isLoading: _controller.isLoadingPriceReferences,
+      error: _controller.priceReferencesError,
+      onRetry: _reloadPriceReferences,
     );
   }
 
-  /// Formatea el período actual en español
-  String _formatCurrentPeriod() {
-    return Formatters.formatCurrentPeriodDisplayName();
+  Widget _body() {
+    return ListView(
+      padding:
+          EdgeInsets.only(top: AppTokens.space16, bottom: AppTokens.space24),
+      children: [
+        _header(),
+        SizedBox(height: AppTokens.space16),
+        _periodStatusIndicator(),
+        SizedBox(height: AppTokens.space16),
+        _pdeCard(),
+        SizedBox(height: AppTokens.space16),
+        _energySummary(),
+        SizedBox(height: AppTokens.space24),
+        if (_isAdminView && _isCurrentPeriod) ...[
+          _priceCardsAdmin(),
+          SizedBox(height: AppTokens.space24),
+        ],
+        Padding(
+          padding: EdgeInsets.only(
+            left: AppTokens.space16,
+            bottom: AppTokens.space12,
+          ),
+          child: Text(
+            'Actividades',
+            style: context.textStyles.titleMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightSemiBold,
+            ),
+          ),
+        ),
+        HomeActivitySection(
+          isAdminView: _isAdminView,
+          onCommunityManagementTap: () =>
+              context.push(CommunityManagementScreen(
+            communityId: _currentCommunityId,
+            communityName: _currentCommunityName,
+          )),
+          onTransferTap: () => context.push(const TradingScreen()),
+          onBolsaTap: () => context.push(const BolsaScreen()),
+          onLearnTap: () {
+            if (widget.myUser == null) {
+              context.showInfoSnackbar(
+                  'No se pudo identificar el usuario actual.');
+              return;
+            }
+            context.push(AprendeScreen(myUser: widget.myUser!));
+          },
+        ),
+        SizedBox(height: AppTokens.space64),
+      ],
+    );
   }
 
-  /// Formatea un período YYYY-MM a formato legible (ej: "Marzo 2026")
-  String _formatPeriodLabel(String period) {
-    return Formatters.formatPeriodToDisplayName(period);
-  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: HomeAppBar(
+        userName: widget.myUser?.nombre ?? 'Cristian',
+        canToggleAdminView: widget.myUser?.role != null &&
+            (widget.myUser!.role == 3 || widget.myUser!.role == 4),
+        isAdminView: _isAdminView,
+        onToggleAdminView: () async {
+          _controller.toggleAdminView();
+          await _reloadPriceReferences();
+          if (!mounted) {
+            return;
+          }
 
-  /// Widget del indicador de estado (extraído para reutilización)
-  Widget _buildStatusIndicatorWidget({
-    required Color statusColor,
-    required IconData statusIcon,
-    required String statusText,
-    required String periodLabel,
-    required bool isCurrentMonth,
-  }) {
+          this.context.showInfoSnackbar(
+                _isAdminView
+                    ? 'Vista: $_currentCommunityName'
+                    : 'Vista: Usuario',
+              );
+        },
+        onNotificationsTap: () => context.push(const NotificacionesScreen()),
+      ),
+      backgroundColor: context.colors.surface,
+      body: _body(),
+    );
+  }
+}
+
+class _StatusIndicator extends StatelessWidget {
+  final Color statusColor;
+  final IconData statusIcon;
+  final String statusText;
+  final String periodLabel;
+  final bool isCurrentMonth;
+  final VoidCallback onTap;
+
+  const _StatusIndicator({
+    required this.statusColor,
+    required this.statusIcon,
+    required this.statusText,
+    required this.periodLabel,
+    required this.isCurrentMonth,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: _showPeriodSelectorModal,
+      onTap: onTap,
       borderRadius: AppTokens.borderRadiusMedium,
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -810,14 +891,11 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: statusColor.withValues(alpha: 0.1),
           borderRadius: AppTokens.borderRadiusMedium,
-          border: Border.all(
-            color: statusColor.withValues(alpha: 0.5),
-            width: 2,
-          ),
+          border:
+              Border.all(color: statusColor.withValues(alpha: 0.5), width: 2),
         ),
         child: Row(
           children: [
-            // Indicador pulsante para mes en curso
             if (isCurrentMonth)
               Container(
                 width: 10,
@@ -838,11 +916,7 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               Container(
                 margin: EdgeInsets.only(right: AppTokens.space8),
-                child: Icon(
-                  statusIcon,
-                  color: statusColor,
-                  size: 16,
-                ),
+                child: Icon(statusIcon, color: statusColor, size: 16),
               ),
             Expanded(
               child: Column(
@@ -866,298 +940,51 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            // Botón de cambio de período
             Container(
               padding: EdgeInsets.all(AppTokens.space8),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.15),
                 borderRadius: AppTokens.borderRadiusSmall,
               ),
-              child: Icon(
-                Icons.swap_horiz_rounded,
-                color: statusColor,
-                size: 20,
-              ),
+              child:
+                  Icon(Icons.swap_horiz_rounded, color: statusColor, size: 20),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  /// Muestra modal de selección de período
-  void _showPeriodSelectorModal() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.45,
-          ),
-          decoration: BoxDecoration(
-            color: this.context.colors.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(AppTokens.space20),
-              topRight: Radius.circular(AppTokens.space20),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle bar
-              Container(
-                margin: EdgeInsets.only(top: AppTokens.space12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: this
-                      .context
-                      .colors
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              SizedBox(height: AppTokens.space16),
-              // Header
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppTokens.space20),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_month_rounded,
-                      color: this.context.colors.primary,
-                      size: 24,
-                    ),
-                    SizedBox(width: AppTokens.space12),
-                    Text(
-                      'Seleccionar Período',
-                      style: this.context.textStyles.titleLarge?.copyWith(
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: AppTokens.space20),
-              // Lista de períodos con scroll
-              Expanded(
-                child: _isLoadingPeriods
-                    ? Center(child: CircularProgressIndicator())
-                    : _buildPeriodsList(),
-              ),
-              SizedBox(height: AppTokens.space20),
-            ],
-          ),
-        );
-      },
-    );
-  }
+class _PeriodOption extends StatelessWidget {
+  final String period;
+  final String selectedPeriod;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final String badge;
+  final bool enabled;
+  final Future<void> Function(String period, String title) onTap;
 
-  /// Construye la lista de períodos según la fuente de datos (API o Mock)
-  Widget _buildPeriodsList() {
-    // Si ENABLE_MOCKS=true, SIEMPRE usar FakePeriodsData
-    if (DataSourceConfig.isFake) {
-      return _buildFakePeriodsListView();
-    }
+  const _PeriodOption({
+    required this.period,
+    required this.selectedPeriod,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.badge,
+    required this.onTap,
+    this.enabled = true,
+  });
 
-    // Si ENABLE_MOCKS=false, SIEMPRE usar datos del backend (aunque estén vacíos)
-    return _buildApiPeriodsListView();
-  }
-
-  /// Lista de períodos desde FakePeriodsData (ENABLE_MOCKS=true)
-  Widget _buildFakePeriodsListView() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          ...FakePeriodsData.availablePeriods.map((period) {
-            final metadata = FakePeriodsData.getPeriodMetadata(period.period);
-            final subtitle =
-                metadata?['description'] ?? 'Datos de comunidad energética';
-
-            // Determinar badge según estado
-            String badge;
-            switch (period.status) {
-              case PeriodStatus.current:
-                badge = '✨';
-                break;
-              case PeriodStatus.historical:
-                badge = period.hasData ? '🔄' : '📊';
-                break;
-              case PeriodStatus.future:
-                badge = '🔒';
-                break;
-            }
-
-            return Column(
-              children: [
-                if (FakePeriodsData.availablePeriods.indexOf(period) > 0)
-                  Divider(
-                      height: 1,
-                      color:
-                          this.context.colors.outline.withValues(alpha: 0.1)),
-                _buildModalPeriodOption(
-                  period: period.period,
-                  title: period.displayName,
-                  subtitle: subtitle,
-                  icon: period.getStatusIcon(),
-                  iconColor: period.getStatusColor(),
-                  badge: badge,
-                  enabled: period.hasData,
-                ),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  /// Lista de períodos desde API (ENABLE_MOCKS=false)
-  Widget _buildApiPeriodsListView() {
-    // Construir lista de widgets de períodos
-    final List<Widget> periodWidgets = [];
-
-    // 1. SIEMPRE agregar el período actual primero (si no tiene datos históricos)
-    if (_userPeriodHistory != null) {
-      final currentPeriod = _userPeriodHistory!.currentPeriod;
-
-      // Verificar si el período actual ya está en la lista de períodos con datos
-      final hasCurrentPeriodData = _userPeriodHistory!.periods.any(
-        (p) => p.period == currentPeriod,
-      );
-
-      // Si el período actual NO tiene datos históricos, agregarlo manualmente
-      if (!hasCurrentPeriodData && _pdePeriodStatus != null) {
-        // Verificar que el _pdePeriodStatus corresponde al período actual
-        final isCurrentPeriodStatus = _pdePeriodStatus!.period == currentPeriod;
-
-        final subtitle =
-            isCurrentPeriodStatus && _pdePeriodStatus!.canCreateOffers
-                ? 'PDE Disponible - Puedes crear ofertas'
-                : isCurrentPeriodStatus
-                    ? 'Estado: ${_pdePeriodStatus!.statusName}'
-                    : 'Sin datos disponibles';
-
-        periodWidgets.add(
-          _buildModalPeriodOption(
-            period:
-                currentPeriod, // Usar currentPeriod, NO _pdePeriodStatus.period
-            title: _formatPeriodLabel(currentPeriod),
-            subtitle: subtitle,
-            icon: Icons.auto_awesome,
-            iconColor: AppTokens.primaryColor,
-            badge: '✨',
-            enabled: true,
-          ),
-        );
-      }
-    }
-
-    // 2. Agregar períodos históricos (desde _userPeriodHistory)
-    if (_userPeriodHistory != null && _userPeriodHistory!.periods.isNotEmpty) {
-      for (var i = 0; i < _userPeriodHistory!.periods.length; i++) {
-        final period = _userPeriodHistory!.periods[i];
-
-        // Construir subtitle con datos energéticos
-        final energyData = period.energyRecord;
-        final subtitle =
-            'Consumo: ${Formatters.formatEnergy(energyData.energyConsumed)} • '
-            'Generación: ${Formatters.formatEnergy(energyData.energyGenerated)}';
-
-        // Agregar divider si no es el primer elemento de la lista completa
-        if (periodWidgets.isNotEmpty || i > 0) {
-          periodWidgets.add(
-            Divider(
-                height: 1,
-                color: this.context.colors.outline.withValues(alpha: 0.1)),
-          );
-        }
-
-        periodWidgets.add(
-          _buildModalPeriodOption(
-            period: period.period,
-            title: period.displayName,
-            subtitle: subtitle,
-            icon: period.getStatusIcon(),
-            iconColor: period.getStatusColor(),
-            badge: period.getStatusBadge(),
-            enabled: period.hasData,
-          ),
-        );
-      }
-    }
-
-    // 3. Si no hay ningún período (ni actual ni históricos), mostrar mensaje vacío
-    if (periodWidgets.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppTokens.space24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.inbox_outlined,
-                size: 64,
-                color: context.colors.onSurfaceVariant.withValues(alpha: 0.5),
-              ),
-              SizedBox(height: AppTokens.space16),
-              Text(
-                'Sin períodos disponibles',
-                style: context.textStyles.bodyLarge?.copyWith(
-                  color: context.colors.onSurfaceVariant,
-                ),
-              ),
-              SizedBox(height: AppTokens.space8),
-              Text(
-                'No tienes registros energéticos todavía',
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: context.colors.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Retornar lista de períodos
-    return SingleChildScrollView(
-      child: Column(
-        children: periodWidgets,
-      ),
-    );
-  }
-
-  /// Opción de período en el modal
-  Widget _buildModalPeriodOption({
-    required String period,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required String badge,
-    bool enabled = true,
-  }) {
-    final isSelected = _selectedPeriod == period;
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = selectedPeriod == period;
 
     return InkWell(
-      onTap: enabled
-          ? () {
-              setState(() {
-                _selectedPeriod = period;
-              });
-              Navigator.pop(context);
-
-              // Recargar estado PDE para el nuevo periodo
-              _loadPDEPeriodStatus();
-              _loadPriceReferences();
-
-              context.showInfoSnackbar('Período cambiado a $title');
-            }
-          : null,
+      onTap: enabled ? () => onTap(period, title) : null,
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppTokens.space20,
@@ -1165,21 +992,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               padding: EdgeInsets.all(AppTokens.space12),
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.15),
                 borderRadius: AppTokens.borderRadiusSmall,
               ),
-              child: Icon(
-                icon,
-                color: iconColor,
-                size: 24,
-              ),
+              child: Icon(icon, color: iconColor, size: 24),
             ),
             SizedBox(width: AppTokens.space16),
-            // Text info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1193,10 +1014,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(width: AppTokens.space8),
-                      Text(
-                        badge,
-                        style: TextStyle(fontSize: AppTokens.fontSize16),
-                      ),
+                      Text(badge,
+                          style: TextStyle(fontSize: AppTokens.fontSize16)),
                     ],
                   ),
                   SizedBox(height: AppTokens.space4),
@@ -1209,2063 +1028,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            // Checkmark
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: iconColor,
-                size: 24,
-              )
-            else
-              Icon(
-                Icons.radio_button_unchecked,
-                color: context.colors.onSurfaceVariant.withValues(alpha: 0.4),
-                size: 24,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _indicadores() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      padding: EdgeInsets.all(AppTokens.space12),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: AppTokens.borderRadiusLarge,
-        border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: _grafico(),
-          ),
-          SizedBox(width: AppTokens.space12),
-          Expanded(
-            flex: 3,
-            child: _trData(),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _btnActividadIcon(
-      String nombre, BuildContext context, int onTap, IconData icon) {
-    return Expanded(
-      flex: 1,
-      child: InkWell(
-        onTap: () {
-          switch (onTap) {
-            case 1:
-              context.push(const TradingScreen());
-              break;
-            case 2:
-              context.push(const BolsaScreen());
-              break;
-            case 3:
-              context.push(AprendeScreen(myUser: widget.myUser!));
-              break;
-            default:
-              context.push(const TradingScreen());
-
-              break;
-          }
-        },
-        borderRadius: AppTokens.borderRadiusMedium,
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            vertical: AppTokens.space16,
-            horizontal: AppTokens.space12,
-          ),
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: AppTokens.borderRadiusMedium,
-            border: Border.all(
-              color: context.colors.outline.withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: context.colors.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: AppTokens.borderRadiusSmall,
-                ),
-                child: Icon(
-                  icon,
-                  color: context.colors.primary,
-                  size: 24,
-                ),
-              ),
-              SizedBox(height: AppTokens.space8),
-              Text(
-                nombre,
-                style: context.textStyles.labelMedium,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _actividades() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      child: Column(
-        children: [
-          // Vista Admin: Mostrar Gestión de la Comunidad primero y destacado
-          if (_isAdminView) ...[
-            _buildCommunityManagementButton(),
-            SizedBox(height: AppTokens.space12),
-          ],
-          // Actividades comunes para ambas vistas
-          Row(
-            children: [
-              _btnActividadIcon(
-                "Transferir",
-                context,
-                1,
-                Icons.swap_horiz_rounded,
-              ),
-              SizedBox(width: AppTokens.space12),
-              _btnActividadIcon(
-                "Bolsa",
-                context,
-                2,
-                Icons.account_balance_outlined,
-              ),
-              SizedBox(width: AppTokens.space12),
-              _btnActividadIcon(
-                "Aprende",
-                context,
-                3,
-                Icons.bookmark_outline_rounded,
-              ),
-            ],
-          ),
-          // Vista Usuario: No mostrar Gestión de la Comunidad (solo para admins)
-        ],
-      ),
-    );
-  }
-
-  /// Botón de Gestión de la Comunidad
-  Widget _buildCommunityManagementButton() {
-    return InkWell(
-      onTap: () {
-        context.push(CommunityManagementScreen(
-          communityId: _currentCommunityId,
-          communityName: _currentCommunityName,
-        ));
-      },
-      borderRadius: AppTokens.borderRadiusMedium,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          vertical: AppTokens.space16,
-          horizontal: AppTokens.space16,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTokens.primaryColor,
-              AppTokens.primaryColor.withValues(alpha: 0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: AppTokens.borderRadiusMedium,
-          boxShadow: [
-            BoxShadow(
-              color: AppTokens.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
             Icon(
-              Icons.groups_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-            SizedBox(width: AppTokens.space12),
-            Flexible(
-              child: Text(
-                "Gestión de comunidad",
-                style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightBold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
+              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: isSelected
+                  ? iconColor
+                  : context.colors.onSurfaceVariant.withValues(alpha: 0.4),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  // ignore: unused_element
-  Widget _miniListHistorial() {
-    return ListView.separated(
-      scrollDirection: Axis.vertical,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: data.length,
-      separatorBuilder: (context, index) => SizedBox(height: AppTokens.space8),
-      itemBuilder: (BuildContext context, int index) {
-        final transaction = data[index];
-        final bool isIncome = transaction['entrada'] as bool;
-        final color = isIncome ? AppTokens.primaryColor : AppTokens.error;
-
-        return InkWell(
-          onTap: () {
-            if (_selectedPeriod == '2026-01') {
-              context.push(const TransactionDetailScreen());
-            } else {
-              context.showInfoSnackbar(
-                  "Transacción #${transaction['numTransaccion']}");
-            }
-          },
-          borderRadius: AppTokens.borderRadiusMedium,
-          child: Container(
-            padding: EdgeInsets.all(AppTokens.space12),
-            decoration: BoxDecoration(
-              color: context.colors.surface,
-              borderRadius: AppTokens.borderRadiusMedium,
-              border: Border.all(
-                color: context.colors.outline.withValues(alpha: 0.1),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                // Icon Container
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: AppTokens.borderRadiusSmall,
-                  ),
-                  child: Icon(
-                    isIncome
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_downward_rounded,
-                    size: 20,
-                    color: color,
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                // Transaction Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${transaction['nombre']}",
-                        style: context.textStyles.bodyMedium?.copyWith(
-                          fontWeight: AppTokens.fontWeightMedium,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: AppTokens.space4),
-                      Text(
-                        "${transaction['fuente']} • ${transaction['energia']}",
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: AppTokens.space8),
-                // Amount & Date
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      "${transaction['dinero']}",
-                      style: context.textStyles.bodyMedium?.copyWith(
-                        color: color,
-                        fontWeight: AppTokens.fontWeightBold,
-                      ),
-                    ),
-                    SizedBox(height: AppTokens.space4),
-                    Text(
-                      "${transaction['fecha']}",
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: context.colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ignore: unused_element
-  Widget _titulobtnHistorial() {
-    return Padding(
-      padding: EdgeInsets.only(bottom: AppTokens.space12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Transacciones",
-            style: context.textStyles.titleMedium?.copyWith(
-              fontWeight: AppTokens.fontWeightSemiBold,
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.arrow_forward_rounded,
-              size: 24,
-              color: context.colors.primary,
-            ),
-            tooltip: "Ver todas",
-            onPressed: () {
-              // TODO: Navegar a la pantalla de historial completo
-              context.showInfoSnackbar("Próximamente: Ver historial completo");
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _minihostiral() {
-    return Container(
-      padding: EdgeInsets.all(AppTokens.space16),
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: AppTokens.borderRadiusLarge,
-      ),
-      child: Column(
-        children: [
-          // _titulobtnHistorial(),
-          // _miniListHistorial(),
-        ],
-      ),
-    );
-  }
-
-  /// Widget destacado del PDE - Controlado por API
-  Widget _buildPDEHighlightCard() {
-    // Mostrar loading mientras carga
-    if (_isLoadingPDEStatus) {
-      return Container(
-        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-        padding: EdgeInsets.all(AppTokens.space20),
-        child: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // Si no hay estado, ocultar el card
-    if (_pdePeriodStatus == null) {
-      return const SizedBox.shrink();
-    }
-
-    // NUEVO: Periodo Cerrado (statusCode == 2)
-    if (_pdePeriodStatus!.statusCode == 2) {
-      return _buildPDEPeriodoCerradoCard();
-    }
-
-    // NUEVO: Ofertas Finalizadas (statusCode == 3)
-    if (_pdePeriodStatus!.statusCode == 3) {
-      return _buildPDEFinalizadoCard();
-    }
-
-    // NUEVO: En Conciliación (statusCode == 4)
-    if (_pdePeriodStatus!.statusCode == 4) {
-      return _buildPDEEnConciliacionCard();
-    }
-
-    // PDE Disponible (statusCode == 1)
-    if (!_pdePeriodStatus!.isPDEAvailable) {
-      return const SizedBox.shrink();
-    }
-
-    final minValue =
-        FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
-    final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-            FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) *
-        0.95;
-    return GestureDetector(
-      onTap: () {
-        // Navegación según el rol del usuario
-        if (_isAdminView) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AdminCommunityOffersScreen(
-                period: _selectedPeriod,
-                communityId: _currentCommunityId,
-                communityName: _currentCommunityName,
-              ),
-            ),
-          );
-        } else {
-          _handleConsumerPDETap();
-        }
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-        padding: EdgeInsets.all(AppTokens.space20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTokens.primaryColor,
-              AppTokens.primaryColor.withValues(alpha: 0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: AppTokens.borderRadiusLarge,
-          boxShadow: [
-            BoxShadow(
-              color: AppTokens.primaryColor.withValues(alpha: 0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: AppTokens.borderRadiusSmall,
-                  ),
-                  child: Icon(
-                    _isAdminView ? Icons.list_alt : Icons.bolt,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isAdminView
-                            ? 'Revisar Ofertas'
-                            : _pdePeriodStatus!.getDisplayMessage(),
-                        style: context.textStyles.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                      SizedBox(height: AppTokens.space4),
-                      Text(
-                        _isAdminView
-                            ? '$_selectedPeriodDisplayName - Gestión Comunitaria'
-                            : '$_selectedPeriodDisplayName - Modelo de Ofertas',
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-              ],
-            ),
-            SizedBox(height: AppTokens.space20),
-
-            // Info footer
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(AppTokens.space12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: AppTokens.borderRadiusSmall,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Precio Mercado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          '${Formatters.formatCurrency(FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia, decimals: 2)} COP',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(AppTokens.space12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: AppTokens.borderRadiusSmall,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Rango Precio',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 11,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          '${Formatters.formatCurrency(minValue, decimals: 2, showSymbol: false)} - ${Formatters.formatCurrency(maxValue, decimals: 2, showSymbol: false)} COP',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: AppTokens.space16),
-
-            // CTA Button - Diferente según el rol
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: AppTokens.space12,
-                horizontal: AppTokens.space16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: AppTokens.borderRadiusMedium,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    _isAdminView
-                        ? Icons.manage_search
-                        : Icons.add_shopping_cart,
-                    color: AppTokens.primaryColor,
-                    size: 20,
-                  ),
-                  SizedBox(width: AppTokens.space8),
-                  Text(
-                    _isAdminView
-                        ? 'Revisar Ofertas Comunitarias'
-                        : 'Crear Oferta de PDE',
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryColor,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Widget para mostrar cuando el periodo está cerrado (statusCode == 2)
-  /// Admin: Puede realizar asignación de PDE
-  /// Usuario: Ver si tiene oferta y esperar asignación
-  Widget _buildPDEPeriodoCerradoCard() {
-    // Vista Admin: Puede realizar asignación de PDE
-    if (_isAdminView) {
-      return _buildPDEPeriodoCerradoAdminCard();
-    }
-
-    // Vista Usuario: Ver si tiene oferta pendiente
-    return _buildPDEPeriodoCerradoUsuarioCard();
-  }
-
-  /// Card para Admin cuando el periodo está cerrado
-  /// Permite realizar la asignación de PDE
-  Widget _buildPDEPeriodoCerradoAdminCard() {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AdminCommunityOffersScreen(
-              period: _selectedPeriod,
-              communityId: _currentCommunityId,
-              communityName: _currentCommunityName,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-        padding: EdgeInsets.all(AppTokens.space20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTokens.primaryColor,
-              AppTokens.primaryColor.withValues(alpha: 0.85),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: AppTokens.borderRadiusLarge,
-          boxShadow: [
-            BoxShadow(
-              color: AppTokens.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header con icono
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: AppTokens.borderRadiusSmall,
-                  ),
-                  child: const Icon(
-                    Icons.assignment_turned_in,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Periodo Cerrado',
-                        style: context.textStyles.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                      SizedBox(height: AppTokens.space4),
-                      Text(
-                        _selectedPeriodDisplayName,
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-              ],
-            ),
-
-            SizedBox(height: AppTokens.space20),
-
-            // Mensaje informativo
-            Container(
-              padding: EdgeInsets.all(AppTokens.space12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: AppTokens.borderRadiusMedium,
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  SizedBox(width: AppTokens.space8),
-                  Expanded(
-                    child: Text(
-                      'El periodo de ofertas ha cerrado. Puede proceder a realizar la asignación de PDE.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: AppTokens.space16),
-
-            // CTA Button
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: AppTokens.space12,
-                horizontal: AppTokens.space16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: AppTokens.borderRadiusMedium,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.assignment,
-                    color: AppTokens.primaryColor,
-                    size: 20,
-                  ),
-                  SizedBox(width: AppTokens.space8),
-                  Text(
-                    'Realizar Asignación de PDE',
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryColor,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Card para Usuario cuando el periodo está cerrado
-  /// Muestra si tiene oferta y notifica que esperará asignación
-  Widget _buildPDEPeriodoCerradoUsuarioCard() {
-    final apiService = ConsumerOfferApiService();
-    final userId = widget.myUser?.idUser ?? 0;
-
-    return FutureBuilder<ConsumerOffer?>(
-      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
-      builder: (context, snapshot) {
-        // Mostrar loading mientras carga
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-            padding: EdgeInsets.all(AppTokens.space20),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // Si no hay oferta para este período, mostrar mensaje informativo
-        if (!snapshot.hasData || snapshot.data == null) {
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-            padding: EdgeInsets.all(AppTokens.space20),
-            decoration: BoxDecoration(
-              color: context.colors.surfaceContainerHighest,
-              borderRadius: AppTokens.borderRadiusLarge,
-              border: Border.all(
-                color: context.colors.outline.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.lock_clock,
-                      color: context.colors.onSurfaceVariant,
-                      size: 24,
-                    ),
-                    SizedBox(width: AppTokens.space12),
-                    Expanded(
-                      child: Text(
-                        'Periodo Cerrado',
-                        style: context.textStyles.titleMedium?.copyWith(
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: AppTokens.space12),
-                Text(
-                  'No realizaste ninguna oferta para este periodo.',
-                  style: context.textStyles.bodyMedium?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        final offer = snapshot.data!;
-
-        // Usuario tiene oferta pendiente de asignación
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-          padding: EdgeInsets.all(AppTokens.space20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTokens.primaryColor,
-                AppTokens.primaryColor.withValues(alpha: 0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: AppTokens.borderRadiusLarge,
-            boxShadow: [
-              BoxShadow(
-                color: AppTokens.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con icono
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(AppTokens.space12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: AppTokens.borderRadiusSmall,
-                    ),
-                    child: const Icon(
-                      Icons.timer,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  SizedBox(width: AppTokens.space12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Periodo Cerrado',
-                          style: context.textStyles.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          _selectedPeriodDisplayName,
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: AppTokens.space20),
-
-              // Datos de la oferta realizada
-              Container(
-                padding: EdgeInsets.all(AppTokens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tu Oferta',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        fontWeight: AppTokens.fontWeightMedium,
-                      ),
-                    ),
-                    SizedBox(height: AppTokens.space12),
-                    // PDE Solicitado
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'PDE Solicitado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: AppTokens.space12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Precio Ofertado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0, showSymbol: false)} COP/kWh',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: AppTokens.space16),
-
-              // Mensaje de espera
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.notifications_active,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    SizedBox(width: AppTokens.space8),
-                    Expanded(
-                      child: Text(
-                        'Se te notificará cuando se realice la asignación de PDE',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Card para Admin cuando las ofertas están finalizadas (statusCode == 3)
-  /// Permite pasar el periodo a estado de conciliación
-  Widget _buildPDEFinalizadoAdminCard() {
-    return GestureDetector(
-      onTap: () => _showConfirmacionConciliacionModal(),
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-        padding: EdgeInsets.all(AppTokens.space20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppTokens.primaryColor,
-              AppTokens.primaryColor.withValues(alpha: 0.85),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: AppTokens.borderRadiusLarge,
-          boxShadow: [
-            BoxShadow(
-              color: AppTokens.primaryColor.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header con icono
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(AppTokens.space12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: AppTokens.borderRadiusSmall,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ofertas Finalizadas',
-                        style: context.textStyles.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: AppTokens.fontWeightBold,
-                        ),
-                      ),
-                      SizedBox(height: AppTokens.space4),
-                      Text(
-                        _selectedPeriodDisplayName,
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  size: 20,
-                ),
-              ],
-            ),
-
-            SizedBox(height: AppTokens.space20),
-
-            // Mensaje informativo
-            Container(
-              padding: EdgeInsets.all(AppTokens.space12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: AppTokens.borderRadiusMedium,
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  SizedBox(width: AppTokens.space8),
-                  Expanded(
-                    child: Text(
-                      'Las ofertas han sido liquidadas. Puede proceder a cambiar el estado a "En Conciliación".',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 13,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: AppTokens.space16),
-
-            // CTA Button
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(
-                vertical: AppTokens.space12,
-                horizontal: AppTokens.space16,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: AppTokens.borderRadiusMedium,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.forward_to_inbox,
-                    color: AppTokens.primaryColor,
-                    size: 20,
-                  ),
-                  SizedBox(width: AppTokens.space8),
-                  Text(
-                    'Pasar a Conciliación',
-                    style: context.textStyles.bodyMedium?.copyWith(
-                      color: AppTokens.primaryColor,
-                      fontWeight: AppTokens.fontWeightBold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Muestra modal de confirmación para pasar a estado de conciliación
-  void _showConfirmacionConciliacionModal() {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: AppTokens.borderRadiusLarge,
-          ),
-          title: Row(
-            children: [
-              Icon(
-                Icons.help_outline,
-                color: context.colors.primary,
-                size: 28,
-              ),
-              SizedBox(width: AppTokens.space12),
-              Expanded(
-                child: Text(
-                  'Confirmar Cambio de Estado',
-                  style: context.textStyles.titleLarge?.copyWith(
-                    fontWeight: AppTokens.fontWeightBold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '¿Desea pasar el periodo $_selectedPeriodDisplayName a estado "En Conciliación"?',
-                style: context.textStyles.bodyLarge,
-              ),
-              SizedBox(height: AppTokens.space16),
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: context.colors.primaryContainer.withValues(alpha: 0.3),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Border.all(
-                    color: context.colors.primary.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: context.colors.primary,
-                      size: 20,
-                    ),
-                    SizedBox(width: AppTokens.space8),
-                    Expanded(
-                      child: Text(
-                        'Los usuarios serán notificados y podrán ver su PDE asignado.',
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: context.colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppTokens.primaryColor),
-                    ),
-                    child: Text(
-                      'Cancelar',
-                      style: context.textStyles.labelLarge?.copyWith(
-                        color: AppTokens.primaryColor,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop();
-                      _actualizarEstadoPeriodo(4);
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppTokens.primaryColor,
-                    ),
-                    child: Text(
-                      'Confirmar',
-                      style: context.textStyles.labelLarge?.copyWith(
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Actualiza el estado del periodo PDE en el backend
-  Future<void> _actualizarEstadoPeriodo(int nuevoEstado) async {
-    try {
-      // Mostrar loading
-      if (!mounted) return;
-      context.showInfoSnackbar('Actualizando estado del periodo...');
-
-      // Llamar al repositorio para actualizar el estado
-      final nuevoStatus = await _pdePeriodRepository.updatePeriodStatus(
-        communityId: _currentCommunityId,
-        period: _selectedPeriod,
-        newStatusCode: nuevoEstado,
-      );
-
-      // Verificar si el widget todavía está montado
-      if (!mounted) return;
-
-      // Actualizar el estado local
-      setState(() {
-        _pdePeriodStatus = nuevoStatus;
-      });
-
-      // Mostrar mensaje de éxito
-      context.showInfoSnackbar(
-        'Estado actualizado a: ${nuevoStatus.statusName}',
-      );
-
-      AppLogger.info(
-        'Estado del periodo $_selectedPeriod actualizado a: ${nuevoStatus.statusName}',
-        tag: 'HomeScreen',
-      );
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Error actualizando estado del periodo',
-        tag: 'HomeScreen',
-        error: e,
-        stackTrace: stackTrace,
-      );
-
-      // Verificar si el widget todavía está montado antes de mostrar el error
-      if (!mounted) return;
-
-      // Mostrar mensaje de error
-      context.showInfoSnackbar(
-        'Error al actualizar estado: ${e.toString()}',
-      );
-    }
-  }
-
-  /// Widget para mostrar cuando ofertas están finalizadas (statusCode == 3)
-  /// Carga datos reales del backend y muestra: pde_percentage_requested,
-  /// pde_percentage_assigned, price_per_kwh, liquidated_at
-  Widget _buildPDEFinalizadoCard() {
-    // Vista Admin: Mostrar card con acción para pasar a conciliación
-    if (_isAdminView) {
-      return _buildPDEFinalizadoAdminCard();
-    }
-
-    final apiService = ConsumerOfferApiService();
-    final userId = widget.myUser?.idUser ?? 0;
-
-    return FutureBuilder<ConsumerOffer?>(
-      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
-      builder: (context, snapshot) {
-        // Mostrar loading mientras carga
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-            padding: EdgeInsets.all(AppTokens.space20),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // Si no hay oferta para este período, ocultar el card
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
-
-        final offer = snapshot.data!;
-
-        // Calcular valor total si hay energía calculada
-        final double? totalValue = offer.energyKwhCalculated != null
-            ? offer.energyKwhCalculated! * offer.pricePerKwh
-            : null;
-
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-          padding: EdgeInsets.all(AppTokens.space20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTokens.primaryColor,
-                AppTokens.primaryColor.withValues(alpha: 0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: AppTokens.borderRadiusLarge,
-            boxShadow: [
-              BoxShadow(
-                color: AppTokens.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con icono
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(AppTokens.space12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: AppTokens.borderRadiusSmall,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_outline,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  SizedBox(width: AppTokens.space12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Ofertas Finalizadas',
-                          style: context.textStyles.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          _selectedPeriodDisplayName,
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: AppTokens.space20),
-
-              // Datos de la oferta
-              Container(
-                padding: EdgeInsets.all(AppTokens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // PDE Solicitado vs Asignado
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'PDE Solicitado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatNumber(offer.pdePercentageRequested * 100, decimals: 2)}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (offer.pdePercentageAssigned != null) ...[
-                      SizedBox(height: AppTokens.space12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'PDE Asignado',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            '${Formatters.formatNumber(offer.pdePercentageAssigned! * 100, decimals: 2)}%',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    SizedBox(height: AppTokens.space12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Precio',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatCurrency(offer.pricePerKwh, decimals: 0, showSymbol: false)} COP/kWh',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (totalValue != null) ...[
-                      SizedBox(height: AppTokens.space12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Valor Total',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            Formatters.formatCurrency(totalValue, decimals: 0),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (offer.liquidatedAt != null) ...[
-                      SizedBox(height: AppTokens.space12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Liquidado el',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            Formatters.formatDateMedium(offer.liquidatedAt!),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              SizedBox(height: AppTokens.space16),
-
-              // Mensaje de espera
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.info_outline,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    SizedBox(width: AppTokens.space8),
-                    Expanded(
-                      child: Text(
-                        'Apenas se concilie con el comercializador podrá ver el ahorro real en su tarifa energética',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Widget para mostrar cuando está en conciliación (statusCode == 4)
-  /// Carga datos reales del backend y muestra únicamente pde_percentage_assigned
-  /// con mensaje de espera del comercializador
-  Widget _buildPDEEnConciliacionCard() {
-    if (_isAdminView) {
-      return _buildPDEEnConciliacionAdminCard();
-    }
-    return _buildPDEEnConciliacionUsuarioCard();
-  }
-
-  /// Card informativo para Admin en Estado 4: En Conciliación
-  Widget _buildPDEEnConciliacionAdminCard() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      padding: EdgeInsets.all(AppTokens.space20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTokens.primaryColor,
-            AppTokens.primaryColor.withValues(alpha: 0.85),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: AppTokens.borderRadiusLarge,
-        boxShadow: [
-          BoxShadow(
-            color: AppTokens.primaryColor.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header con icono
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: AppTokens.borderRadiusSmall,
-                ),
-                child: const Icon(
-                  Icons.sync,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              SizedBox(width: AppTokens.space12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'En Conciliación',
-                      style: context.textStyles.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: AppTokens.fontWeightBold,
-                      ),
-                    ),
-                    SizedBox(height: AppTokens.space4),
-                    Text(
-                      _selectedPeriodDisplayName,
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: AppTokens.space20),
-
-          // Mensaje informativo
-          Container(
-            padding: EdgeInsets.all(AppTokens.space16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: AppTokens.borderRadiusMedium,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.schedule,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Text(
-                    'Esperando conciliación con el comercializador',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Card de usuario para Estado 4: En Conciliación
-  Widget _buildPDEEnConciliacionUsuarioCard() {
-    final apiService = ConsumerOfferApiService();
-    final userId = widget.myUser?.idUser ?? 0;
-
-    return FutureBuilder<ConsumerOffer?>(
-      future: apiService.getBuyerOfferForPeriod(userId, _selectedPeriod),
-      builder: (context, snapshot) {
-        // Mostrar loading mientras carga
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-            padding: EdgeInsets.all(AppTokens.space20),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // Si no hay oferta para este período, ocultar el card
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
-
-        final offer = snapshot.data!;
-
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-          padding: EdgeInsets.all(AppTokens.space20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppTokens.primaryColor,
-                AppTokens.primaryColor.withValues(alpha: 0.85),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: AppTokens.borderRadiusLarge,
-            boxShadow: [
-              BoxShadow(
-                color: AppTokens.primaryColor.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con icono
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(AppTokens.space12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: AppTokens.borderRadiusSmall,
-                    ),
-                    child: const Icon(
-                      Icons.hourglass_empty,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  SizedBox(width: AppTokens.space12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'En Conciliación',
-                          style: context.textStyles.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                        SizedBox(height: AppTokens.space4),
-                        Text(
-                          _selectedPeriodDisplayName,
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: AppTokens.space20),
-
-              // Datos de la oferta - Solo PDE Asignado
-              Container(
-                padding: EdgeInsets.all(AppTokens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // PDE Asignado (único dato mostrado)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'PDE Asignado',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          '${Formatters.formatNumber((offer.pdePercentageAssigned ?? 0.0) * 100, decimals: 2)}%',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: AppTokens.space16),
-
-              // Mensaje de espera del comercializador
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.schedule,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    SizedBox(width: AppTokens.space8),
-                    Expanded(
-                      child: Text(
-                        'A la espera de conciliación con el comercializador',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          fontSize: 13,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Tarjetas de precios de referencia para el gestor comunitario (admin)
-  Widget _buildPriceCardsAdmin() {
-    return PriceReferenceCards(
-      prices: _homeController.priceReferences,
-      isLoading: _homeController.isLoadingPriceReferences,
-      error: _homeController.priceReferencesError,
-      onRetry: _loadPriceReferences,
-    );
-  }
-
-  Widget body() {
-    return ListView(
-      padding: EdgeInsets.only(
-        top: AppTokens.space16,
-        bottom: AppTokens.space24,
-      ),
-      children: [
-        _saludoText(),
-        SizedBox(height: AppTokens.space16),
-        // Indicador visual de estado mensual con selector de período
-        _buildMonthlyStatusIndicator(),
-        SizedBox(height: AppTokens.space16),
-        // Widget destacado del PDE (controlado por API - se muestra solo si está disponible)
-        _buildPDEHighlightCard(),
-        SizedBox(height: AppTokens.space16),
-        _indicadores(),
-        SizedBox(height: AppTokens.space24),
-        // Precios de referencia del mes (solo admin, período actual)
-        if (_isAdminView && _isCurrentPeriod) ...[
-          _buildPriceCardsAdmin(),
-          SizedBox(height: AppTokens.space24),
-        ],
-        Padding(
-          padding: EdgeInsets.only(
-            left: AppTokens.space16,
-            bottom: AppTokens.space12,
-          ),
-          child: Text(
-            "Actividades",
-            style: context.textStyles.titleMedium?.copyWith(
-              fontWeight: AppTokens.fontWeightSemiBold,
-            ),
-          ),
-        ),
-        _actividades(),
-        SizedBox(height: AppTokens.space24),
-        SizedBox(height: AppTokens.space64),
-        _minihostiral(),
-      ],
-    );
-  }
-
-  /// AppBar personalizado con botón de cambio de vista
-  PreferredSizeWidget _buildAppBar() {
-    final userName = widget.myUser?.nombre ?? "Cristian";
-
-    return AppBar(
-      toolbarHeight: 60,
-      elevation: 0.0,
-      flexibleSpace: Container(
-        width: context.width,
-        decoration: BoxDecoration(
-          boxShadow: const [
-            BoxShadow(
-              blurRadius: 6,
-              color: Color(0x4B1A1F24),
-              offset: Offset(0, 2),
-            )
-          ],
-          gradient: Metodos.gradientClasic(context),
-          borderRadius: BorderRadius.circular(0),
-        ),
-      ),
-      backgroundColor: Colors.transparent,
-      title: Container(
-        margin:
-            const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 5.0, left: 5.0),
-        child: Row(
-          children: [
-            // Avatar
-            Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-              ),
-              child: const Image(
-                alignment: AlignmentDirectional.center,
-                image: AssetImage("assets/img/avatar.jpg"),
-                width: 55.0,
-                height: 55.0,
-              ),
-            ),
-            const SizedBox(width: 15.0),
-            // Saludo
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "¡Hola,",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "$userName!",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        // Botón de cambio de vista Admin/Usuario (solo para role 3 - Admin o role 4 - SuperAdmin)
-        if (widget.myUser?.role != null &&
-            (widget.myUser!.role == 3 || widget.myUser!.role == 4))
-          Container(
-            width: 45.0,
-            height: 45.0,
-            decoration: BoxDecoration(
-              color: _isAdminView
-                  ? AppTokens.primaryColor
-                  : AppTokens.primaryColor,
-              border: Border.all(width: 2.0, color: Colors.white),
-              borderRadius: BorderRadius.circular(25.0),
-            ),
-            margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 10.0),
-            child: IconButton(
-              icon: Icon(
-                _isAdminView ? Icons.person : Icons.admin_panel_settings,
-                size: 22.0,
-              ),
-              color: Colors.white,
-              tooltip: _isAdminView ? "Vista Usuario" : "Vista Administrador",
-              onPressed: () {
-                setState(() {
-                  _isAdminView = !_isAdminView;
-                });
-                // La vista admin necesita precios del periodo desde SQL; se cargan bajo demanda.
-                _loadPriceReferences();
-                context.showInfoSnackbar(_isAdminView
-                    ? 'Vista: $_currentCommunityName'
-                    : 'Vista: Usuario');
-              },
-            ),
-          ),
-        // Botón de notificaciones
-        Container(
-          width: 45.0,
-          height: 45.0,
-          decoration: BoxDecoration(
-            color: AppTokens.primaryColor,
-            border: Border.all(width: 2.0, color: Colors.white),
-            borderRadius: BorderRadius.circular(25.0),
-          ),
-          margin: const EdgeInsets.only(top: 7.5, bottom: 7.5, right: 15.0),
-          child: IconButton(
-            icon: const Icon(Icons.notifications, size: 25.0),
-            color: Colors.white,
-            tooltip: "Notificaciones",
-            onPressed: () {
-              context.push(const NotificacionesScreen());
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      backgroundColor: context.colors.surface,
-      body: body(),
     );
   }
 }
 
-//Generation grid data
 class GGData {
-  late final String fuente;
-  late final int consumo;
+  final String source;
+  final int value;
 
-  GGData(this.fuente, this.consumo);
+  GGData(this.source, this.value);
 }

@@ -98,6 +98,20 @@ class _AdminCommunityOffersScreenState
   /// Número de miembros con ofertas (calculado)
   int get _membersWithOffers => _offers.length;
 
+  double get _averageOfferPrice {
+    if (_offers.isEmpty) return 0;
+    final total =
+        _offers.fold<double>(0, (sum, offer) => sum + offer.pricePerKwh);
+    return total / _offers.length;
+  }
+
+  double get _totalPdeRequested {
+    return _offers.fold<double>(
+      0,
+      (sum, offer) => sum + offer.pdePercentageRequested,
+    );
+  }
+
   /// Ordena la lista de ofertas según el tipo y orden seleccionados
   void _sortOffers() {
     setState(() {
@@ -867,17 +881,28 @@ class _AdminCommunityOffersScreenState
             ),
             SizedBox(height: AppTokens.space16),
             Text(
-              'Resumen:',
-              style: context.textStyles.bodySmall?.copyWith(
-                fontWeight: AppTokens.fontWeightSemiBold,
+              'Checklist antes de cerrar:',
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
               ),
             ),
             SizedBox(height: AppTokens.space8),
-            Text(
-                '• $_membersWithOffers de $_totalMembers miembros participaron'),
-            Text(
-                '• Total: ${Formatters.formatEnergy(_totalEnergyOffered)} ofertados'),
-            Text('• $_membersWithOffers ofertas en total (1 por miembro)'),
+            _buildClosePeriodChecklistItem(
+              '$_membersWithOffers de $_totalMembers miembros participaron',
+            ),
+            _buildClosePeriodChecklistItem(
+              '$_membersWithOffers ofertas registradas para revisar',
+            ),
+            _buildClosePeriodChecklistItem(
+              'PDE solicitado total: ${Formatters.formatNumber(_totalPdeRequested * 100, decimals: 2)}%',
+            ),
+            _buildClosePeriodChecklistItem(
+              'Precio promedio ofertado: ${Formatters.formatCurrency(_averageOfferPrice, decimals: 0)} COP/kWh',
+            ),
+            _buildClosePeriodChecklistItem(
+              'Después de cerrar, los usuarios no podrán crear ni modificar ofertas',
+              isWarning: true,
+            ),
           ],
         ),
         actions: [
@@ -894,6 +919,32 @@ class _AdminCommunityOffersScreenState
               backgroundColor: AppTokens.primaryColor,
             ),
             child: const Text('Cerrar Periodo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClosePeriodChecklistItem(String text, {bool isWarning = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppTokens.space8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isWarning ? Icons.warning_amber_rounded : Icons.check_circle,
+            color: isWarning ? AppTokens.warning : AppTokens.energyGreen,
+            size: 18,
+          ),
+          SizedBox(width: AppTokens.space8),
+          Expanded(
+            child: Text(
+              text,
+              style: context.textStyles.bodySmall?.copyWith(
+                color: isWarning ? AppTokens.warning : null,
+                height: 1.3,
+              ),
+            ),
           ),
         ],
       ),
