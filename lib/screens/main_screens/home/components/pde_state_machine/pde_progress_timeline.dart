@@ -15,12 +15,13 @@ class PdeProgressTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const steps = [
+      MapEntry(7, 'Cobro'),
+      MapEntry(6, 'Aporte'),
       MapEntry(1, 'Disponible'),
       MapEntry(2, 'Cerrado'),
       MapEntry(3, 'Asignado'),
       MapEntry(4, 'Conciliación'),
       MapEntry(5, 'Histórico'),
-      MapEntry(6, 'Renuncia'),
     ];
     final baseColor = onDark ? Colors.white : AppTokens.primaryColor;
     final mutedColor =

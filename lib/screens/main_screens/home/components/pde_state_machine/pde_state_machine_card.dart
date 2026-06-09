@@ -19,6 +19,7 @@ class PdeStateMachineCard extends StatelessWidget {
   final VoidCallback onAdminClosedTap;
   final VoidCallback onMoveToReconciliationTap;
   final VoidCallback onVoluntaryWaiverTap;
+  final VoidCallback onPaymentTap;
 
   const PdeStateMachineCard({
     super.key,
@@ -32,6 +33,7 @@ class PdeStateMachineCard extends StatelessWidget {
     required this.onAdminClosedTap,
     required this.onMoveToReconciliationTap,
     required this.onVoluntaryWaiverTap,
+    required this.onPaymentTap,
   });
 
   @override
@@ -124,15 +126,26 @@ class PdeStateMachineCard extends StatelessWidget {
       case 6:
         return _InfoCard(
           statusCode: 6,
-          title: 'Renuncia Voluntaria',
+          title: 'Aporte Comunitario',
           periodDisplayName: periodDisplayName,
           message: isAdminView
-              ? 'Revisa las renuncias PDE de la comunidad y cierra el flujo para abrir ofertas.'
-              : 'Puedes renunciar parte del PDE asignado para liberarlo a la comunidad.',
-          ctaLabel:
-              isAdminView ? 'Gestionar Renuncias PDE' : 'Ir a Renuncia PDE',
+              ? 'Gestiona los aportes comunitarios de PDE antes de abrir nuevas ofertas.'
+              : 'Puedes aportar parte del PDE asignado para liberarlo a la comunidad.',
+          ctaLabel: isAdminView ? 'Gestionar Aportes PDE' : 'Ir a Aporte PDE',
           icon: Icons.volunteer_activism,
           onTap: onVoluntaryWaiverTap,
+        );
+      case 7:
+        return _InfoCard(
+          statusCode: 7,
+          title: 'Cobro del Periodo',
+          periodDisplayName: periodDisplayName,
+          message: isAdminView
+              ? 'Revisa los cobros de la comunidad antes de abrir el aporte comunitario.'
+              : 'Tienes una liquidación pendiente del periodo anterior.',
+          ctaLabel: isAdminView ? 'Gestionar Cobros' : 'Ver Cobro',
+          icon: Icons.receipt_long,
+          onTap: onPaymentTap,
         );
       default:
         return _HistoricalCard(

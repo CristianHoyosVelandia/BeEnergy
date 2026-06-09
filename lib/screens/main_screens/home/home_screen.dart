@@ -22,6 +22,7 @@ import 'components/home_energy_card.dart';
 import 'components/home_header.dart';
 import 'components/pde_state_machine/pde_state_machine_card.dart';
 import 'controllers/home_controller.dart';
+import 'pde_cobro_screen.dart';
 import 'pde_renuncia_screen.dart';
 import 'widgets/price_reference_cards.dart';
 
@@ -649,7 +650,35 @@ class _HomeScreenState extends State<HomeScreen> {
       onAdminClosedTap: _navigateToAdminOffers,
       onMoveToReconciliationTap: _showConfirmReconciliationModal,
       onVoluntaryWaiverTap: _navigateToPdeRenuncia,
+      onPaymentTap: _navigateToPdeCobro,
     );
+  }
+
+  Future<void> _navigateToPdeCobro() async {
+    if (widget.myUser == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    final shouldOpenContribution = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdeCobroScreen(
+          myUser: widget.myUser!,
+          communityId: _currentCommunityId,
+          period: _selectedPeriod,
+          periodDisplayName: _selectedPeriodDisplayName,
+          isAdminView: _isAdminView,
+        ),
+      ),
+    );
+
+    if (shouldOpenContribution == true) {
+      await _controller.updatePeriodStatus(
+        communityId: _currentCommunityId,
+        newStatusCode: 6,
+      );
+    }
   }
 
   Future<void> _navigateToPdeRenuncia() async {

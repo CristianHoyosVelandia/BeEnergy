@@ -60,7 +60,9 @@ class PDEPeriodStatus {
       case 5:
         return 'Periodo histórico';
       case 6:
-        return 'Renuncia voluntaria PDE';
+        return 'Aporte comunitario PDE';
+      case 7:
+        return 'Cobro del periodo';
       default:
         return 'No disponible';
     }
