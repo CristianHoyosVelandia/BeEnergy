@@ -1,32 +1,46 @@
 import 'package:be_energy/core/api/api_client.dart';
+import 'package:be_energy/core/constants/api_endpoints.dart';
 import 'package:be_energy/models/pde_renuncia.dart';
+import 'package:be_energy/services/forecast_api_service.dart';
 
 class PdeRenunciaService {
   final ApiClient _client;
+  final ForecastApiService _forecastService;
 
   PdeRenunciaService({ApiClient? client})
-      : _client = client ?? ApiClient.instance;
+      : _client = client ?? ApiClient.instance,
+        _forecastService = ForecastApiService(client: client);
 
   Future<PdeRenunciaStatus> getUserStatus({
     required int comunidadId,
     required int usuarioId,
     required String periodo,
   }) async {
-    final response = await _client.get(
-      '/community/pde-renuncias/user',
-      queryParameters: {
-        'comunidad_id': comunidadId,
-        'usuario_id': usuarioId,
-        'periodo': periodo,
-      },
+    final forecast = await _forecastService.getAporteSolidario(
+      communityId: comunidadId,
+      userId: usuarioId,
+      period: periodo,
     );
 
-    final body = response.data as Map<String, dynamic>;
-    if (body['success'] != true) {
-      throw Exception(body['message'] ?? 'Error obteniendo renuncia PDE');
-    }
-
-    return PdeRenunciaStatus.fromJson(body['data'] as Map<String, dynamic>);
+    return PdeRenunciaStatus(
+      comunidadId: forecast.communityId,
+      usuarioId: forecast.userId,
+      periodo: forecast.period,
+      pdeActual: forecast.pdeActual / 100,
+      consumoKwh: forecast.consumoEstimadoKwh,
+      pdeSugeridoRenuncia: forecast.renunciaSugerida / 100,
+      pdeSugeridoConservado: forecast.pdeConservadoSugerido / 100,
+      fuente: forecast.fuente,
+      nivelConfianza: forecast.nivelConfianza,
+      opciones: forecast.opciones
+          .map((option) => PdeRenunciaOption(
+                id: option.id,
+                renunciaPorcentaje: option.renunciaPorcentaje,
+                descripcion: option.descripcion,
+              ))
+          .toList(),
+      permiteRenunciaManual: forecast.permiteRenunciaManual,
+    );
   }
 
   Future<PdeRenuncia> createRenuncia({
@@ -34,17 +48,17 @@ class PdeRenunciaService {
     required int usuarioId,
     required String periodo,
     required double pdeRenunciado,
+    double? renunciaKwh,
     String? motivo,
   }) async {
     final response = await _client.post(
-      '/community/pde-renuncias',
+      ApiEndpoints.pdeRenuncia,
       data: {
-        'comunidad_id': comunidadId,
-        'usuario_id': usuarioId,
-        'periodo': periodo,
-        'pde_renunciado': pdeRenunciado,
-        'motivo': motivo,
-        'creado_por': usuarioId,
+        'community_id': comunidadId,
+        'period': periodo,
+        'renuncia_porcentaje': pdeRenunciado * 100,
+        'renuncia_kwh': renunciaKwh ?? (pdeRenunciado * 100),
+        'origen': 'forecast',
       },
     );
 

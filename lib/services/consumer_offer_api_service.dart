@@ -33,7 +33,8 @@ class ConsumerOfferApiService {
       if (response.data['status'] == true) {
         final List<dynamic> offersData = response.data['data'] as List<dynamic>;
         return offersData
-            .map((json) => ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
+            .map((json) =>
+                ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
             .toList();
       } else {
         throw ApiException(
@@ -65,7 +66,8 @@ class ConsumerOfferApiService {
       );
 
       if (response.data['status'] == true) {
-        return ConsumerOffer.fromBackendJson(response.data['data'] as Map<String, dynamic>);
+        return ConsumerOffer.fromBackendJson(
+            response.data['data'] as Map<String, dynamic>);
       } else {
         throw ApiException(
           message: response.data['message'] ?? 'Oferta no encontrada',
@@ -98,7 +100,8 @@ class ConsumerOfferApiService {
       if (response.data['status'] == true) {
         final List<dynamic> offersData = response.data['data'] as List<dynamic>;
         return offersData
-            .map((json) => ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
+            .map((json) =>
+                ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
             .toList();
       } else {
         throw ApiException(
@@ -136,7 +139,8 @@ class ConsumerOfferApiService {
       if (response.data['status'] == true) {
         final List<dynamic> offersData = response.data['data'] as List<dynamic>;
         return offersData
-            .map((json) => ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
+            .map((json) =>
+                ConsumerOffer.fromBackendJson(json as Map<String, dynamic>))
             .toList();
       } else {
         throw ApiException(
@@ -191,7 +195,8 @@ class ConsumerOfferApiService {
       );
 
       if (response.data['status'] == true) {
-        return ConsumerOffer.fromBackendJson(response.data['data'] as Map<String, dynamic>);
+        return ConsumerOffer.fromBackendJson(
+            response.data['data'] as Map<String, dynamic>);
       } else {
         throw ApiException(
           message: response.data['message'] ?? 'Error al crear oferta',
@@ -203,6 +208,50 @@ class ConsumerOfferApiService {
     } catch (e) {
       throw ApiException(
         message: 'Error inesperado al crear oferta: $e',
+        statusCode: 500,
+      );
+    }
+  }
+
+  /// Crea una oferta PDE usando el contrato nuevo de forecast/PDE.
+  Future<ConsumerOffer> createPdeOffer({
+    required int communityId,
+    required String period,
+    required double pdePercentage,
+    required double pdeKwh,
+    required double pricePerKwh,
+    required String origen,
+    String? escenarioId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.pdeOferta,
+        data: {
+          'community_id': communityId,
+          'period': period,
+          'pde_porcentaje': pdePercentage,
+          'pde_kwh': pdeKwh,
+          'price_per_kwh': pricePerKwh,
+          'origen': origen,
+          if (escenarioId != null) 'escenario_id': escenarioId,
+        },
+      );
+
+      final body = response.data as Map<String, dynamic>;
+      if (body['success'] == true) {
+        return ConsumerOffer.fromBackendJson(
+            body['data'] as Map<String, dynamic>);
+      }
+
+      throw ApiException(
+        message: body['message'] as String? ?? 'Error al crear oferta PDE',
+        statusCode: response.statusCode,
+      );
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        message: 'Error inesperado al crear oferta PDE: $e',
         statusCode: 500,
       );
     }
@@ -250,7 +299,8 @@ class ConsumerOfferApiService {
       );
 
       if (response.data['status'] == true) {
-        return ConsumerOffer.fromBackendJson(response.data['data'] as Map<String, dynamic>);
+        return ConsumerOffer.fromBackendJson(
+            response.data['data'] as Map<String, dynamic>);
       } else {
         throw ApiException(
           message: response.data['message'] ?? 'Error al actualizar oferta',
@@ -352,7 +402,9 @@ class ConsumerOfferApiService {
   Future<bool> hasOfferForPeriod(int buyerId, String period) async {
     try {
       final offers = await getBuyerOffers(buyerId);
-      return offers.any((offer) => offer.period == period && offer.status == ConsumerOfferStatus.pending);
+      return offers.any((offer) =>
+          offer.period == period &&
+          offer.status == ConsumerOfferStatus.pending);
     } catch (e) {
       return false;
     }
@@ -364,7 +416,8 @@ class ConsumerOfferApiService {
   /// [period] - Período en formato YYYY-MM
   ///
   /// Retorna la oferta o null si no existe
-  Future<ConsumerOffer?> getBuyerOfferForPeriod(int buyerId, String period) async {
+  Future<ConsumerOffer?> getBuyerOfferForPeriod(
+      int buyerId, String period) async {
     try {
       final offers = await getBuyerOffers(buyerId);
       return offers.firstWhere(

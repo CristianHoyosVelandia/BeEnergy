@@ -33,8 +33,6 @@ class ApiEndpoints {
   /// Endpoint para resetear contraseña
   static const String resetPassword = '/auth/reset-password';
 
-
-
   // ==================== USER ENDPOINTS ====================
   /// Endpoint para obtener perfil de usuario
   static const String userProfile = '/user/profile';
@@ -133,6 +131,21 @@ class ApiEndpoints {
   /// Endpoint para obtener detalle de asignación PDE
   static String getPDEAllocation(String id) => '/pde/allocation/$id';
 
+  /// Endpoint para forecast de oferta PDE
+  static const String forecastOfertaPde = '/forecast/oferta-pde';
+
+  /// Endpoint para forecast de aporte solidario
+  static const String forecastAporteSolidario = '/forecast/aporte-solidario';
+
+  /// Endpoint para estado PDE actual
+  static const String pdeEstadoActual = '/pde/estado-actual';
+
+  /// Endpoint para confirmar oferta PDE
+  static const String pdeOferta = '/pde/oferta';
+
+  /// Endpoint para registrar renuncia PDE
+  static const String pdeRenuncia = '/pde/renuncia';
+
   // ==================== BILLING ENDPOINTS ====================
   /// Endpoint para obtener facturación de usuario
   static String userBilling(int userId) => '/billing/user/$userId';
@@ -157,7 +170,8 @@ class ApiEndpoints {
   static String finalizeLiquidation(String id) => '/liquidation/$id/finalize';
 
   /// Endpoint para obtener matches de liquidación
-  static String liquidationMatches(String sessionId) => '/liquidation/$sessionId/matches';
+  static String liquidationMatches(String sessionId) =>
+      '/liquidation/$sessionId/matches';
 
   // ==================== CONSUMER OFFERS ENDPOINTS ====================
   /// Endpoint para obtener ofertas de consumidores
@@ -167,25 +181,31 @@ class ApiEndpoints {
   static const String createConsumerOffer = '/consumer-offers';
 
   /// Endpoint para obtener ofertas por comprador
-  static String getConsumerOffersByBuyer(int buyerId) => '/consumer-offers/buyer/$buyerId';
+  static String getConsumerOffersByBuyer(int buyerId) =>
+      '/consumer-offers/buyer/$buyerId';
 
   /// Endpoint para obtener oferta por ID
-  static String getConsumerOfferById(int offerId) => '/consumer-offers/$offerId';
+  static String getConsumerOfferById(int offerId) =>
+      '/consumer-offers/$offerId';
 
   /// Endpoint para actualizar oferta de consumidor
   static String updateConsumerOffer(int offerId) => '/consumer-offers/$offerId';
 
   /// Endpoint para cancelar oferta de consumidor
-  static String cancelConsumerOffer(int offerId) => '/consumer-offers/$offerId/cancel';
+  static String cancelConsumerOffer(int offerId) =>
+      '/consumer-offers/$offerId/cancel';
 
   /// Endpoint para liquidar oferta de consumidor
-  static String liquidateConsumerOffer(int offerId) => '/consumer-offers/$offerId/liquidate';
+  static String liquidateConsumerOffer(int offerId) =>
+      '/consumer-offers/$offerId/liquidate';
 
   /// Endpoint para obtener ofertas por período
-  static String getConsumerOffersByPeriod(String period) => '/consumer-offers/period/$period';
+  static String getConsumerOffersByPeriod(String period) =>
+      '/consumer-offers/period/$period';
 
   /// Endpoint para obtener ofertas por comunidad y período
-  static String getConsumerOffersByCommunityAndPeriod(int communityId, String period) =>
+  static String getConsumerOffersByCommunityAndPeriod(
+          int communityId, String period) =>
       '/consumer-offers/community/$communityId/period/$period';
 
   // ==================== CREDITS ENDPOINTS ====================

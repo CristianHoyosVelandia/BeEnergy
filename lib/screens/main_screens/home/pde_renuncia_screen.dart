@@ -82,16 +82,18 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
     setState(() => _isSubmitting = true);
     try {
+      PdeRenuncia? savedRenuncia;
       if (renuncia == null) {
-        await _service.createRenuncia(
+        savedRenuncia = await _service.createRenuncia(
           comunidadId: widget.communityId,
           usuarioId: widget.myUser.idUser!,
           periodo: widget.period,
           pdeRenunciado: pdeRenunciado,
+          renunciaKwh: (_status?.consumoKwh ?? 0) * pdeRenunciado,
           motivo: motivo,
         );
       } else {
-        await _service.updateRenuncia(
+        savedRenuncia = await _service.updateRenuncia(
           renunciaId: renuncia.id,
           usuarioId: widget.myUser.idUser!,
           pdeRenunciado: pdeRenunciado,
@@ -99,6 +101,28 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         );
       }
       await _loadStatus();
+      final renunciaGuardada = savedRenuncia;
+      if (mounted && _status?.renuncia == null) {
+        final currentStatus = _status;
+        setState(() {
+          _status = PdeRenunciaStatus(
+            comunidadId: currentStatus?.comunidadId ?? widget.communityId,
+            usuarioId: currentStatus?.usuarioId ?? widget.myUser.idUser!,
+            periodo: currentStatus?.periodo ?? widget.period,
+            pdeActual: currentStatus?.pdeActual ?? renunciaGuardada.pdeOriginal,
+            consumoKwh: currentStatus?.consumoKwh ?? 0,
+            pdeSugeridoRenuncia: currentStatus?.pdeSugeridoRenuncia ??
+                renunciaGuardada.pdeRenunciado,
+            pdeSugeridoConservado: currentStatus?.pdeSugeridoConservado ??
+                renunciaGuardada.pdeConservado,
+            fuente: currentStatus?.fuente,
+            nivelConfianza: currentStatus?.nivelConfianza,
+            opciones: currentStatus?.opciones ?? const [],
+            permiteRenunciaManual: currentStatus?.permiteRenunciaManual ?? true,
+            renuncia: renunciaGuardada,
+          );
+        });
+      }
       if (mounted) {
         context.showInfoSnackbar(
           renuncia == null
@@ -443,59 +467,24 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
               ),
             ),
             SizedBox(height: AppTokens.space12),
-            _RecommendedOptionCard(
-              title: 'Renuncia sugerida',
-              pdeLabel: '${_formatPercent(status.pdeSugeridoRenuncia)} PDE',
-              detail: 'Liberar PDE sugerido',
-              selected: _selectedOptionIndex == 0,
-              enabled: !_isSubmitting && status.pdeSugeridoRenuncia > 0,
-              onTap: () => setState(() => _selectedOptionIndex = 0),
-              onDoubleTap: () => _submitRenuncia(
-                status.pdeSugeridoRenuncia,
-                'Renuncia sugerida por bajo consumo del periodo',
-              ),
-            ),
-            SizedBox(height: AppTokens.space8),
-            _RecommendedOptionCard(
-              title: 'Renuncia moderada',
-              pdeLabel: '${_formatPercent(status.pdeActual * 0.25)} PDE',
-              detail: 'Liberar una parte menor del PDE',
-              selected: _selectedOptionIndex == 1,
-              enabled: !_isSubmitting,
-              onTap: () => setState(() => _selectedOptionIndex = 1),
-              onDoubleTap: () => _submitRenuncia(
-                status.pdeActual * 0.25,
-                'Renuncia moderada sugerida',
-              ),
-            ),
-            SizedBox(height: AppTokens.space8),
-            _RecommendedOptionCard(
-              title: 'Renuncia total',
-              pdeLabel: '${_formatPercent(status.pdeActual)} PDE',
-              detail: 'Renunciar todo',
-              selected: _selectedOptionIndex == 2,
-              enabled: !_isSubmitting && status.pdeActual > 0,
-              onTap: () => setState(() => _selectedOptionIndex = 2),
-              onDoubleTap: () => _submitRenuncia(
-                status.pdeActual,
-                'Renuncia total voluntaria del PDE asignado',
-              ),
-            ),
-            SizedBox(height: AppTokens.space12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: _isSubmitting ? null : _showManualDialog,
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppTokens.primaryColor),
-                  padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: AppTokens.borderRadiusMedium,
+            ..._buildRecommendedOptions(status),
+            if (status.permiteRenunciaManual) ...[
+              SizedBox(height: AppTokens.space12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _isSubmitting ? null : _showManualDialog,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTokens.primaryColor),
+                    padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: AppTokens.borderRadiusMedium,
+                    ),
                   ),
+                  child: const Text('Renuncia manual'),
                 ),
-                child: const Text('Renuncia manual'),
               ),
-            ),
+            ],
           ] else if (renuncia.estado == 'pendiente') ...[
             SizedBox(height: AppTokens.space20),
             SizedBox(
@@ -520,11 +509,68 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     );
   }
 
+  List<Widget> _buildRecommendedOptions(PdeRenunciaStatus status) {
+    final options = status.opciones.isEmpty
+        ? [
+            PdeRenunciaOption(
+              id: 'sugerida',
+              renunciaPorcentaje: status.pdeSugeridoRenuncia,
+              descripcion: 'Liberar PDE sugerido',
+            ),
+            PdeRenunciaOption(
+              id: 'moderada',
+              renunciaPorcentaje: status.pdeActual * 0.25,
+              descripcion: 'Liberar una parte menor del PDE',
+            ),
+            PdeRenunciaOption(
+              id: 'total',
+              renunciaPorcentaje: status.pdeActual,
+              descripcion: 'Renunciar todo',
+            ),
+          ]
+        : status.opciones;
+
+    return [
+      for (var i = 0; i < options.length; i++) ...[
+        _RecommendedOptionCard(
+          title: _optionTitle(options[i].id),
+          pdeLabel:
+              '${_formatPercent(options[i].renunciaPorcentaje / 100)} PDE',
+          detail: options[i].descripcion,
+          selected: _selectedOptionIndex == i,
+          enabled: !_isSubmitting && options[i].renunciaPorcentaje > 0,
+          onTap: () => setState(() => _selectedOptionIndex = i),
+          onDoubleTap: () => _submitRenuncia(
+            options[i].renunciaPorcentaje / 100,
+            options[i].descripcion,
+          ),
+        ),
+        if (i != options.length - 1) SizedBox(height: AppTokens.space8),
+      ],
+    ];
+  }
+
+  String _optionTitle(String id) {
+    switch (id) {
+      case 'moderada':
+        return 'Renuncia moderada';
+      case 'total':
+        return 'Renuncia total';
+      default:
+        return 'Renuncia sugerida';
+    }
+  }
+
   String _formatPercent(double value) {
     return '${Formatters.formatNumber(value * 100, decimals: 2)}%';
   }
 
   double _selectedRenunciaValue(PdeRenunciaStatus status) {
+    if (status.opciones.isNotEmpty &&
+        _selectedOptionIndex < status.opciones.length) {
+      return status.opciones[_selectedOptionIndex].renunciaPorcentaje / 100;
+    }
+
     switch (_selectedOptionIndex) {
       case 1:
         return status.pdeActual * 0.25;

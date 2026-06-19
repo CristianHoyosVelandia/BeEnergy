@@ -1,13 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
-import 'package:be_energy/data/fake_data_january_2026.dart';
+import 'package:be_energy/models/forecast_pde.dart';
 import 'package:be_energy/models/my_user.dart';
 import 'package:be_energy/screens/main_screens/consumer/consumer_marketplace_screen.dart';
 import 'package:be_energy/services/consumer_offer_api_service.dart';
+import 'package:be_energy/services/forecast_api_service.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
@@ -35,15 +34,47 @@ class PdeSuggestionSelectionScreen extends StatefulWidget {
 class _PdeSuggestionSelectionScreenState
     extends State<PdeSuggestionSelectionScreen> {
   final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
+  final ForecastApiService _forecastService = ForecastApiService();
+  ForecastOfertaPde? _forecast;
+  bool _isLoadingForecast = true;
   bool _isCreatingOffer = false;
   String? _errorMessage;
 
-  static const double _gridEnergyPrice = FakeDataJanuary2026.costoEnergia;
-  static const double _maxPdePercentage = 9.99;
+  @override
+  void initState() {
+    super.initState();
+    _loadForecast();
+  }
 
-  double get _availablePDE => widget.totalPDEAvailable > 0
-      ? widget.totalPDEAvailable
-      : FakeDataJanuary2026.pdeJan2026.allocatedEnergy;
+  Future<void> _loadForecast() async {
+    try {
+      final forecast = await _forecastService.getOfertaPde(
+        communityId: widget.communityId,
+        userId: widget.myUser.idUser,
+        period: widget.period,
+      );
+      if (mounted) {
+        setState(() {
+          _forecast = forecast;
+          _isLoadingForecast = false;
+        });
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.message;
+          _isLoadingForecast = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error inesperado: $e';
+          _isLoadingForecast = false;
+        });
+      }
+    }
+  }
 
   String get _firstName {
     final name = widget.myUser.nombre?.trim();
@@ -54,78 +85,44 @@ class _PdeSuggestionSelectionScreenState
   }
 
   List<_PdeSuggestion> get _suggestions {
-    // final available = math.max(_availablePDE, 0.01);
-    final available = _availablePDE * 100;
-    // print('Available PDE: $available kWh');
-    final consumption =
-        widget.energyConsumed > 0 ? widget.energyConsumed : available;
-    final maxUsefulEnergy = math.min(available, consumption);
+    final forecast = _forecast;
+    if (forecast == null) return const [];
 
-    return [
-      _buildSuggestion(
-        name: 'Escenario 2',
-        factor: 0.35,
-        pricePerKwh: 550,
-        icon: Icons.bolt_outlined,
+    return forecast.escenarios.map((scenario) {
+      return _PdeSuggestion(
+        id: scenario.id,
+        name: _scenarioName(scenario.id),
+        pdePercentage: scenario.pdePorcentaje,
+        energyKwh: scenario.pdeKwh,
+        pricePerKwh: forecast.tarifaCopKwh,
+        estimatedSavings: scenario.ahorroEstimadoCop,
+        explanation: scenario.descripcion,
+        icon: _scenarioIcon(scenario.id),
         color: AppTokens.primaryColor,
-        explanation:
-            'Ideal si quieres probar el PDE con una solicitud conservadora.',
-        maxUsefulEnergy: maxUsefulEnergy,
-        available: available,
-      ),
-      _buildSuggestion(
-        name: 'Escenario 1',
-        factor: 0.65,
-        pricePerKwh: 550.0,
-        icon: Icons.offline_bolt,
-        color: AppTokens.primaryColor,
-        explanation:
-            'Balancea ahorro y probabilidad de asignación para este periodo.',
-        maxUsefulEnergy: maxUsefulEnergy,
-        available: available,
-      ),
-      _buildSuggestion(
-        name: 'Escenario 3',
-        factor: 1,
-        pricePerKwh: 550,
-        icon: Icons.flash_on,
-        color: AppTokens.primaryColor,
-        explanation:
-            'Busca una mayor cobertura PDE aprovechando la disponibilidad actual.',
-        maxUsefulEnergy: maxUsefulEnergy,
-        available: available,
-      ),
-    ];
+      );
+    }).toList();
   }
 
-  _PdeSuggestion _buildSuggestion({
-    required String name,
-    required double factor,
-    required double pricePerKwh,
-    required IconData icon,
-    required Color color,
-    required String explanation,
-    required double maxUsefulEnergy,
-    required double available,
-  }) {
-    final maxUsefulPercentage = math.min(
-      (maxUsefulEnergy / available) * 100,
-      _maxPdePercentage,
-    );
-    final pdePercentage = math.max(maxUsefulPercentage * factor, 0.01);
-    final energyKwh = available * (pdePercentage / 100);
-    final savings = math.max((_gridEnergyPrice - pricePerKwh) * energyKwh, 0.0);
+  String _scenarioName(String id) {
+    switch (id) {
+      case 'bajo':
+        return 'Escenario conservador';
+      case 'alto':
+        return 'Escenario alto';
+      default:
+        return 'Escenario recomendado';
+    }
+  }
 
-    return _PdeSuggestion(
-      name: name,
-      pdePercentage: pdePercentage.clamp(0.01, _maxPdePercentage).toDouble(),
-      energyKwh: energyKwh,
-      pricePerKwh: pricePerKwh,
-      estimatedSavings: savings,
-      explanation: explanation,
-      icon: icon,
-      color: color,
-    );
+  IconData _scenarioIcon(String id) {
+    switch (id) {
+      case 'bajo':
+        return Icons.bolt_outlined;
+      case 'alto':
+        return Icons.flash_on;
+      default:
+        return Icons.offline_bolt;
+    }
   }
 
   Future<void> _createSuggestedOffer(_PdeSuggestion suggestion) async {
@@ -141,12 +138,14 @@ class _PdeSuggestionSelectionScreenState
     });
 
     try {
-      await _apiService.createOffer(
-        buyerId: userId,
+      await _apiService.createPdeOffer(
         communityId: widget.communityId,
         period: widget.period,
-        pdePercentageRequested: suggestion.pdePercentage,
+        pdePercentage: suggestion.pdePercentage,
+        pdeKwh: suggestion.energyKwh,
         pricePerKwh: suggestion.pricePerKwh,
+        origen: 'forecast',
+        escenarioId: suggestion.id,
       );
 
       if (!mounted) return;
@@ -192,7 +191,9 @@ class _PdeSuggestionSelectionScreenState
   @override
   Widget build(BuildContext context) {
     final suggestions = _suggestions;
-    final recommendedSavings = suggestions[1].estimatedSavings;
+    final recommendedSavings = suggestions.isEmpty
+        ? 0.0
+        : suggestions[(suggestions.length / 2).floor()].estimatedSavings;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -212,35 +213,38 @@ class _PdeSuggestionSelectionScreenState
       ),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: EdgeInsets.all(AppTokens.space16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeroCard(recommendedSavings),
-                SizedBox(height: AppTokens.space16),
-                Text(
-                  'Opciones recomendadas',
-                  style: context.textStyles.titleMedium?.copyWith(
-                    fontWeight: AppTokens.fontWeightBold,
-                  ),
-                ),
-                SizedBox(height: AppTokens.space12),
-                for (var i = 0; i < suggestions.length; i++)
-                  _buildSuggestionCard(
-                    suggestions[i],
-                    highlight: i == 1,
-                  ),
-                SizedBox(height: AppTokens.space8),
-                _buildManualOption(),
-                if (_errorMessage != null) ...[
+          if (_isLoadingForecast)
+            const Center(child: CircularProgressIndicator())
+          else
+            SingleChildScrollView(
+              padding: EdgeInsets.all(AppTokens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeroCard(recommendedSavings),
                   SizedBox(height: AppTokens.space16),
-                  _buildErrorMessage(),
+                  Text(
+                    'Opciones recomendadas',
+                    style: context.textStyles.titleMedium?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space12),
+                  for (var i = 0; i < suggestions.length; i++)
+                    _buildSuggestionCard(
+                      suggestions[i],
+                      highlight: suggestions[i].id == 'medio',
+                    ),
+                  SizedBox(height: AppTokens.space8),
+                  _buildManualOption(),
+                  if (_errorMessage != null) ...[
+                    SizedBox(height: AppTokens.space16),
+                    _buildErrorMessage(),
+                  ],
+                  SizedBox(height: AppTokens.space32),
                 ],
-                SizedBox(height: AppTokens.space32),
-              ],
+              ),
             ),
-          ),
           if (_isCreatingOffer)
             Container(
               color: Colors.black.withValues(alpha: 0.25),
@@ -460,6 +464,7 @@ class _PdeSuggestionSelectionScreenState
 }
 
 class _PdeSuggestion {
+  final String id;
   final String name;
   final double pdePercentage;
   final double energyKwh;
@@ -470,6 +475,7 @@ class _PdeSuggestion {
   final Color color;
 
   const _PdeSuggestion({
+    required this.id,
     required this.name,
     required this.pdePercentage,
     required this.energyKwh,

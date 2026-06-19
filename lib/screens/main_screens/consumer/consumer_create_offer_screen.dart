@@ -4,8 +4,9 @@ import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/utils/metodos.dart';
-import '../../../data/fake_data_january_2026.dart';
+import '../../../models/forecast_pde.dart';
 import '../../../services/consumer_offer_api_service.dart';
+import '../../../services/forecast_api_service.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../models/my_user.dart';
 
@@ -41,13 +42,14 @@ class ConsumerCreateOfferScreen extends StatefulWidget {
 
 class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   final ConsumerOfferApiService _apiService = ConsumerOfferApiService();
+  final ForecastApiService _forecastService = ForecastApiService();
 
-  final _totalPDEAvailable = 1500.0; // kWh disponibles para PDE
+  ForecastOfertaPde? _forecast;
+  double _totalPDEAvailable = 0.0;
 
   // Controles del formulario
   double _pdePercentageRequested = 5.0; // 5% por defecto (rango 0-9.99)
-  double _pricePerKwh =
-      FakeDataJanuary2026.precioMinimoConsumidor; // Precio mínimo
+  double _pricePerKwh = 550.0;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -65,6 +67,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   @override
   void initState() {
     super.initState();
+    _loadForecast();
 
     // Si existe oferta, pre-llenar el formulario
     if (_isEditMode) {
@@ -72,18 +75,53 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       _pdePercentageRequested =
           offer.pdePercentageRequested * 100; // Convertir decimal a porcentaje
       _pricePerKwh = offer.pricePerKwh;
-    } else {
-      // Inicializar con precio mínimo (MC_m × 1.1 = 330 COP)
-      _pricePerKwh = FakeDataJanuary2026.precioMinimoConsumidor;
+    }
+  }
+
+  Future<void> _loadForecast() async {
+    setState(() => _isLoading = true);
+    try {
+      final forecast = await _forecastService.getOfertaPde(
+        communityId: widget.communityId,
+        userId: widget.myUser.idUser,
+        period: _currentPeriod,
+      );
+      if (!mounted) return;
+      setState(() {
+        _forecast = forecast;
+        _totalPDEAvailable = forecast.generacionEstimadaComunidadKwh;
+        if (!_isEditMode) {
+          _pdePercentageRequested =
+              forecast.pdeRecomendado.clamp(0.01, 9.99).toDouble();
+          _pricePerKwh = forecast.tarifaCopKwh;
+        }
+      });
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() => _errorMessage = e.message);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(
+            () => _errorMessage = 'Error inesperado cargando forecast: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   /// Verifica si el precio está en rango válido (330 a 693.5 COP/kWh)
   bool get _isPriceValid {
-    final minPrice = FakeDataJanuary2026.precioMinimoConsumidor;
-    final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor;
+    final minPrice = _minPrice;
+    final maxPrice = _maxPrice;
     return _pricePerKwh >= minPrice && _pricePerKwh <= maxPrice;
   }
+
+  double get _minPrice => (_forecast?.tarifaCopKwh ?? 550.0) * 0.6;
+
+  double get _maxPrice => (_forecast?.tarifaCopKwh ?? 550.0) * 1.3;
 
   /// Calcula la energía total estimada en kWh
   double get _totalEnergyKwh {
@@ -115,8 +153,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
       }
 
       if (!_isPriceValid) {
-        final minPrice = FakeDataJanuary2026.precioMinimoConsumidor;
-        final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor;
+        final minPrice = _minPrice;
+        final maxPrice = _maxPrice;
         throw Exception(
           'Precio fuera de rango permitido (${Formatters.formatCurrency(minPrice, decimals: 0, showSymbol: false)}-${Formatters.formatCurrency(maxPrice, decimals: 0, showSymbol: false)} COP/kWh)',
         );
@@ -133,13 +171,14 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
         );
       } else {
         // Crear nueva oferta
-        offer = await _apiService.createOffer(
-          buyerId: widget.myUser.idUser!,
+        offer = await _apiService.createPdeOffer(
           communityId: widget.communityId,
           period:
               widget.period ?? '2026-01', // Usar período del widget o default
-          pdePercentageRequested: _pdePercentageRequested,
+          pdePercentage: _pdePercentageRequested,
+          pdeKwh: _totalEnergyKwh,
           pricePerKwh: _pricePerKwh,
+          origen: 'manual',
         );
       }
 
@@ -448,9 +487,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   }
 
   Widget _buildPriceSlider() {
-    final minPrice =
-        FakeDataJanuary2026.precioMinimoConsumidor; // MC_m × 1.1 = 330
-    final maxPrice = FakeDataJanuary2026.precioMaximoConsumidor; // 693.5
+    final minPrice = _minPrice;
+    final maxPrice = _maxPrice;
 
     return Card(
       margin: EdgeInsets.symmetric(
@@ -552,7 +590,7 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
             ),
             SizedBox(height: AppTokens.space8),
             Text(
-              'MCm (Precio Promedio): ${Formatters.formatCurrency(FakeDataJanuary2026.mcmValorEnergiaPromedio, decimals: 0)} COP/kWh',
+              'Tarifa forecast: ${Formatters.formatCurrency(_forecast?.tarifaCopKwh ?? _pricePerKwh, decimals: 0)} COP/kWh',
               style: context.textStyles.bodySmall?.copyWith(color: Colors.grey),
             ),
             SizedBox(height: AppTokens.space8),
@@ -696,8 +734,8 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
   }
 
   Widget _buildPreviewSupportMessage() {
-    final minValue = FakeDataJanuary2026.precioMinimoConsumidor;
-    final maxValue = FakeDataJanuary2026.precioMaximoConsumidor;
+    final minValue = _minPrice;
+    final maxValue = _maxPrice;
     final color = _isPriceValid ? Colors.white : AppTokens.primaryYellow;
 
     return Container(

@@ -77,8 +77,8 @@ class ConsumerOffer {
   /// Verifica si la oferta puede ser liquidada
   bool isLiquidatable() {
     return status == ConsumerOfferStatus.pending &&
-           !isExpired &&
-           liquidationSessionId == null;
+        !isExpired &&
+        liquidationSessionId == null;
   }
 
   /// Verifica si la oferta ha expirado
@@ -126,8 +126,10 @@ class ConsumerOffer {
       buyerType: buyerType ?? this.buyerType,
       communityId: communityId ?? this.communityId,
       period: period ?? this.period,
-      pdePercentageRequested: pdePercentageRequested ?? this.pdePercentageRequested,
-      pdePercentageAssigned: pdePercentageAssigned ?? this.pdePercentageAssigned,
+      pdePercentageRequested:
+          pdePercentageRequested ?? this.pdePercentageRequested,
+      pdePercentageAssigned:
+          pdePercentageAssigned ?? this.pdePercentageAssigned,
       pricePerKwh: pricePerKwh ?? this.pricePerKwh,
       energyKwhCalculated: energyKwhCalculated ?? this.energyKwhCalculated,
       status: status ?? this.status,
@@ -172,7 +174,8 @@ class ConsumerOffer {
       buyerType: json['buyerType'] as String?,
       communityId: json['communityId'] as int,
       period: json['period'] as String,
-      pdePercentageRequested: (json['pdePercentageRequested'] as num).toDouble(),
+      pdePercentageRequested:
+          (json['pdePercentageRequested'] as num).toDouble(),
       pdePercentageAssigned: json['pdePercentageAssigned'] != null
           ? (json['pdePercentageAssigned'] as num).toDouble()
           : null,
@@ -204,7 +207,8 @@ class ConsumerOffer {
   /// - energy_requested (pde_estimated * pde_percentage_requested)
   /// - pde_percentage_requested como decimal (0.0-1.0)
   /// - status como int (0-4)
-  factory ConsumerOffer.fromBackendJsonWithBuyerInfo(Map<String, dynamic> json) {
+  factory ConsumerOffer.fromBackendJsonWithBuyerInfo(
+      Map<String, dynamic> json) {
     // Calcular validUntil basado en el período
     DateTime validUntil;
     try {
@@ -219,7 +223,8 @@ class ConsumerOffer {
 
     // Mapear buyer_type a español
     String buyerType = json['buyer_type'] as String;
-    String buyerTypeSpanish = buyerType == 'Consumer' ? 'Consumidor' : 'Prosumidor';
+    String buyerTypeSpanish =
+        buyerType == 'Consumer' ? 'Consumidor' : 'Prosumidor';
 
     return ConsumerOffer(
       id: json['id'] as int,
@@ -229,7 +234,8 @@ class ConsumerOffer {
       communityId: json['community_id'] as int,
       period: json['period'] as String,
       // Backend retorna como decimal (0.0-1.0)
-      pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble(),
+      pdePercentageRequested:
+          (json['pde_percentage_requested'] as num).toDouble(),
       pdePercentageAssigned: json['pde_percentage_assigned'] != null
           ? (json['pde_percentage_assigned'] as num).toDouble()
           : null,
@@ -268,22 +274,48 @@ class ConsumerOffer {
       validUntil = DateTime.now();
     }
 
+    ConsumerOfferStatus parseStatus(dynamic value) {
+      if (value is int) {
+        return ConsumerOfferStatus.values[value.clamp(0, 4)];
+      }
+      final statusText =
+          (value ?? json['estado'] ?? 'pending').toString().toLowerCase();
+      switch (statusText) {
+        case 'matched':
+        case 'liquidada':
+        case 'completed':
+          return ConsumerOfferStatus.matched;
+        case 'partial_match':
+        case 'partialmatch':
+          return ConsumerOfferStatus.partialMatch;
+        case 'expired':
+        case 'expirada':
+          return ConsumerOfferStatus.expired;
+        case 'cancelled':
+        case 'canceled':
+        case 'cancelada':
+          return ConsumerOfferStatus.cancelled;
+        default:
+          return ConsumerOfferStatus.pending;
+      }
+    }
+
     return ConsumerOffer(
       id: json['id'] as int,
-      buyerId: json['buyer_id'] as int,
-      buyerName: 'Usuario ${json['buyer_id']}', // El backend no retorna nombre
+      buyerId: json['buyer_id'] as int? ?? json['user_id'] as int,
+      buyerName: 'Usuario ${json['buyer_id'] ?? json['user_id']}',
       buyerType: null, // Este método no incluye buyer_type
       communityId: json['community_id'] as int,
       period: json['period'] as String,
       // Backend retorna como porcentaje (0.01-99.99), convertir a decimal (0.0001-0.9999)
-      pdePercentageRequested: (json['pde_percentage_requested'] as num).toDouble() / 100,
+      pdePercentageRequested:
+          (json['pde_percentage_requested'] as num).toDouble() / 100,
       pdePercentageAssigned: json['pde_percentage_assigned'] != null
           ? (json['pde_percentage_assigned'] as num).toDouble() / 100
           : null,
       pricePerKwh: (json['price_per_kwh'] as num).toDouble(),
-      energyKwhCalculated: null, // Backend no retorna este campo
-      // Backend retorna status como int (0-4)
-      status: ConsumerOfferStatus.values[(json['status'] as int).clamp(0, 4)],
+      energyKwhCalculated: (json['pde_kwh'] as num?)?.toDouble(),
+      status: parseStatus(json['status']),
       createdAt: DateTime.parse(json['created_at'] as String),
       validUntil: validUntil,
       liquidationSessionId: json['liquidation_session_id'] as int?,
