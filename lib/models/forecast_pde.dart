@@ -8,6 +8,7 @@ class ForecastOfertaPde {
   final double tarifaCopKwh;
   final String nivelConfianza;
   final String fuente;
+  final String? modelVersion;
   final List<ForecastEscenarioOferta> escenarios;
   final bool permiteOfertaManual;
 
@@ -21,6 +22,7 @@ class ForecastOfertaPde {
     required this.tarifaCopKwh,
     required this.nivelConfianza,
     required this.fuente,
+    this.modelVersion,
     required this.escenarios,
     required this.permiteOfertaManual,
   });
@@ -37,6 +39,7 @@ class ForecastOfertaPde {
       tarifaCopKwh: (json['tarifa_cop_kwh'] as num).toDouble(),
       nivelConfianza: json['nivel_confianza'] as String,
       fuente: json['fuente'] as String,
+      modelVersion: json['model_version'] as String?,
       escenarios: (json['escenarios'] as List<dynamic>? ?? [])
           .map((item) =>
               ForecastEscenarioOferta.fromJson(item as Map<String, dynamic>))
@@ -82,6 +85,7 @@ class ForecastAporteSolidario {
   final double pdeConservadoSugerido;
   final String nivelConfianza;
   final String fuente;
+  final String? modelVersion;
   final List<ForecastOpcionAporte> opciones;
   final bool permiteRenunciaManual;
 
@@ -95,6 +99,7 @@ class ForecastAporteSolidario {
     required this.pdeConservadoSugerido,
     required this.nivelConfianza,
     required this.fuente,
+    this.modelVersion,
     required this.opciones,
     required this.permiteRenunciaManual,
   });
@@ -111,6 +116,7 @@ class ForecastAporteSolidario {
           (json['pde_conservado_sugerido'] as num).toDouble(),
       nivelConfianza: json['nivel_confianza'] as String,
       fuente: json['fuente'] as String,
+      modelVersion: json['model_version'] as String?,
       opciones: (json['opciones'] as List<dynamic>? ?? [])
           .map((item) =>
               ForecastOpcionAporte.fromJson(item as Map<String, dynamic>))
