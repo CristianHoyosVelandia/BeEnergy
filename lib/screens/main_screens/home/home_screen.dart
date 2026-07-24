@@ -91,6 +91,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshHome() async {
+    try {
+      await _controller.initialize(
+        user: widget.myUser,
+        communityId: _currentCommunityId,
+        fallbackPeriod: FakePeriodsData.currentPeriod,
+        useFakeData: DataSourceConfig.isFake,
+      );
+      await _reloadPriceReferences();
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Error recargando Home',
+        tag: 'HomeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        context.showInfoSnackbar('No se pudo actualizar la información.');
+      }
+    }
+  }
+
   Future<void> _reloadPriceReferences() async {
     if (DataSourceConfig.isFake || !_isAdminView || !_isCurrentPeriod) {
       return;
@@ -845,6 +867,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _body() {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding:
           EdgeInsets.only(top: AppTokens.space16, bottom: AppTokens.space24),
       children: [
@@ -908,7 +931,11 @@ class _HomeScreenState extends State<HomeScreen> {
         onNotificationsTap: () => context.push(const NotificacionesScreen()),
       ),
       backgroundColor: context.colors.surface,
-      body: _body(),
+      body: RefreshIndicator(
+        color: context.colors.primary,
+        onRefresh: _refreshHome,
+        child: _body(),
+      ),
     );
   }
 }
