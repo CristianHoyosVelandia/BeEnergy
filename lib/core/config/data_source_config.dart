@@ -21,6 +21,7 @@ import 'package:be_energy/repositories/impl/auth_repository_api.dart';
 enum DataSourceType {
   /// Datos fake locales (para desarrollo y testing)
   fake,
+
   /// API REST (para producción)
   api,
 }
@@ -29,10 +30,13 @@ enum DataSourceType {
 class DataSourceConfig {
   /// Tipo de fuente de datos activa
   static DataSourceType _currentSource = DataSourceType.fake;
+
   /// URL base del API (leído desde .env)
   static String _apiBaseUrl = '';
+
   /// Obtiene el tipo de fuente de datos actual
   static DataSourceType get currentSource => _currentSource;
+
   /// Establece el tipo de fuente de datos
   static void setDataSource(DataSourceType source) {
     _currentSource = source;
@@ -59,7 +63,7 @@ class DataSourceConfig {
       }
 
       // Leer BASE_URL desde .env
-      _apiBaseUrl = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8000';
+      _apiBaseUrl = dotenv.env['BASE_URL'] ?? 'https://api.voltagora.com';
 
       // Leer ENABLE_MOCKS desde .env (runtime)
       final enableMocks = dotenv.env['ENABLE_MOCKS']?.toLowerCase() ?? 'true';
@@ -76,9 +80,10 @@ class DataSourceConfig {
       // print('🔧 [DataSourceConfig] Using: $_currentSource');
       // print('🌐 [DataSourceConfig] API Base URL: $_apiBaseUrl');
     } catch (e) {
-      AppLogger.warning('Error loading .env, using default config', tag: 'DataSourceConfig', error: e);
+      AppLogger.warning('Error loading .env, using default config',
+          tag: 'DataSourceConfig', error: e);
       _currentSource = DataSourceType.fake;
-      _apiBaseUrl = 'http://10.0.2.2:8000';
+      _apiBaseUrl = 'https://api.voltagora.com';
     }
   }
 

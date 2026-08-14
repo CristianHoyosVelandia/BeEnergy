@@ -13,7 +13,7 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: dotenv.env['BASE_URL'] ?? '',
+        baseUrl: dotenv.env['BASE_URL'] ?? 'https://api.voltagora.com',
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
@@ -29,7 +29,8 @@ class ApiClient {
     // Agregar interceptor de logs en modo debug
     _dio.interceptors.add(LogInterceptor(
       request: false,
-      requestHeader: false, // Desactivar logs de headers para evitar información sensible
+      requestHeader:
+          false, // Desactivar logs de headers para evitar información sensible
       requestBody: false,
       responseHeader: false,
       responseBody: false,
