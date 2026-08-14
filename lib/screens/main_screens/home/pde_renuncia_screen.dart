@@ -542,7 +542,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   }
 
   List<Widget> _buildRecommendedOptions(PdeRenunciaStatus status) {
-    final options = status.opciones.isEmpty
+    final rawOptions = status.opciones.isEmpty
         ? [
             PdeRenunciaOption(
               id: 'sugerida',
@@ -561,6 +561,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             ),
           ]
         : status.opciones;
+    final options = _uniqueOptionsByRenuncia(rawOptions);
 
     return [
       for (var i = 0; i < options.length; i++) ...[
@@ -573,7 +574,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
           return _RecommendedOptionCard(
             title: keepsAllPde
-                ? 'Conservar todo mi PDE'
+                ? 'Te recomendamos conservar todo tu PDE'
                 : _optionTitle(options[i].id),
             pdeLabel: keepsAllPde
                 ? 'Te quedas con ${_formatPercent(conservado)} PDE'
@@ -595,6 +596,15 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         if (i != options.length - 1) SizedBox(height: AppTokens.space8),
       ],
     ];
+  }
+
+  List<PdeRenunciaOption> _uniqueOptionsByRenuncia(
+      List<PdeRenunciaOption> options) {
+    final seen = <String>{};
+    return options.where((option) {
+      final key = option.renunciaPorcentaje.toStringAsFixed(4);
+      return seen.add(key);
+    }).toList();
   }
 
   String _optionTitle(String id) {

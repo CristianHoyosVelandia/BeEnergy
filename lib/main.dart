@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/config/data_source_config.dart';
+import 'core/navigation/app_session_manager.dart';
 
 import 'data/database_Helper.dart';
 import 'services/community_theme_storage.dart';
@@ -31,10 +32,14 @@ void main() async {
   try {
     final dbHelper = DatabaseHelper();
     final user = await dbHelper.getUser();
-    if (user.idUser != 0 && user.primaryColor != null && user.secondColor != null) {
+    if (user.idUser != 0 &&
+        user.primaryColor != null &&
+        user.secondColor != null) {
       AppTokens.updateThemeColors(
-        primary: Color(CommunityThemeStorage.parseColorString(user.primaryColor!)),
-        secondary: Color(CommunityThemeStorage.parseColorString(user.secondColor!)),
+        primary:
+            Color(CommunityThemeStorage.parseColorString(user.primaryColor!)),
+        secondary:
+            Color(CommunityThemeStorage.parseColorString(user.secondColor!)),
         imageUrl: user.urlImg ?? '',
       );
     }
@@ -54,6 +59,8 @@ class MyApp extends StatelessWidget {
       valueListenable: AppTokens.themeVersion,
       builder: (context, _, __) {
         return MaterialApp(
+          navigatorKey: appNavigatorKey,
+          scaffoldMessengerKey: appScaffoldMessengerKey,
           debugShowCheckedModeBanner: false,
           title: 'Be Energy',
 
@@ -66,26 +73,27 @@ class MyApp extends StatelessWidget {
           initialRoute: 'beEnergy',
           routes: {
             // Main Route:
-            'beEnergy'        : (context) => const Beenergy(),
+            'beEnergy': (context) => const Beenergy(),
             //others routes
-            'configuration'   : (context) => const ConfiguracionScreen(),
-            'energy'          : (context) => const EnergyScreen(),
-            'historial'       : (context) => const HistorialScreen(),
-            'home'            : (context) => const HomeScreen(),
-            'login'           : (context) => const LoginScreen(),
-            'notificaciones'  : (context) => const NotificacionesScreen(),
-            'register'        : (context) => const RegisterScreen(),
-            'trading'         : (context) => const TradingScreen(),
-            'RecuerdoMiClave' : (context) => const NoRecuerdomiclaveScreen(),
+            'configuration': (context) => const ConfiguracionScreen(),
+            'energy': (context) => const EnergyScreen(),
+            'historial': (context) => const HistorialScreen(),
+            'home': (context) => const HomeScreen(),
+            'login': (context) => const LoginScreen(),
+            'notificaciones': (context) => const NotificacionesScreen(),
+            'register': (context) => const RegisterScreen(),
+            'trading': (context) => const TradingScreen(),
+            'RecuerdoMiClave': (context) => const NoRecuerdomiclaveScreen(),
 
             // Community Routes (nuevas pantallas):
-            'communityManagement' : (context) => const CommunityManagementScreen(),
-            'energyRecords'       : (context) => const EnergyRecordsScreen(),
-            'pdeAllocation'       : (context) => const PDEAllocationScreen(),
-            'p2pMarket'           : (context) => const P2PMarketScreen(),
-            'energyCredits'       : (context) => const EnergyCreditsScreen(),
-            'monthlyBilling'      : (context) => const MonthlyBillingScreen(),
-            'reports'             : (context) => const ReportsScreen(),
+            'communityManagement': (context) =>
+                const CommunityManagementScreen(),
+            'energyRecords': (context) => const EnergyRecordsScreen(),
+            'pdeAllocation': (context) => const PDEAllocationScreen(),
+            'p2pMarket': (context) => const P2PMarketScreen(),
+            'energyCredits': (context) => const EnergyCreditsScreen(),
+            'monthlyBilling': (context) => const MonthlyBillingScreen(),
+            'reports': (context) => const ReportsScreen(),
           },
         );
       },

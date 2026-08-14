@@ -24,7 +24,9 @@ class ApiClient {
     );
 
     // Agregar interceptor personalizado
-    _dio.interceptors.add(ApiInterceptor());
+    _dio.interceptors.add(
+      ApiInterceptor(onClearAuthHeader: removeAuthToken),
+    );
 
     // Agregar interceptor de logs en modo debug
     _dio.interceptors.add(LogInterceptor(

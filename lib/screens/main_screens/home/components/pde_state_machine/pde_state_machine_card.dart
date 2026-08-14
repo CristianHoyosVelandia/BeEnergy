@@ -246,7 +246,6 @@ class _AvailableCard extends StatelessWidget {
         0.95;
 
     return _GradientCard(
-      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -257,6 +256,7 @@ class _AvailableCard extends StatelessWidget {
                 ? '$periodDisplayName - Gestión Comunitaria'
                 : '$periodDisplayName - Modelo de Ofertas',
             showArrow: true,
+            onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
           const PdeProgressTimeline(currentStatus: 1),
@@ -282,9 +282,11 @@ class _AvailableCard extends StatelessWidget {
           ),
           SizedBox(height: AppTokens.space16),
           _Cta(
-              label: isAdminView
-                  ? 'Revisar Ofertas Comunitarias'
-                  : 'Crear Oferta de PDE'),
+            label: isAdminView
+                ? 'Revisar Ofertas Comunitarias'
+                : 'Crear Oferta de PDE',
+            onTap: onTap,
+          ),
         ],
       ),
     );
@@ -313,7 +315,6 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _GradientCard(
-      onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -322,6 +323,7 @@ class _InfoCard extends StatelessWidget {
             title: title,
             subtitle: periodDisplayName,
             showArrow: onTap != null,
+            onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
           PdeProgressTimeline(currentStatus: statusCode),
@@ -329,7 +331,7 @@ class _InfoCard extends StatelessWidget {
           _MessageBox(message: message),
           if (ctaLabel != null) ...[
             SizedBox(height: AppTokens.space16),
-            _Cta(label: ctaLabel!),
+            _Cta(label: ctaLabel!, onTap: onTap),
           ],
         ],
       ),
@@ -508,13 +510,12 @@ class _HistoricalCard extends StatelessWidget {
 
 class _GradientCard extends StatelessWidget {
   final Widget child;
-  final VoidCallback? onTap;
 
-  const _GradientCard({required this.child, this.onTap});
+  const _GradientCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
+    return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
       padding: EdgeInsets.all(AppTokens.space20),
       decoration: BoxDecoration(
@@ -537,10 +538,6 @@ class _GradientCard extends StatelessWidget {
       ),
       child: child,
     );
-
-    return onTap == null
-        ? content
-        : GestureDetector(onTap: onTap, child: content);
   }
 }
 
@@ -549,12 +546,14 @@ class _Header extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool showArrow;
+  final VoidCallback? onArrowTap;
 
   const _Header({
     required this.icon,
     required this.title,
     required this.subtitle,
     this.showArrow = false,
+    this.onArrowTap,
   });
 
   @override
@@ -594,10 +593,14 @@ class _Header extends StatelessWidget {
           ),
         ),
         if (showArrow)
-          Icon(
-            Icons.arrow_forward_ios,
-            color: Colors.white.withValues(alpha: 0.7),
-            size: 20,
+          IconButton(
+            onPressed: onArrowTap,
+            icon: Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white.withValues(alpha: 0.7),
+              size: 20,
+            ),
+            tooltip: 'Ir al proceso',
           ),
       ],
     );
@@ -721,27 +724,32 @@ class _MessageBox extends StatelessWidget {
 
 class _Cta extends StatelessWidget {
   final String label;
+  final VoidCallback? onTap;
 
-  const _Cta({required this.label});
+  const _Cta({required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        vertical: AppTokens.space12,
-        horizontal: AppTokens.space16,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: AppTokens.borderRadiusMedium,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: AppTokens.borderRadiusMedium,
-      ),
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: context.textStyles.bodyMedium?.copyWith(
-          color: AppTokens.primaryColor,
-          fontWeight: AppTokens.fontWeightBold,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+            vertical: AppTokens.space12,
+            horizontal: AppTokens.space16,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: AppTokens.primaryColor,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
+          ),
         ),
       ),
     );

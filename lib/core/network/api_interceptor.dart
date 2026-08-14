@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/api_endpoints.dart';
+import '../navigation/app_session_manager.dart';
 import '../utils/logger.dart';
 
 /// Interceptor personalizado para manejar requests y responses del API
@@ -10,8 +14,13 @@ class ApiInterceptor extends Interceptor {
   static const String _tag = 'API';
   static const String _tokenKey = 'auth_token';
 
+  ApiInterceptor({this.onClearAuthHeader});
+
+  final void Function()? onClearAuthHeader;
+
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
     // Agregar headers personalizados de la aplicación
     options.headers['codApp'] = dotenv.env['APP_CODE'] ?? '0';
     options.headers['codVersion'] = dotenv.env['APP_VERSION'] ?? '1.0.0';
@@ -29,7 +38,8 @@ class ApiInterceptor extends Interceptor {
         options.headers['Authorization'] = 'Bearer $token';
       }
     } catch (e) {
-      AppLogger.warning('Error obteniendo token del storage', tag: _tag, error: e.toString());
+      AppLogger.warning('Error obteniendo token del storage',
+          tag: _tag, error: e.toString());
     }
 
     // AppLogger.debug('REQUEST[${options.method}] => PATH: ${options.path}', tag: _tag);
@@ -67,12 +77,24 @@ class ApiInterceptor extends Interceptor {
     // - 403: Sin permisos
     // - 500: Error del servidor
 
-    if (err.response?.statusCode == 401) {
-      // Manejar token expirado
+    if (err.response?.statusCode == 401 &&
+        !_isAuthRequest(err.requestOptions.path)) {
       AppLogger.warning('Token expirado o no autorizado', tag: _tag);
-      // TODO: Implementar lógica de refresh token o redirigir a login
+      unawaited(
+        AppSessionManager.handleExpiredSession(
+          onClearAuthHeader: onClearAuthHeader,
+        ),
+      );
     }
 
     super.onError(err, handler);
+  }
+
+  bool _isAuthRequest(String path) {
+    return path == ApiEndpoints.login ||
+        path == ApiEndpoints.signUp ||
+        path == ApiEndpoints.register ||
+        path == ApiEndpoints.forgotPassword ||
+        path == ApiEndpoints.resetPassword;
   }
 }
