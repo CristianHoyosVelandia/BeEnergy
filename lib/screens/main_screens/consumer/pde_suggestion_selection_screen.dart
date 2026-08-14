@@ -89,9 +89,14 @@ class _PdeSuggestionSelectionScreenState
     if (forecast == null) return const [];
 
     return forecast.escenarios.map((scenario) {
+      final additionalPde = (scenario.pdePorcentaje - forecast.pdeActual)
+          .clamp(0, scenario.pdePorcentaje)
+          .toDouble();
       return _PdeSuggestion(
         id: scenario.id,
         name: _scenarioName(scenario.id),
+        currentPdePercentage: forecast.pdeActual,
+        additionalPdePercentage: additionalPde,
         pdePercentage: scenario.pdePorcentaje,
         energyKwh: scenario.pdeKwh,
         pricePerKwh: forecast.tarifaCopKwh,
@@ -221,7 +226,7 @@ class _PdeSuggestionSelectionScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeroCard(recommendedSavings),
+                  _buildHeroCard(recommendedSavings, suggestions),
                   SizedBox(height: AppTokens.space16),
                   Text(
                     'Opciones recomendadas',
@@ -255,7 +260,18 @@ class _PdeSuggestionSelectionScreenState
     );
   }
 
-  Widget _buildHeroCard(double recommendedSavings) {
+  Widget _buildHeroCard(
+    double recommendedSavings,
+    List<_PdeSuggestion> suggestions,
+  ) {
+    final forecast = _forecast;
+    final recommended = suggestions.isEmpty
+        ? null
+        : suggestions.firstWhere(
+            (item) => item.id == 'medio',
+            orElse: () => suggestions[(suggestions.length / 2).floor()],
+          );
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(AppTokens.space20),
@@ -293,7 +309,9 @@ class _PdeSuggestionSelectionScreenState
           ),
           SizedBox(height: AppTokens.space16),
           Text(
-            'Hola $_firstName, de acuerdo con tu consumo y la generación comunitaria disponible, para este periodo te recomendamos solicitar un PDE de:',
+            forecast == null || recommended == null
+                ? 'Hola $_firstName, de acuerdo con tu consumo y la generación comunitaria disponible, revisa las opciones recomendadas para este periodo.'
+                : 'Hola $_firstName, tu PDE actual es ${_formatPde(forecast.pdeActual)}. Para este periodo te recomendamos solicitar ${_formatPde(recommended.additionalPdePercentage)} más, hasta quedar en ${_formatPde(recommended.pdePercentage)}.',
             style: context.textStyles.bodyMedium?.copyWith(
               height: 1.4,
               color: AppTokens.black,
@@ -308,14 +326,17 @@ class _PdeSuggestionSelectionScreenState
     _PdeSuggestion suggestion, {
     bool highlight = false,
   }) {
+    final hasAdditionalPde = suggestion.additionalPdePercentage > 0;
+
     return Padding(
       padding: EdgeInsets.only(bottom: AppTokens.space8),
       child: Material(
         color: Colors.white,
         borderRadius: AppTokens.borderRadiusLarge,
         child: InkWell(
-          onTap:
-              _isCreatingOffer ? null : () => _createSuggestedOffer(suggestion),
+          onTap: _isCreatingOffer || !hasAdditionalPde
+              ? null
+              : () => _createSuggestedOffer(suggestion),
           borderRadius: AppTokens.borderRadiusLarge,
           child: Container(
             padding: EdgeInsets.symmetric(
@@ -323,11 +344,15 @@ class _PdeSuggestionSelectionScreenState
               vertical: AppTokens.space12,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: hasAdditionalPde
+                  ? Colors.white
+                  : AppTokens.grey100.withValues(alpha: 0.6),
               borderRadius: AppTokens.borderRadiusLarge,
               border: Border.all(
-                color: highlight ? AppTokens.primaryColor : AppTokens.grey300,
-                width: highlight ? 2 : 1,
+                color: highlight && hasAdditionalPde
+                    ? AppTokens.primaryColor
+                    : AppTokens.grey300,
+                width: highlight && hasAdditionalPde ? 2 : 1,
               ),
             ),
             child: Row(
@@ -336,12 +361,16 @@ class _PdeSuggestionSelectionScreenState
                   width: 54,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: suggestion.color.withValues(alpha: 0.12),
+                    color: suggestion.color.withValues(
+                      alpha: hasAdditionalPde ? 0.12 : 0.06,
+                    ),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     suggestion.icon,
-                    color: suggestion.color,
+                    color: hasAdditionalPde
+                        ? suggestion.color
+                        : suggestion.color.withValues(alpha: 0.45),
                     size: 28,
                   ),
                 ),
@@ -359,15 +388,21 @@ class _PdeSuggestionSelectionScreenState
                         ),
                       ),
                       Text(
-                        '${Formatters.formatNumber(suggestion.pdePercentage, decimals: 2)}% PDE',
+                        hasAdditionalPde
+                            ? 'Solicitar ${_formatPde(suggestion.additionalPdePercentage)} más'
+                            : 'No necesitas solicitar más',
                         style: context.textStyles.titleSmall?.copyWith(
                           fontWeight: AppTokens.fontWeightBold,
-                          color: suggestion.color,
+                          color: hasAdditionalPde
+                              ? suggestion.color
+                              : context.colors.onSurfaceVariant,
                         ),
                       ),
                       SizedBox(height: AppTokens.space4),
                       Text(
-                        '${Formatters.formatCurrency(suggestion.pricePerKwh, decimals: 0)} COP/kWh',
+                        hasAdditionalPde
+                            ? 'Tu PDE quedaría en ${_formatPde(suggestion.pdePercentage)} · ${Formatters.formatCurrency(suggestion.pricePerKwh, decimals: 0)} COP/kWh'
+                            : 'Tu PDE actual ya es ${_formatPde(suggestion.currentPdePercentage)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: context.textStyles.bodySmall?.copyWith(
@@ -461,11 +496,17 @@ class _PdeSuggestionSelectionScreenState
       ),
     );
   }
+
+  String _formatPde(double value) {
+    return '${Formatters.formatNumber(value, decimals: 2)}%';
+  }
 }
 
 class _PdeSuggestion {
   final String id;
   final String name;
+  final double currentPdePercentage;
+  final double additionalPdePercentage;
   final double pdePercentage;
   final double energyKwh;
   final double pricePerKwh;
@@ -477,6 +518,8 @@ class _PdeSuggestion {
   const _PdeSuggestion({
     required this.id,
     required this.name,
+    required this.currentPdePercentage,
+    required this.additionalPdePercentage,
     required this.pdePercentage,
     required this.energyKwh,
     required this.pricePerKwh,

@@ -4,6 +4,7 @@ class ForecastOfertaPde {
   final String period;
   final double consumoEstimadoKwh;
   final double generacionEstimadaComunidadKwh;
+  final double pdeActual;
   final double pdeRecomendado;
   final double tarifaCopKwh;
   final String nivelConfianza;
@@ -18,6 +19,7 @@ class ForecastOfertaPde {
     required this.period,
     required this.consumoEstimadoKwh,
     required this.generacionEstimadaComunidadKwh,
+    required this.pdeActual,
     required this.pdeRecomendado,
     required this.tarifaCopKwh,
     required this.nivelConfianza,
@@ -35,6 +37,7 @@ class ForecastOfertaPde {
       consumoEstimadoKwh: (json['consumo_estimado_kwh'] as num).toDouble(),
       generacionEstimadaComunidadKwh:
           (json['generacion_estimada_comunidad_kwh'] as num).toDouble(),
+      pdeActual: (json['pde_actual'] as num? ?? 0).toDouble(),
       pdeRecomendado: (json['pde_recomendado'] as num).toDouble(),
       tarifaCopKwh: (json['tarifa_cop_kwh'] as num).toDouble(),
       nivelConfianza: json['nivel_confianza'] as String,
