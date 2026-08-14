@@ -146,6 +146,9 @@ class ApiEndpoints {
   /// Endpoint para registrar renuncia PDE
   static const String pdeRenuncia = '/pde/renuncia';
 
+  /// Endpoint para resumen de cobro o compensación PDE
+  static const String pdeCobroResumen = '/pde/cobro-resumen';
+
   // ==================== BILLING ENDPOINTS ====================
   /// Endpoint para obtener facturación de usuario
   static String userBilling(int userId) => '/billing/user/$userId';

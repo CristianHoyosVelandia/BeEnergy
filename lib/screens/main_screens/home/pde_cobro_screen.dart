@@ -2,6 +2,7 @@ import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/models/models.dart';
+import 'package:be_energy/services/pde_cobro_service.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
@@ -26,16 +27,44 @@ class PdeCobroScreen extends StatefulWidget {
 }
 
 class _PdeCobroScreenState extends State<PdeCobroScreen> {
+  final PdeCobroService _cobroService = PdeCobroService();
+
   bool _isPaid = false;
   bool _isSubmitting = false;
+  bool _isLoading = true;
+  String? _errorMessage;
+  PdeCobroResumen? _charge;
 
-  final _mockCharge = const _MockPdeCharge(
-    amount: 148500,
-    energyKwh: 185.6,
-    pdeApplied: 0.05,
-    previousPeriod: 'Mayo 2026',
-    dueDate: '20/06/2026',
-  );
+  @override
+  void initState() {
+    super.initState();
+    _loadCharge();
+  }
+
+  Future<void> _loadCharge() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final charge = await _cobroService.getResumen(
+        communityId: widget.communityId,
+        period: widget.period,
+      );
+      if (!mounted) return;
+      setState(() {
+        _charge = charge;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _simulatePayment() async {
     setState(() => _isSubmitting = true);
@@ -106,55 +135,147 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
         children: [
           _TitleRow(
             icon: Icons.receipt_long,
-            title: 'Cobro del periodo',
-            subtitle: 'Liquidación ${_mockCharge.previousPeriod}',
+            title: _screenTitle,
+            subtitle: 'Liquidación ${widget.periodDisplayName}',
           ),
           SizedBox(height: AppTokens.space20),
           _StatusPill(
-            label: _isPaid ? 'Pagado' : 'Pendiente',
-            color: _isPaid ? AppTokens.energyGreen : AppTokens.energySolar,
+            label: _statusLabel,
+            color: _statusColor,
           ),
           SizedBox(height: AppTokens.space20),
-          _Rows(rows: [
-            MapEntry(
-                'Valor a pagar', Formatters.formatCurrency(_mockCharge.amount)),
-            MapEntry('Energía liquidada',
-                Formatters.formatEnergy(_mockCharge.energyKwh)),
-            MapEntry('PDE aplicado', _formatPercent(_mockCharge.pdeApplied)),
-            MapEntry('Fecha límite', _mockCharge.dueDate),
-          ]),
+          _buildBodyState(),
           SizedBox(height: AppTokens.space20),
-          Text(
-            _isPaid
-                ? 'Tu pago quedó registrado visualmente. Cuando exista pasarela se conciliará con backend.'
-                : 'Si no realizas el pago, quedarás excluido temporalmente del próximo periodo PDE y tu PDE retornará a la bolsa comunitaria.',
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
+          if (!_isLoading && _errorMessage == null) _buildMessage(),
           SizedBox(height: AppTokens.space24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: _isSubmitting || _isPaid ? null : _simulatePayment,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppTokens.primaryColor,
-                padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: AppTokens.borderRadiusMedium,
-                ),
-              ),
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(_isPaid ? 'Pago registrado' : 'Simular pago'),
+          if (_charge?.hasMovement == true) _buildActionButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBodyState() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No se pudo cargar el resumen PDE.',
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: AppTokens.error,
+              fontWeight: AppTokens.fontWeightBold,
             ),
+          ),
+          SizedBox(height: AppTokens.space8),
+          Text(
+            _errorMessage!,
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: AppTokens.space12),
+          OutlinedButton(
+            onPressed: _loadCharge,
+            child: const Text('Reintentar'),
           ),
         ],
+      );
+    }
+
+    final charge = _charge;
+    if (charge == null || !charge.hasMovement) {
+      return Text(
+        'No tienes cobros ni compensaciones PDE para este periodo.',
+        style: context.textStyles.bodyMedium?.copyWith(
+          color: context.colors.onSurfaceVariant,
+          height: 1.35,
+        ),
+      );
+    }
+
+    final amountLabel = charge.isCredit ? 'Valor a recibir' : 'Valor a pagar';
+    final pdeLabel = charge.isCredit ? 'PDE cedido' : 'PDE comprado';
+    final energyLabel =
+        charge.isCredit ? 'Energía cedida' : 'Energía entregada';
+
+    return _Rows(rows: [
+      MapEntry(amountLabel, Formatters.formatCurrency(charge.amount)),
+      MapEntry(
+          energyLabel, Formatters.formatEnergy(charge.energyKwh, decimals: 2)),
+      MapEntry('PDE aplicado', _formatPercentValue(charge.pdeAppliedPct)),
+      MapEntry(pdeLabel, _formatPercentValue(charge.pdeTransactedPct)),
+      MapEntry('Precio energía comunitaria',
+          '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
+    ]);
+  }
+
+  Widget _buildMessage() {
+    final charge = _charge;
+    final textStyle = context.textStyles.bodyMedium?.copyWith(
+      color: context.colors.onSurfaceVariant,
+      height: 1.35,
+    );
+
+    if (charge == null || !charge.hasMovement) {
+      return Text(
+        'Cuando tengas una compra o cesión PDE liquidada, el detalle aparecerá en esta sección.',
+        style: textStyle,
+      );
+    }
+
+    if (charge.isCommunityManagement) {
+      return Text(
+        'Gestión comunitaria solidaria: este valor se verá reflejado como un ingreso / egreso adicional en su cuota de administración.',
+        style: textStyle,
+      );
+    }
+
+    if (charge.isCredit) {
+      return Text(
+        'Cediste PDE a la comunidad. Este valor queda como compensación a tu favor; la dispersión real se habilitará cuando se integre la pasarela de pago.',
+        style: textStyle,
+      );
+    }
+
+    return Text(
+      _isPaid
+          ? 'Tu pago quedó registrado visualmente. La conciliación real se habilitará cuando se integre la pasarela de pago.'
+          : 'Este valor corresponde a la energía comunitaria PDE que recibiste en la liquidación del periodo. El pago real queda pendiente hasta integrar la pasarela.',
+      style: textStyle,
+    );
+  }
+
+  Widget _buildActionButton() {
+    final charge = _charge;
+    final pendingText = charge?.isCredit == true
+        ? 'Registrar compensación visual'
+        : 'Simular pago';
+    final paidText = charge?.isCredit == true
+        ? 'Compensación registrada'
+        : 'Pago registrado';
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: _isSubmitting || _isPaid ? null : _simulatePayment,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppTokens.primaryColor,
+          padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+          ),
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(_isPaid ? paidText : pendingText),
       ),
     );
   }
@@ -211,25 +332,37 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
     );
   }
 
-  String _formatPercent(double value) {
-    return '${Formatters.formatNumber(value * 100, decimals: 2)}%';
+  String get _screenTitle {
+    final charge = _charge;
+    if (charge?.isCommunityManagement == true) {
+      return 'Gestión comunitaria';
+    }
+    if (charge?.isCredit == true) {
+      return 'Compensación PDE';
+    }
+    return 'Cobro del periodo';
   }
-}
 
-class _MockPdeCharge {
-  final double amount;
-  final double energyKwh;
-  final double pdeApplied;
-  final String previousPeriod;
-  final String dueDate;
+  String get _statusLabel {
+    if (_isLoading) return 'Cargando';
+    if (_errorMessage != null) return 'Error';
+    final charge = _charge;
+    if (charge == null || !charge.hasMovement) return 'Sin movimientos';
+    if (charge.isCredit) return _isPaid ? 'Compensación registrada' : 'A favor';
+    return _isPaid ? 'Pagado' : 'Pendiente';
+  }
 
-  const _MockPdeCharge({
-    required this.amount,
-    required this.energyKwh,
-    required this.pdeApplied,
-    required this.previousPeriod,
-    required this.dueDate,
-  });
+  Color get _statusColor {
+    if (_errorMessage != null) return AppTokens.error;
+    final charge = _charge;
+    if (charge == null || !charge.hasMovement) return context.colors.outline;
+    if (_isPaid || charge.isCredit) return AppTokens.energyGreen;
+    return AppTokens.energySolar;
+  }
+
+  String _formatPercentValue(double value) {
+    return '${Formatters.formatNumber(value, decimals: 2)}%';
+  }
 }
 
 class _CardContainer extends StatelessWidget {
