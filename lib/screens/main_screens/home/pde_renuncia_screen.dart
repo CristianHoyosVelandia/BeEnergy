@@ -28,11 +28,14 @@ class PdeRenunciaScreen extends StatefulWidget {
 }
 
 class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
+  static const double _minimumPdeToKeep = 0.001; // 0.10%
+  static const double _decimalTolerance = 0.000001;
   final PdeRenunciaService _service = PdeRenunciaService();
   PdeRenunciaStatus? _status;
   bool _isLoading = true;
   bool _isSubmitting = false;
   int _selectedOptionIndex = 0;
+  bool _isCreatingNewDecision = false;
 
   @override
   void initState() {
@@ -56,6 +59,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         setState(() {
           _status = status;
           _isLoading = false;
+          _isCreatingNewDecision = false;
         });
       }
     } catch (e, stackTrace) {
@@ -75,8 +79,12 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   Future<void> _submitRenuncia(double pdeRenunciado, String motivo,
       {PdeRenuncia? renuncia}) async {
     final current = _status?.pdeActual ?? 0;
-    if (pdeRenunciado <= 0 || pdeRenunciado > current) {
+    if (pdeRenunciado < 0 || pdeRenunciado > current) {
       context.showInfoSnackbar('El porcentaje de renuncia no es válido.');
+      return;
+    }
+    if (pdeRenunciado - _maxRenunciable(current) > _decimalTolerance) {
+      context.showInfoSnackbar('Debes conservar mínimo 0,10% de tu PDE.');
       return;
     }
 
@@ -101,6 +109,9 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         );
       }
       await _loadStatus();
+      if (mounted) {
+        setState(() => _isCreatingNewDecision = false);
+      }
       final renunciaGuardada = savedRenuncia;
       if (mounted && _status?.renuncia == null) {
         final currentStatus = _status;
@@ -180,8 +191,9 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   void _showManualDialog({PdeRenuncia? renuncia}) {
     final inputController = TextEditingController();
     final current = _status?.pdeActual ?? 0;
-    double selectedValue =
-        renuncia?.pdeRenunciado ?? (current == 0 ? 0 : current / 2);
+    final maxRenunciable = _maxRenunciable(current);
+    double selectedValue = renuncia?.pdeRenunciado ??
+        (maxRenunciable == 0 ? 0 : maxRenunciable / 2);
     inputController.text = Formatters.formatNumber(
       selectedValue * 100,
       decimals: 2,
@@ -203,7 +215,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             if (parsed == null) {
               return;
             }
-            selectedValue = (parsed / 100).clamp(0, current).toDouble();
+            selectedValue = (parsed / 100).clamp(0, maxRenunciable).toDouble();
             setDialogState(() {});
           }
 
@@ -222,23 +234,23 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'PDE disponible para renunciar: ${_formatPercent(current)}',
+                  'PDE disponible para aportar: ${_formatPercent(maxRenunciable)}',
                   style: context.textStyles.bodyMedium,
                 ),
                 SizedBox(height: AppTokens.space16),
                 Slider(
-                  value: selectedValue.clamp(0, current).toDouble(),
+                  value: selectedValue.clamp(0, maxRenunciable).toDouble(),
                   min: 0,
-                  max: current == 0 ? 0.0001 : current,
-                  divisions: current == 0 ? 1 : 100,
+                  max: maxRenunciable == 0 ? 0.0001 : maxRenunciable,
+                  divisions: maxRenunciable == 0 ? 1 : 100,
                   activeColor: AppTokens.primaryColor,
-                  onChanged: current == 0 ? null : updateFromSlider,
+                  onChanged: maxRenunciable == 0 ? null : updateFromSlider,
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('0%', style: context.textStyles.bodySmall),
-                    Text(_formatPercent(current),
+                    Text(_formatPercent(maxRenunciable),
                         style: context.textStyles.bodySmall),
                   ],
                 ),
@@ -415,7 +427,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       );
     }
 
-    final renuncia = status.renuncia;
+    final renuncia = _isCreatingNewDecision ? null : status.renuncia;
     final pdeBase = renuncia?.pdeOriginal ?? status.pdeActual;
     final pdeRenunciado =
         renuncia?.pdeRenunciado ?? _selectedRenunciaValue(status);
@@ -438,11 +450,11 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             MapEntry(
                 'Consumo del mes', Formatters.formatEnergy(status.consumoKwh)),
             MapEntry(
-              renuncia == null ? 'Renuncia seleccionada' : 'Renuncia sugerida',
+              renuncia == null ? 'Aporte a bolsa' : 'Aporte registrado',
               _formatPercent(pdeRenunciado),
             ),
             MapEntry(
-              renuncia == null ? 'PDE conservado sugerido' : 'Nuevo PDE',
+              renuncia == null ? 'PDE conservado' : 'Nuevo PDE',
               _formatPercent(pdeConservado),
             ),
             if (renuncia != null)
@@ -453,7 +465,9 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           Text(
             renuncia == null
                 ? 'Puedes liberar parte de tu PDE para que otros miembros oferten por él cuando el admin abra el periodo.'
-                : 'Tu renuncia fue registrada y queda pendiente de revisión del administrador.',
+                : renuncia.pdeRenunciado == 0
+                    ? 'Tu decisión de conservar todo tu PDE quedó registrada para este periodo.'
+                    : 'Tu renuncia fue registrada y queda pendiente de revisión del administrador.',
             style: context.textStyles.bodyMedium?.copyWith(
               color: context.colors.onSurfaceVariant,
             ),
@@ -503,6 +517,24 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                 child: const Text('Cambiar porcentaje de renuncia'),
               ),
             ),
+          ] else ...[
+            SizedBox(height: AppTokens.space20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _isSubmitting
+                    ? null
+                    : () => setState(() => _isCreatingNewDecision = true),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppTokens.primaryColor),
+                  padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: AppTokens.borderRadiusMedium,
+                  ),
+                ),
+                child: const Text('Registrar nueva decisión'),
+              ),
+            ),
           ],
         ],
       ),
@@ -514,37 +546,52 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         ? [
             PdeRenunciaOption(
               id: 'sugerida',
-              renunciaPorcentaje: status.pdeSugeridoRenuncia,
+              renunciaPorcentaje: status.pdeSugeridoRenuncia * 100,
               descripcion: 'Liberar PDE sugerido',
             ),
             PdeRenunciaOption(
               id: 'moderada',
-              renunciaPorcentaje: status.pdeActual * 0.25,
+              renunciaPorcentaje: status.pdeActual * 25,
               descripcion: 'Liberar una parte menor del PDE',
             ),
             PdeRenunciaOption(
-              id: 'total',
-              renunciaPorcentaje: status.pdeActual,
-              descripcion: 'Renunciar todo',
+              id: 'maxima',
+              renunciaPorcentaje: _maxRenunciable(status.pdeActual) * 100,
+              descripcion: 'Liberar el máximo manteniendo 0.1%',
             ),
           ]
         : status.opciones;
 
     return [
       for (var i = 0; i < options.length; i++) ...[
-        _RecommendedOptionCard(
-          title: _optionTitle(options[i].id),
-          pdeLabel:
-              '${_formatPercent(options[i].renunciaPorcentaje / 100)} PDE',
-          detail: options[i].descripcion,
-          selected: _selectedOptionIndex == i,
-          enabled: !_isSubmitting && options[i].renunciaPorcentaje > 0,
-          onTap: () => setState(() => _selectedOptionIndex = i),
-          onDoubleTap: () => _submitRenuncia(
-            options[i].renunciaPorcentaje / 100,
-            options[i].descripcion,
-          ),
-        ),
+        Builder(builder: (context) {
+          final renuncia = options[i].renunciaPorcentaje / 100;
+          final conservado = (status.pdeActual - renuncia)
+              .clamp(0, status.pdeActual)
+              .toDouble();
+          final keepsAllPde = renuncia == 0;
+
+          return _RecommendedOptionCard(
+            title: keepsAllPde
+                ? 'Conservar todo mi PDE'
+                : _optionTitle(options[i].id),
+            pdeLabel: keepsAllPde
+                ? 'Te quedas con ${_formatPercent(conservado)} PDE'
+                : 'Aportas ${_formatPercent(renuncia)} PDE',
+            detail: keepsAllPde
+                ? 'No aportas PDE a la bolsa comunitaria'
+                : 'Conservas ${_formatPercent(conservado)} PDE. ${options[i].descripcion}',
+            selected: _selectedOptionIndex == i,
+            enabled: !_isSubmitting && status.pdeActual > 0,
+            onTap: () => setState(() => _selectedOptionIndex = i),
+            onDoubleTap: () => _submitRenuncia(
+              renuncia,
+              keepsAllPde
+                  ? 'Conservar todo el PDE asignado'
+                  : options[i].descripcion,
+            ),
+          );
+        }),
         if (i != options.length - 1) SizedBox(height: AppTokens.space8),
       ],
     ];
@@ -556,6 +603,8 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         return 'Renuncia moderada';
       case 'total':
         return 'Renuncia total';
+      case 'maxima':
+        return 'Aporte máximo';
       default:
         return 'Renuncia sugerida';
     }
@@ -579,6 +628,13 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       default:
         return status.pdeSugeridoRenuncia;
     }
+  }
+
+  double _maxRenunciable(double pdeActual) {
+    if (pdeActual <= _minimumPdeToKeep) {
+      return 0;
+    }
+    return (pdeActual - _minimumPdeToKeep).clamp(0, pdeActual).toDouble();
   }
 }
 

@@ -40,6 +40,9 @@ class PdeRenunciaService {
               ))
           .toList(),
       permiteRenunciaManual: forecast.permiteRenunciaManual,
+      renuncia: forecast.renuncia == null
+          ? null
+          : PdeRenuncia.fromJson(forecast.renuncia!),
     );
   }
 

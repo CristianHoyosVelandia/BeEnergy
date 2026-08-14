@@ -112,8 +112,6 @@ class PdeRenuncia {
   });
 
   factory PdeRenuncia.fromJson(Map<String, dynamic> json) {
-    final usesPercentFields = json.containsKey('pde_actual') ||
-        json.containsKey('renuncia_porcentaje');
     final pdeOriginal =
         json['pde_original'] as num? ?? json['pde_actual'] as num? ?? 0;
     final pdeRenunciado = json['pde_renunciado'] as num? ??
@@ -128,15 +126,9 @@ class PdeRenuncia {
       comunidadId: json['comunidad_id'] as int? ?? json['community_id'] as int,
       usuarioId: json['usuario_id'] as int? ?? json['user_id'] as int,
       periodo: json['periodo'] as String? ?? json['period'] as String,
-      pdeOriginal: usesPercentFields
-          ? pdeOriginal.toDouble() / 100
-          : pdeOriginal.toDouble(),
-      pdeRenunciado: usesPercentFields
-          ? pdeRenunciado.toDouble() / 100
-          : pdeRenunciado.toDouble(),
-      pdeConservado: usesPercentFields
-          ? pdeConservado.toDouble() / 100
-          : pdeConservado.toDouble(),
+      pdeOriginal: _normalizePdeValue(pdeOriginal.toDouble()),
+      pdeRenunciado: _normalizePdeValue(pdeRenunciado.toDouble()),
+      pdeConservado: _normalizePdeValue(pdeConservado.toDouble()),
       consumoKwh: (json['consumo_kwh'] as num?)?.toDouble(),
       pdeSugeridoRenuncia: (json['pde_sugerido_renuncia'] as num?)?.toDouble(),
       renunciaKwh: (json['renuncia_kwh'] as num?)?.toDouble(),
@@ -144,5 +136,9 @@ class PdeRenuncia {
       estado: json['estado'] as String,
       motivo: json['motivo'] as String?,
     );
+  }
+
+  static double _normalizePdeValue(double value) {
+    return value > 1 ? value / 100 : value;
   }
 }

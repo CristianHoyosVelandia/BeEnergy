@@ -88,6 +88,7 @@ class ForecastAporteSolidario {
   final String? modelVersion;
   final List<ForecastOpcionAporte> opciones;
   final bool permiteRenunciaManual;
+  final Map<String, dynamic>? renuncia;
 
   const ForecastAporteSolidario({
     required this.userId,
@@ -102,6 +103,7 @@ class ForecastAporteSolidario {
     this.modelVersion,
     required this.opciones,
     required this.permiteRenunciaManual,
+    this.renuncia,
   });
 
   factory ForecastAporteSolidario.fromJson(Map<String, dynamic> json) {
@@ -122,6 +124,9 @@ class ForecastAporteSolidario {
               ForecastOpcionAporte.fromJson(item as Map<String, dynamic>))
           .toList(),
       permiteRenunciaManual: json['permite_renuncia_manual'] as bool? ?? true,
+      renuncia: json['renuncia'] == null
+          ? null
+          : Map<String, dynamic>.from(json['renuncia'] as Map),
     );
   }
 }
