@@ -100,6 +100,9 @@ class PdeStateMachineCard extends StatelessWidget {
                 periodDisplayName: periodDisplayName,
                 loading: isLoadingOffer,
                 offer: buyerOffer,
+                emptyTitle: 'Ofertas Finalizadas',
+                emptyMessage:
+                    'No tienes una oferta PDE registrada para este periodo. Las ofertas de la comunidad ya fueron finalizadas.',
                 footerMessage:
                     'Apenas se concilie con el comercializador podrá ver el ahorro real en su tarifa energética.',
                 rowsBuilder: _finalizedRows,
@@ -119,6 +122,9 @@ class PdeStateMachineCard extends StatelessWidget {
                 periodDisplayName: periodDisplayName,
                 loading: isLoadingOffer,
                 offer: buyerOffer,
+                emptyTitle: 'En Conciliación',
+                emptyMessage:
+                    'No tienes asignación PDE para conciliar en este periodo. Te notificaremos cuando haya un nuevo PDE disponible.',
                 footerMessage:
                     'A la espera de conciliación con el comercializador.',
                 rowsBuilder: _reconciliationRows,
