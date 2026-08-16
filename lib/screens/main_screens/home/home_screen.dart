@@ -45,9 +45,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return name == null || name.trim().isEmpty ? 'Comunidad' : name.trim();
   }
 
-  String get _selectedPeriod => _controller.selectedPeriod.isEmpty
-      ? FakePeriodsData.currentPeriod
-      : _controller.selectedPeriod;
+  String get _selectedPeriod {
+    if (_controller.selectedPeriod.isNotEmpty) {
+      return _controller.selectedPeriod;
+    }
+    return DataSourceConfig.isFake ? FakePeriodsData.currentPeriod : '';
+  }
 
   bool get _isAdminView => _controller.isAdminView;
 
@@ -78,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
         communityId: _currentCommunityId,
         fallbackPeriod: FakePeriodsData.currentPeriod,
         useFakeData: DataSourceConfig.isFake,
+        forceRefresh: true,
       );
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -96,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
         communityId: _currentCommunityId,
         fallbackPeriod: FakePeriodsData.currentPeriod,
         useFakeData: DataSourceConfig.isFake,
+        forceRefresh: true,
       );
       await _reloadPriceReferences();
     } catch (e, stackTrace) {
@@ -129,6 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String get _selectedPeriodDisplayName {
     final history = _controller.userPeriodHistory;
+    if (!DataSourceConfig.isFake && _selectedPeriod.isEmpty) {
+      return 'Resumen energético';
+    }
     if (!DataSourceConfig.isFake && history != null) {
       final periodItem = history.periods.firstWhere(
         (p) => p.period == _selectedPeriod,
@@ -202,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
     };
   }
 
-  double _previousConsumption() {
+  double? _previousConsumption() {
     final summary = _controller.userPeriodHistory?.summary;
     if (!DataSourceConfig.isFake && summary != null) {
       return summary.lastConsumptionKwh;
@@ -216,18 +224,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return history.periods[currentIndex + 1].energyRecord.energyConsumed;
       }
     }
-
-    switch (_selectedPeriod) {
-      case '2026-01':
-        return 145;
-      case '2025-12':
-        return 132;
-      default:
-        return 145;
-    }
+    return null;
   }
 
-  double _currentConsumption() {
+  double? _currentConsumption() {
     final summary = _controller.userPeriodHistory?.summary;
     if (!DataSourceConfig.isFake && summary != null) {
       return summary.currentConsumptionKwh;
@@ -235,32 +235,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final consumed = _selectedPeriodEnergyData['consumed'] ?? 0;
     if (consumed > 0) return consumed;
+    return null;
+  }
 
-    switch (_selectedPeriod) {
-      case '2026-01':
-        return 120;
-      case '2025-12':
-        return 138;
-      default:
-        return 0;
+  double? _historicalAverageConsumption() {
+    final summary = _controller.userPeriodHistory?.summary;
+    if (!DataSourceConfig.isFake && summary != null) {
+      return summary.userHistoricalAverageConsumptionKwh ??
+          summary.communityAverageConsumptionKwh;
     }
+
+    return null;
   }
 
   Widget _consumptionComparison() {
     final current = _currentConsumption();
     final previous = _previousConsumption();
-    final summary = _controller.userPeriodHistory?.summary;
-    final communityAverage = !DataSourceConfig.isFake && summary != null
-        ? summary.communityAverageConsumptionKwh
-        : 132.0;
-    final maxValue = [current, previous, communityAverage]
-        .reduce((value, element) => value > element ? value : element);
-    final delta = previous == 0 ? 0 : ((current - previous) / previous) * 100;
-    final deltaText = current == 0
-        ? 'Aún no hay consumo registrado para este periodo.'
-        : delta <= 0
-            ? 'Consumes ${Formatters.formatNumber(delta.abs(), decimals: 0)}% menos que el periodo anterior.'
-            : 'Consumes ${Formatters.formatNumber(delta, decimals: 0)}% más que el periodo anterior.';
+    final historicalAverage = _historicalAverageConsumption();
+    final values =
+        [current, previous, historicalAverage].whereType<double>().toList();
+    final hasData = values.isNotEmpty;
+    final maxValue = hasData
+        ? values.reduce((value, element) => value > element ? value : element)
+        : 1.0;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -275,40 +272,48 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Consumo del periodo',
+            'Datos energéticos',
             style: context.textStyles.titleMedium?.copyWith(
               fontWeight: AppTokens.fontWeightBold,
               color: AppTokens.grey900,
             ),
           ),
-          SizedBox(height: AppTokens.space4),
-          Text(
-            deltaText,
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
+          if (!hasData) ...[
+            SizedBox(height: AppTokens.space4),
+            Text(
+              'Sin datos de consumo para este periodo.',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
           SizedBox(height: AppTokens.space16),
-          _ConsumptionBar(
-            label: 'Actual',
-            value: current,
-            maxValue: maxValue,
-            color: AppTokens.primaryColor,
-          ),
-          SizedBox(height: AppTokens.space12),
-          _ConsumptionBar(
-            label: 'Mes anterior',
-            value: previous,
-            maxValue: maxValue,
-            color: AppTokens.primaryColor.withValues(alpha: 0.72),
-          ),
-          SizedBox(height: AppTokens.space12),
-          _ConsumptionBar(
-            label: 'Promedio comunidad',
-            value: communityAverage,
-            maxValue: maxValue,
-            color: AppTokens.primaryColor.withValues(alpha: 0.48),
-          ),
+          if (current != null)
+            _ConsumptionBar(
+              label: 'Actual',
+              value: current,
+              maxValue: maxValue,
+              color: AppTokens.primaryColor,
+            ),
+          if (current != null && previous != null)
+            SizedBox(height: AppTokens.space12),
+          if (previous != null)
+            _ConsumptionBar(
+              label: 'Mes anterior',
+              value: previous,
+              maxValue: maxValue,
+              color: AppTokens.primaryColor.withValues(alpha: 0.72),
+            ),
+          if ((current != null || previous != null) &&
+              historicalAverage != null)
+            SizedBox(height: AppTokens.space12),
+          if (historicalAverage != null)
+            _ConsumptionBar(
+              label: 'Promedio histórico',
+              value: historicalAverage,
+              maxValue: maxValue,
+              color: AppTokens.primaryColor.withValues(alpha: 0.48),
+            ),
         ],
       ),
     );
@@ -317,84 +322,108 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _userPdeSummary() {
     if (_isAdminView) return const SizedBox.shrink();
 
-    final offer = _controller.buyerOffer;
-    final status = _controller.pdePeriodStatus;
     final summary = _controller.userPeriodHistory?.summary;
-    final pdeKwh = offer?.energyKwhCalculated;
+    final offer = _controller.buyerOffer;
     final assignedPercentage = offer?.pdePercentageAssigned;
-    final requestedPercentage = offer?.pdePercentageRequested;
-
-    final summaryPdeKwh = !DataSourceConfig.isFake ? summary?.userPdeKwh : null;
     final summaryPdePercentage =
         !DataSourceConfig.isFake ? summary?.userPdePercentage : null;
 
-    final value = (summaryPdeKwh != null && summaryPdeKwh > 0)
-        ? Formatters.formatEnergy(summaryPdeKwh, decimals: 2)
-        : pdeKwh == null
-            ? 'Sin asignación'
-            : Formatters.formatEnergy(pdeKwh, decimals: 2);
-    final detail = (summaryPdePercentage != null && summaryPdePercentage > 0)
-        ? 'Asignado: ${Formatters.formatNumber(summaryPdePercentage * 100, decimals: 2)}% del PDE'
-        : assignedPercentage != null
-            ? 'Asignado: ${Formatters.formatNumber(assignedPercentage * 100, decimals: 2)}% del PDE'
-            : requestedPercentage != null
-                ? 'Solicitado: ${Formatters.formatNumber(requestedPercentage * 100, decimals: 2)}% del PDE'
-                : status?.canCreateOffers == true
-                    ? 'Hay PDE disponible para este periodo.'
-                    : 'No tienes PDE asignado en este periodo.';
+    final effectivePdePercentage = summaryPdePercentage ??
+        (assignedPercentage == null ? null : assignedPercentage * 100);
+    final pdeValue = effectivePdePercentage == null ||
+            effectivePdePercentage <= 0
+        ? 'Sin asignación'
+        : '${Formatters.formatNumber(effectivePdePercentage, decimals: 2)}%';
+    final communityAverageGeneration =
+        !DataSourceConfig.isFake ? summary?.energiaComunitariaPromedio : null;
+    final equivalentKwh = effectivePdePercentage != null &&
+            effectivePdePercentage > 0 &&
+            communityAverageGeneration != null
+        ? communityAverageGeneration * (effectivePdePercentage / 100)
+        : null;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      padding: EdgeInsets.all(AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
       decoration: BoxDecoration(
-        color: AppTokens.primaryColor.withValues(alpha: 0.08),
+        color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusLarge,
-        border:
-            Border.all(color: AppTokens.primaryColor.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(AppTokens.space12),
-            decoration: BoxDecoration(
-              color: AppTokens.primaryColor.withValues(alpha: 0.14),
-              borderRadius: AppTokens.borderRadiusMedium,
-            ),
-            child: Icon(
-              Icons.bolt_rounded,
-              color: AppTokens.primaryColor,
-              size: 26,
-            ),
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.18),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
-          SizedBox(width: AppTokens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tu PDE actual',
-                  style: context.textStyles.bodyMedium?.copyWith(
-                    color: AppTokens.grey700,
-                    fontWeight: AppTokens.fontWeightSemiBold,
-                  ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.bolt_rounded,
+                color: AppTokens.primaryColor,
+                size: 64,
+              ),
+              SizedBox(width: AppTokens.space16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tu PDE actual',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: AppTokens.grey700,
+                        fontWeight: AppTokens.fontWeightSemiBold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space4),
+                    Text(
+                      pdeValue,
+                      style: context.textStyles.displaySmall?.copyWith(
+                        color: AppTokens.grey900,
+                        fontWeight: AppTokens.fontWeightBold,
+                        height: 1,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: AppTokens.space4),
-                Text(
-                  value,
-                  style: context.textStyles.titleLarge?.copyWith(
-                    color: AppTokens.primaryColor,
-                    fontWeight: AppTokens.fontWeightBold,
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Equivale a:',
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppTokens.grey700,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
                   ),
-                ),
-                SizedBox(height: AppTokens.space4),
-                Text(
-                  detail,
-                  style: context.textStyles.bodySmall?.copyWith(
-                    color: context.colors.onSurfaceVariant,
-                    height: 1.3,
+                  SizedBox(height: AppTokens.space8),
+                  Text(
+                    equivalentKwh == null
+                        ? '- kWh'
+                        : Formatters.formatEnergy(equivalentKwh, decimals: 2),
+                    style: context.textStyles.titleMedium?.copyWith(
+                      color: AppTokens.grey900,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: AppTokens.space20),
+          Text(
+            'Nota: el valor de equivalencia corresponde a una comparación de energía histórica de la comunidad que puede variar.',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colors.onSurfaceVariant,
+              height: 1.35,
             ),
           ),
         ],
@@ -410,7 +439,9 @@ class _HomeScreenState extends State<HomeScreen> {
         : '';
     final title = _isAdminView
         ? _currentCommunityName
-        : 'Resumen de $_selectedPeriodDisplayName';
+        : _selectedPeriod.isEmpty
+            ? 'Resumen energético'
+            : 'Resumen energético';
     final totalMembers = _isAdminView
         ? (_selectedPeriod == '2026-01'
             ? FakeDataPhase2.allMembers.length
@@ -445,8 +476,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return _StatusIndicator(
         statusColor: context.colors.onSurfaceVariant,
         statusIcon: Icons.calendar_month_outlined,
-        statusText: 'Periodo actual',
-        periodLabel: Formatters.formatCurrentPeriodDisplayName(),
+        statusText: _controller.isLoadingPeriods ? 'Cargando' : 'Sin datos',
+        periodLabel: _controller.isLoadingPeriods
+            ? 'Consultando backend'
+            : 'Sin periodo disponible',
         isCurrentMonth: false,
         onTap: _showPeriodSelectorModal,
       );
@@ -849,6 +882,53 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _energyDataLoading() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space20),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: AppTokens.borderRadiusLarge,
+        border:
+            Border.all(color: context.colors.outline.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: AppTokens.primaryColor,
+            ),
+          ),
+          SizedBox(width: AppTokens.space16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cargando datos energéticos',
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: AppTokens.grey900,
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space4),
+                Text(
+                  'Consultando consumo y PDE del periodo.',
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLogoutDialog() {
     showDialog<void>(
       context: context,
@@ -887,24 +967,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _body() {
+    final isLoadingEnergyData = _controller.isLoadingEnergyData;
+
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding:
           EdgeInsets.only(top: AppTokens.space16, bottom: AppTokens.space24),
       children: [
-        _header(),
-        SizedBox(height: AppTokens.space16),
-        _periodStatusIndicator(),
-        SizedBox(height: AppTokens.space16),
-        _userPdeSummary(),
-        if (!_isAdminView) SizedBox(height: AppTokens.space16),
-        _pdeCard(),
-        SizedBox(height: AppTokens.space16),
-        _consumptionComparison(),
-        SizedBox(height: AppTokens.space24),
-        if (_isAdminView && _isCurrentPeriod) ...[
-          _priceCardsAdmin(),
+        if (isLoadingEnergyData) ...[
+          _energyDataLoading(),
+          SizedBox(height: AppTokens.space64),
+        ] else ...[
+          _header(),
+          SizedBox(height: AppTokens.space16),
+          _periodStatusIndicator(),
+          SizedBox(height: AppTokens.space16),
+          _userPdeSummary(),
+          if (!_isAdminView) SizedBox(height: AppTokens.space16),
+          _pdeCard(),
+          SizedBox(height: AppTokens.space16),
+          _consumptionComparison(),
           SizedBox(height: AppTokens.space24),
+          if (_isAdminView && _isCurrentPeriod) ...[
+            _priceCardsAdmin(),
+            SizedBox(height: AppTokens.space24),
+          ],
         ],
         if (_showActivities)
           HomeActivitySection(

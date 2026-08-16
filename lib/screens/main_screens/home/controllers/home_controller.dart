@@ -12,6 +12,8 @@ import 'package:be_energy/services/pde_renuncia_service.dart';
 import 'package:flutter/foundation.dart';
 
 class HomeController extends ChangeNotifier {
+  static final Map<String, _HomeCacheEntry> _cache = {};
+
   final CommunityPriceReferenceService _priceReferenceService;
   final PDEPeriodRepository _pdePeriodRepository;
   final ConsumerOfferApiService _consumerOfferService;
@@ -38,6 +40,7 @@ class HomeController extends ChangeNotifier {
   PdeRenunciaStatus? pdeRenunciaStatus;
 
   bool isLoadingPDEStatus = false;
+  bool isLoadingEnergyData = false;
   bool isLoadingPeriods = false;
   bool isLoadingBuyerOffer = false;
   bool isLoadingPdeRenuncia = false;
@@ -46,6 +49,7 @@ class HomeController extends ChangeNotifier {
   bool isLoadingPriceReferences = false;
   String? priceReferencesError;
   bool _isDisposed = false;
+  String? _cacheKey;
 
   void _notify() {
     if (!_isDisposed) {
@@ -64,8 +68,23 @@ class HomeController extends ChangeNotifier {
     required int communityId,
     required String fallbackPeriod,
     required bool useFakeData,
+    bool forceRefresh = false,
   }) async {
-    selectedPeriod = fallbackPeriod;
+    _cacheKey = '${user?.idUser ?? 0}-$communityId';
+
+    if (!forceRefresh && !useFakeData) {
+      final cached = _cache[_cacheKey];
+      if (cached != null) {
+        _applyCache(cached);
+        _notify();
+        return;
+      }
+    }
+
+    selectedPeriod = useFakeData ? fallbackPeriod : '';
+    isLoadingEnergyData = !useFakeData;
+    _notify();
+
     await loadUserPeriods(
       user: user,
       communityId: communityId,
@@ -75,6 +94,29 @@ class HomeController extends ChangeNotifier {
       user: user,
       communityId: communityId,
     );
+
+    if (!useFakeData && _cacheKey != null) {
+      _cache[_cacheKey!] = _HomeCacheEntry(
+        selectedPeriod: selectedPeriod,
+        pdePeriodStatus: pdePeriodStatus,
+        userPeriodHistory: userPeriodHistory,
+        buyerOffer: buyerOffer,
+        pdeRenunciaStatus: pdeRenunciaStatus,
+      );
+    }
+  }
+
+  void _applyCache(_HomeCacheEntry cached) {
+    selectedPeriod = cached.selectedPeriod;
+    pdePeriodStatus = cached.pdePeriodStatus;
+    userPeriodHistory = cached.userPeriodHistory;
+    buyerOffer = cached.buyerOffer;
+    pdeRenunciaStatus = cached.pdeRenunciaStatus;
+    isLoadingPDEStatus = false;
+    isLoadingEnergyData = false;
+    isLoadingPeriods = false;
+    isLoadingBuyerOffer = false;
+    isLoadingPdeRenuncia = false;
   }
 
   Future<void> loadUserPeriods({
@@ -83,11 +125,13 @@ class HomeController extends ChangeNotifier {
     required bool useFakeData,
   }) async {
     if (useFakeData) {
+      isLoadingEnergyData = false;
       isLoadingPeriods = false;
       _notify();
       return;
     }
 
+    isLoadingEnergyData = true;
     isLoadingPeriods = true;
     _notify();
 
@@ -101,6 +145,7 @@ class HomeController extends ChangeNotifier {
       userPeriodHistory = history;
       selectedPeriod = history.currentPeriod;
     } finally {
+      isLoadingEnergyData = false;
       isLoadingPeriods = false;
       _notify();
     }
@@ -295,4 +340,20 @@ class HomeController extends ChangeNotifier {
       _notify();
     }
   }
+}
+
+class _HomeCacheEntry {
+  final String selectedPeriod;
+  final PDEPeriodStatus? pdePeriodStatus;
+  final UserPeriodHistory? userPeriodHistory;
+  final ConsumerOffer? buyerOffer;
+  final PdeRenunciaStatus? pdeRenunciaStatus;
+
+  const _HomeCacheEntry({
+    required this.selectedPeriod,
+    required this.pdePeriodStatus,
+    required this.userPeriodHistory,
+    required this.buyerOffer,
+    required this.pdeRenunciaStatus,
+  });
 }

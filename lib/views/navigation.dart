@@ -139,8 +139,11 @@ class _NavPagesState extends State<NavPages> {
     return Scaffold(
       extendBody: true,
       body: PageStorage(
-        child: pages[currentIndex],
         bucket: bucket,
+        child: IndexedStack(
+          index: currentIndex,
+          children: pages.cast<Widget>(),
+        ),
       ),
       floatingActionButton: btnCenterHome(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

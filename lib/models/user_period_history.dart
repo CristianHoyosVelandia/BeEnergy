@@ -105,17 +105,21 @@ class UserPeriodItem {
 
 class UserCurrentSummary {
   final String currentPeriod;
-  final double currentConsumptionKwh;
-  final double lastConsumptionKwh;
-  final double communityAverageConsumptionKwh;
-  final double userPdeKwh;
-  final double userPdePercentage;
+  final double? currentConsumptionKwh;
+  final double? lastConsumptionKwh;
+  final double? communityAverageConsumptionKwh;
+  final double? userHistoricalAverageConsumptionKwh;
+  final double? energiaComunitariaPromedio;
+  final double? userPdeKwh;
+  final double? userPdePercentage;
 
   UserCurrentSummary({
     required this.currentPeriod,
     required this.currentConsumptionKwh,
     required this.lastConsumptionKwh,
     required this.communityAverageConsumptionKwh,
+    required this.userHistoricalAverageConsumptionKwh,
+    required this.energiaComunitariaPromedio,
     required this.userPdeKwh,
     required this.userPdePercentage,
   });
@@ -124,13 +128,16 @@ class UserCurrentSummary {
     return UserCurrentSummary(
       currentPeriod: json['current_period'] ?? '',
       currentConsumptionKwh:
-          (json['current_consumption_kwh'] as num? ?? 0).toDouble(),
-      lastConsumptionKwh:
-          (json['last_consumption_kwh'] as num? ?? 0).toDouble(),
+          (json['current_consumption_kwh'] as num?)?.toDouble(),
+      lastConsumptionKwh: (json['last_consumption_kwh'] as num?)?.toDouble(),
       communityAverageConsumptionKwh:
-          (json['community_average_consumption_kwh'] as num? ?? 0).toDouble(),
-      userPdeKwh: (json['user_pde_kwh'] as num? ?? 0).toDouble(),
-      userPdePercentage: (json['user_pde_percentage'] as num? ?? 0).toDouble(),
+          (json['community_average_consumption_kwh'] as num?)?.toDouble(),
+      userHistoricalAverageConsumptionKwh:
+          (json['user_historical_average_consumption_kwh'] as num?)?.toDouble(),
+      energiaComunitariaPromedio:
+          (json['energia_comunitaria_promedio'] as num?)?.toDouble(),
+      userPdeKwh: (json['user_pde_kwh'] as num?)?.toDouble(),
+      userPdePercentage: (json['user_pde_percentage'] as num?)?.toDouble(),
     );
   }
 
@@ -140,6 +147,9 @@ class UserCurrentSummary {
       'current_consumption_kwh': currentConsumptionKwh,
       'last_consumption_kwh': lastConsumptionKwh,
       'community_average_consumption_kwh': communityAverageConsumptionKwh,
+      'user_historical_average_consumption_kwh':
+          userHistoricalAverageConsumptionKwh,
+      'energia_comunitaria_promedio': energiaComunitariaPromedio,
       'user_pde_kwh': userPdeKwh,
       'user_pde_percentage': userPdePercentage,
     };
