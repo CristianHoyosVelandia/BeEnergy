@@ -1,303 +1,146 @@
 // ignore_for_file: file_names
 
-import 'package:be_energy/utils/metodos.dart';
-import 'package:be_energy/core/theme/app_tokens.dart';
-import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/services/auth_service.dart';
+import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/core/utils/validators.dart';
+import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/widgets/auth/auth_footer_link.dart';
+import 'package:be_energy/widgets/auth/auth_header.dart';
+import 'package:be_energy/widgets/auth/auth_primary_button.dart';
+import 'package:be_energy/widgets/auth/auth_scaffold.dart';
+import 'package:be_energy/widgets/auth/auth_text_field.dart';
 import 'package:flutter/material.dart';
 
 class NoRecuerdomiclaveScreen extends StatefulWidget {
   const NoRecuerdomiclaveScreen({super.key});
 
   @override
-  State<NoRecuerdomiclaveScreen> createState() => _NoRecuerdomiclaveScreenState();
+  State<NoRecuerdomiclaveScreen> createState() =>
+      _NoRecuerdomiclaveScreenState();
 }
 
 class _NoRecuerdomiclaveScreenState extends State<NoRecuerdomiclaveScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _email = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+  bool _emailSent = false;
 
-  Widget _modernInput({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required String? Function(String?) validator,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTokens.space32,
-        vertical: AppTokens.space8,
-      ),
-      child: TextFormField(
-        controller: controller,
-        style: context.textStyles.bodyLarge?.copyWith(
-          color: Colors.grey[800],
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-            fontWeight: AppTokens.fontWeightMedium,
-          ),
-          hintStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[400],
-          ),
-          filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.95),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: AppTokens.space20,
-            vertical: AppTokens.space16,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: context.colors.outline.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: context.colors.primary,
-              width: 2.5,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: AppTokens.primaryColor,
-              width: 1.5,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: AppTokens.primaryColor,
-              width: 2.5,
-            ),
-          ),
-          prefixIcon: Icon(
-            Icons.email_outlined,
-            color: AppTokens.primaryColor,
-          ),
-        ),
-        validator: validator,
-      ),
-    );
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
   }
 
-  Widget _volveraLogin(){
+  Future<void> _sendRecoveryEmail() async {
+    if (!_formKey.currentState!.validate()) {
+      Metodos.flushbarNegativo(context, 'Por favor ingresa un email válido');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _authService.forgotPassword(
+        email: _email.text.trim(),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (response['success']) {
+        setState(() => _emailSent = true);
+        await Metodos.flushbarPositivoLargo(
+          context,
+          response['message'] ??
+              'Correo de recuperación enviado. Revisa tu bandeja de entrada.',
+        );
+      } else {
+        Metodos.flushbarNegativo(
+          context,
+          response['message'] ?? 'No se pudo enviar el correo',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      Metodos.flushbarNegativo(
+          context, 'Error de conexión. Verifica tu internet.');
+    }
+  }
+
+  Widget _sentState() {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppTokens.space24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: EdgeInsets.symmetric(horizontal: AppTokens.space32),
+      child: Column(
         children: [
+          Container(
+            padding: EdgeInsets.all(AppTokens.space16),
+            decoration: BoxDecoration(
+              color: AppTokens.primaryColor.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.mark_email_read_outlined,
+              color: AppTokens.primaryColor,
+              size: AppTokens.iconSizeXLarge,
+            ),
+          ),
+          SizedBox(height: AppTokens.space16),
           Text(
-            "¿Ya tienes cuenta?",
-            style: context.textStyles.bodyLarge?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(width: AppTokens.space8),
-          InkWell(
-            highlightColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            onTap: () {
-              context.pop();
-            },
-            child: Text(
-              "Volver a login",
-              style: context.textStyles.titleMedium?.copyWith(
-                color: AppTokens.primaryColor,
-                fontWeight: AppTokens.fontWeightBold,
-                decoration: TextDecoration.underline,
-                decorationColor: AppTokens.primaryColor,
-                decorationThickness: 2,
-              ),
-            ),
+            'Revisa tu correo para continuar con la recuperación de contraseña.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: AppTokens.grey700,
+                  height: 1.4,
+                ),
           ),
         ],
       ),
-    );
-  }
-  
-  Widget imagenLogin(){
-    return Container(
-      alignment: AlignmentDirectional.center,
-      child: Image(
-        image: const AssetImage("assets/img/Login.png"),
-        width: 3*Metodos.width(context)/4,
-        height: 300,
-      ),
-    );
-  }
-
-  Widget loginText(){
-    return Container(
-      width: Metodos.width(context),
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-      child:  Row(
-        children: [
-          const Expanded(
-            flex: 1,
-            child: Image(
-              alignment: AlignmentDirectional.center,
-              image:  AssetImage("assets/img/logo.png"),
-              width: 50,
-              height: 50,
-            )
-          ),
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Recuperar contraseña",
-                style: Metodos.textStyle(
-                  context,
-                  Metodos.colorTitulos(context),
-                  25,
-                  FontWeight.bold,
-                  1.5
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget body(){
-    return Stack(
-      alignment: Alignment.center,
-      children: <Widget>[
-
-        const SingleChildScrollView(
-          child: GradientBack()
-        ),
-
-        ListView(
-          children: <Widget>[
-
-            imagenLogin(),
-
-            loginText(),
-
-            SizedBox(height: AppTokens.space16),
-
-            _modernInput(
-              label: 'Email',
-              hint: 'Ingresa tu correo electrónico',
-              controller: _email,
-              validator: (value) {
-                if (!Metodos.validateEmail(value!)) {
-                  return 'Ingrese un email válido';
-                }
-                return null;
-              },
-            ),
-
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: AppTokens.space32,
-                vertical: AppTokens.space16,
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : () async {
-                  // Validar email
-                  if (!Metodos.validateEmail(_email.text)) {
-                    Metodos.flushbarNegativo(context, 'Por favor ingresa un email válido');
-                    return;
-                  }
-
-                  setState(() {
-                    _isLoading = true;
-                  });
-
-                  try {
-                    // Llamada al servicio para recuperar contraseña
-                    final response = await _authService.forgotPassword(
-                      email: _email.text.trim(),
-                    );
-
-                    if (!mounted) return;
-
-                    setState(() {
-                      _isLoading = false;
-                    });
-
-                    if (response['success']) {
-                      await Metodos.flushbarPositivoLargo(
-                        context,
-                        response['message'] ?? 'Correo de recuperación enviado. Revisa tu bandeja de entrada.'
-                      );
-
-                      // Volver al login después de 2 segundos
-                      if (!mounted) return;
-                      Future.delayed(const Duration(seconds: 2), () {
-                        if (mounted) {
-                          Navigator.pop(context);
-                        }
-                      });
-                    } else {
-                      Metodos.flushbarNegativo(
-                        context,
-                        response['message'] ?? 'No se pudo enviar el correo'
-                      );
-                    }
-                  } catch (e) {
-                    if (!mounted) return;
-
-                    setState(() {
-                      _isLoading = false;
-                    });
-
-                    Metodos.flushbarNegativo(context, 'Error de conexión. Verifica tu internet.');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTokens.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 4,
-                ),
-                child: _isLoading
-                  ? SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      'Enviar',
-                      style: context.textStyles.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: AppTokens.fontWeightBold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-              ),
-            ),
-
-            _volveraLogin()
-
-          ]
-        )
-
-      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Metodos.mediaQuery(context, body());
+    return AuthScaffold(
+      heroHeight: 300,
+      children: [
+        const AuthHeader(
+          title: 'Recuperar contraseña',
+          subtitle: 'Te enviaremos instrucciones al correo registrado.',
+        ),
+        SizedBox(height: AppTokens.space16),
+        if (_emailSent) ...[
+          _sentState(),
+          AuthPrimaryButton(
+            label: 'Volver al login',
+            onPressed: () => Navigator.pop(context),
+          ),
+        ] else ...[
+          Form(
+            key: _formKey,
+            child: AuthTextField(
+              label: 'Email',
+              hint: 'Ingresa tu correo electrónico',
+              controller: _email,
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              validator: Validators.emailValidator(),
+            ),
+          ),
+          AuthPrimaryButton(
+            label: 'Enviar',
+            isLoading: _isLoading,
+            onPressed: _sendRecoveryEmail,
+          ),
+          AuthFooterLink(
+            text: '¿Ya tienes cuenta?',
+            actionText: 'Volver a login',
+            onTap: () => Navigator.pop(context),
+          ),
+        ],
+      ],
+    );
   }
 }

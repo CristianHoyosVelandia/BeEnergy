@@ -7,6 +7,10 @@ import 'package:be_energy/models/community_models.dart';
 import 'package:be_energy/screens/auth/community_selection_screen.dart';
 import 'package:be_energy/services/community_service.dart';
 import 'package:be_energy/services/community_theme_storage.dart';
+import 'package:be_energy/widgets/auth/auth_header.dart';
+import 'package:be_energy/widgets/auth/auth_primary_button.dart';
+import 'package:be_energy/widgets/auth/auth_scaffold.dart';
+import 'package:be_energy/widgets/auth/auth_text_field.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/callmodels.dart';
@@ -30,18 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool showpassword = false;
 
-  Function(String)? _validador() {
-    return (validator) {
-      setState(() {
-        final isValidate = Metodos.validateEmail(_email.value.text) &&
-            _clave.value.text.length >= 4;
-        if (isValidate) {
-          val = true;
-        } else {
-          val = false;
-        }
-      });
-    };
+  void _updateFormState([String? _]) {
+    setState(() {
+      val =
+          Metodos.validateEmail(_email.text.trim()) && _clave.text.length >= 4;
+    });
   }
 
   String _themeValue(
@@ -117,134 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget imagenLogin(BuildContext context) {
-    return Image(
-      alignment: AlignmentDirectional.center,
-      image: const AssetImage("assets/img/Login.png"),
-      width: 3 / 4 * Metodos.width(context),
-      height: 275,
-    );
-  }
-
-  Widget loginText(BuildContext context) {
-    return Container(
-      width: Metodos.width(context),
-      margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-      child: Row(
-        children: [
-          const Expanded(
-              flex: 1,
-              child: Image(
-                alignment: AlignmentDirectional.center,
-                image: AssetImage("assets/img/logo.png"),
-                width: 50,
-                height: 50,
-              )),
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Ingresa a tu cuenta",
-                style: Metodos.textStyle(context, Metodos.colorTitulos(context),
-                    25, FontWeight.bold, 1.5),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _modernInput({
-    required BuildContext context,
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-    required String? Function(String?) validator,
-    bool obscureText = false,
-    bool isPassword = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTokens.space32,
-        vertical: AppTokens.space8,
-      ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: isPassword ? !showpassword : obscureText,
-        onChanged: _validador(),
-        style: context.textStyles.bodyLarge?.copyWith(
-          color: Colors.grey[800],
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-            fontWeight: AppTokens.fontWeightMedium,
-          ),
-          hintStyle: context.textStyles.bodyMedium?.copyWith(
-            color: Colors.grey[400],
-          ),
-          filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.95),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: AppTokens.space20,
-            vertical: AppTokens.space16,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: context.colors.outline.withValues(alpha: 0.3),
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: context.colors.primary,
-              width: 2.5,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: AppTokens.primaryColor,
-              width: 1.5,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: AppTokens.borderRadiusMedium,
-            borderSide: BorderSide(
-              color: AppTokens.primaryColor,
-              width: 2.5,
-            ),
-          ),
-          prefixIcon: Icon(
-            obscureText ? Icons.lock_outline : Icons.email_outlined,
-            color: AppTokens.primaryColor,
-          ),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    showpassword ? Icons.visibility : Icons.visibility_off,
-                    color: AppTokens.primaryColor,
-                  ),
-                  onPressed: () {
-                    if (!mounted) return;
-                    setState(() {
-                      showpassword = !showpassword;
-                    });
-                  },
-                )
-              : null,
-        ),
-        validator: validator,
-      ),
-    );
-  }
-
   Widget _noRecuerdomiClave(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -309,253 +178,186 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _ingresarAmiCuenta(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTokens.space32,
-        vertical: AppTokens.space16,
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading
-            ? null
-            : () async {
-                // Capturar el context antes del await
-                final localContext = context;
+    return AuthPrimaryButton(
+      label: 'Iniciar Sesión',
+      isLoading: _isLoading,
+      onPressed: _isLoading
+          ? null
+          : () async {
+              // Capturar el context antes del await
+              final localContext = context;
 
-                _validador();
-                if (val) {
+              _updateFormState();
+              if (val) {
+                setState(() {
+                  _isLoading = true;
+                });
+                try {
+                  // Llamada al servicio de autenticación
+                  final response = await _authService.login(
+                    email: _email.text.trim(),
+                    password: _clave.text,
+                  );
+
+                  if (!mounted) return;
                   setState(() {
-                    _isLoading = true;
+                    _isLoading = false;
                   });
-                  try {
-                    // Llamada al servicio de autenticación
-                    final response = await _authService.login(
-                      email: _email.text.trim(),
-                      password: _clave.text,
+
+                  if (response['success']) {
+                    // Login exitoso con el API
+                    final userData = response['data'] as Map<String, dynamic>;
+                    final token = response['token'];
+                    final primaryColor = _themeValue(
+                      userData,
+                      'primary_color',
+                      CommunityThemeStorage.defaultPrimaryColor,
+                    );
+                    final secondColor = _themeValue(
+                      userData,
+                      'second_color',
+                      CommunityThemeStorage.defaultSecondColor,
+                    );
+                    final urlImg = _themeValue(
+                      userData,
+                      'url_img',
+                      CommunityThemeStorage.defaultUrlImg,
                     );
 
-                    if (!mounted) return;
-                    setState(() {
-                      _isLoading = false;
-                    });
+                    // Crear usuario local con los datos del API
+                    MyUser usuario = MyUser(
+                      idUser: userData['user_id'] ?? 0,
+                      nombre: userData['name'] ?? userData['email'],
+                      lastname: userData['lastname'] ?? '',
+                      telefono: userData['phone'] ?? '',
+                      correo: userData['email'] ?? _email.text,
+                      clave: _clave.text,
+                      energia: userData['energy'] ?? '0',
+                      dinero: userData['balance'] ?? '0',
+                      idCiudad: userData['city_id'] ?? 0,
+                      role: userData['role'],
+                      roleName: userData['role_name'],
+                      primaryColor: primaryColor,
+                      secondColor: secondColor,
+                      urlImg: urlImg,
+                    );
 
-                    if (response['success']) {
-                      // Login exitoso con el API
-                      final userData = response['data'] as Map<String, dynamic>;
-                      final token = response['token'];
-                      final primaryColor = _themeValue(
-                        userData,
-                        'primary_color',
-                        CommunityThemeStorage.defaultPrimaryColor,
-                      );
-                      final secondColor = _themeValue(
-                        userData,
-                        'second_color',
-                        CommunityThemeStorage.defaultSecondColor,
-                      );
-                      final urlImg = _themeValue(
-                        userData,
-                        'url_img',
-                        CommunityThemeStorage.defaultUrlImg,
-                      );
+                    // Debug: imprimir datos del usuario
+                    debugPrint('Login - Usuario creado:');
+                    debugPrint('  ID: ${usuario.idUser}');
+                    debugPrint('  Nombre: ${usuario.nombre}');
+                    debugPrint('  Role: ${usuario.role}');
+                    debugPrint('  Role Name: ${usuario.roleName}');
 
-                      // Crear usuario local con los datos del API
-                      MyUser usuario = MyUser(
-                        idUser: userData['user_id'] ?? 0,
-                        nombre: userData['name'] ?? userData['email'],
-                        lastname: userData['lastname'] ?? '',
-                        telefono: userData['phone'] ?? '',
-                        correo: userData['email'] ?? _email.text,
-                        clave: _clave.text,
-                        energia: userData['energy'] ?? '0',
-                        dinero: userData['balance'] ?? '0',
-                        idCiudad: userData['city_id'] ?? 0,
-                        role: userData['role'],
-                        roleName: userData['role_name'],
-                        primaryColor: primaryColor,
-                        secondColor: secondColor,
-                        urlImg: urlImg,
-                      );
-
-                      // Debug: imprimir datos del usuario
-                      debugPrint('Login - Usuario creado:');
-                      debugPrint('  ID: ${usuario.idUser}');
-                      debugPrint('  Nombre: ${usuario.nombre}');
-                      debugPrint('  Role: ${usuario.role}');
-                      debugPrint('  Role Name: ${usuario.roleName}');
-
-                      // Guardar token si es necesario
-                      if (token != null) {
-                        // El token ya está guardado en el ApiClient por el AuthService
-                      }
-
-                      final communities =
-                          _parseCommunityIds(userData['communities']);
-                      debugPrint('Login - Comunidades: $communities');
-                      final message =
-                          response['message'] as String? ?? 'Ingresando a App';
-
-                      if (communities.length > 1) {
-                        final authUser =
-                            _buildAuthUser(userData, token as String?);
-
-                        if (!mounted) return;
-                        Navigator.of(localContext).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (selectionContext) =>
-                                CommunitySelectionScreen(
-                              user: authUser,
-                              onCommunitySelected: (community) async {
-                                final selectedUser =
-                                    _applyCommunityToUser(usuario, community);
-                                await _saveUserThemeAndEnter(
-                                    selectionContext, selectedUser, message);
-                              },
-                            ),
-                          ),
-                          (Route<dynamic> route) => false,
-                        );
-                      } else if (communities.length == 1) {
-                        final community = await _communityService
-                            .selectCommunity(communities.first);
-                        final selectedUser =
-                            _applyCommunityToUser(usuario, community);
-                        if (!mounted) return;
-                        await _saveUserThemeAndEnter(
-                            localContext, selectedUser, message);
-                      } else {
-                        if (!mounted) return;
-                        await _saveUserThemeAndEnter(
-                            localContext, usuario, message);
-                      }
-                    } else {
-                      // Error en el login
-                      if (!mounted) return;
-                      // ignore: use_build_context_synchronously
-                      Metodos.flushbarNegativo(localContext,
-                          response['message'] ?? 'Error al iniciar sesión');
+                    // Guardar token si es necesario
+                    if (token != null) {
+                      // El token ya está guardado en el ApiClient por el AuthService
                     }
-                  } catch (e) {
-                    if (!mounted) return;
-                    setState(() {
-                      _isLoading = false;
-                    });
-                    if (!mounted) return;
-                    // ignore: use_build_context_synchronously
+
+                    final communities =
+                        _parseCommunityIds(userData['communities']);
+                    debugPrint('Login - Comunidades: $communities');
+                    final message =
+                        response['message'] as String? ?? 'Ingresando a App';
+
+                    if (communities.length > 1) {
+                      final authUser =
+                          _buildAuthUser(userData, token as String?);
+
+                      if (!localContext.mounted) return;
+                      Navigator.of(localContext).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (selectionContext) =>
+                              CommunitySelectionScreen(
+                            user: authUser,
+                            onCommunitySelected: (community) async {
+                              final selectedUser =
+                                  _applyCommunityToUser(usuario, community);
+                              await _saveUserThemeAndEnter(
+                                  selectionContext, selectedUser, message);
+                            },
+                          ),
+                        ),
+                        (Route<dynamic> route) => false,
+                      );
+                    } else if (communities.length == 1) {
+                      final community = await _communityService
+                          .selectCommunity(communities.first);
+                      final selectedUser =
+                          _applyCommunityToUser(usuario, community);
+                      if (!localContext.mounted) return;
+                      await _saveUserThemeAndEnter(
+                          localContext, selectedUser, message);
+                    } else {
+                      if (!localContext.mounted) return;
+                      await _saveUserThemeAndEnter(
+                          localContext, usuario, message);
+                    }
+                  } else {
+                    // Error en el login
+                    if (!localContext.mounted) return;
                     Metodos.flushbarNegativo(localContext,
-                        'Error de conexión. Verifica tu internet.');
+                        response['message'] ?? 'Error al iniciar sesión');
                   }
-                } else {
-                  Metodos.flushbarNegativo(localContext,
-                      'Por favor, completa todos los campos correctamente');
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() {
+                    _isLoading = false;
+                  });
+                  if (!localContext.mounted) return;
+                  Metodos.flushbarNegativo(
+                      localContext, 'Error de conexión. Verifica tu internet.');
                 }
-              },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTokens.primaryColor,
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: AppTokens.space16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          elevation: 4,
-        ),
-        child: _isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                'Iniciar Sesión',
-                style: context.textStyles.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: AppTokens.fontWeightBold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-      ),
+              } else {
+                Metodos.flushbarNegativo(localContext,
+                    'Por favor, completa todos los campos correctamente');
+              }
+            },
     );
   }
 
   Widget _noTienesCuenta(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppTokens.space24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            "¿No tienes cuenta?",
-            style: context.textStyles.bodyLarge?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(width: AppTokens.space8),
-          InkWell(
-            highlightColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            onTap: () {
-              if (!mounted) return;
-              context.push(const RegisterScreen());
-            },
-            child: Text(
-              "Regístrate",
-              style: context.textStyles.titleMedium?.copyWith(
-                color: AppTokens.primaryColor,
-                fontWeight: AppTokens.fontWeightBold,
-                decoration: TextDecoration.underline,
-                decorationColor: Colors.white,
-                decorationThickness: 2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget body(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
+    return AuthScaffold(
       children: <Widget>[
-        const SingleChildScrollView(child: GradientBack()),
-        ListView(
-          children: <Widget>[
-            imagenLogin(context),
-            loginText(context),
-            SizedBox(height: AppTokens.space16),
-            _modernInput(
-              context: context,
-              label: 'Email',
-              hint: 'Ingresa tu correo electrónico',
-              controller: _email,
-              validator: (value) {
-                if (!Metodos.validateEmail(value!)) {
-                  return 'Ingrese un email válido';
-                }
-                return null;
-              },
-            ),
-            _modernInput(
-              context: context,
-              label: 'Contraseña',
-              hint: 'Ingresa tu contraseña',
-              controller: _clave,
-              obscureText: true,
-              isPassword: true,
-              validator: (value) {
-                if (value!.length < 4) {
-                  return 'Ingrese una contraseña mayor a 3 caracteres';
-                }
-                return null;
-              },
-            ),
-            _noRecuerdomiClave(context),
-            _ingresarAmiCuenta(context),
-            _noTienesCuenta(context)
-          ],
-        )
+        const AuthHeader(title: 'Ingresa a tu cuenta'),
+        SizedBox(height: AppTokens.space16),
+        AuthTextField(
+          label: 'Email',
+          hint: 'Ingresa tu correo electrónico',
+          controller: _email,
+          icon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          onChanged: _updateFormState,
+          validator: (value) {
+            if (!Metodos.validateEmail(value!)) {
+              return 'Ingrese un email válido';
+            }
+            return null;
+          },
+        ),
+        AuthTextField(
+          label: 'Contraseña',
+          hint: 'Ingresa tu contraseña',
+          controller: _clave,
+          icon: Icons.lock_outline,
+          obscureText: true,
+          textInputAction: TextInputAction.done,
+          onChanged: _updateFormState,
+          validator: (value) {
+            if (value!.length < 4) {
+              return 'Ingrese una contraseña mayor a 3 caracteres';
+            }
+            return null;
+          },
+        ),
+        _noRecuerdomiClave(context),
+        _ingresarAmiCuenta(context),
+        _noTienesCuenta(context)
       ],
     );
   }
@@ -563,7 +365,7 @@ class _LoginScreenState extends State<LoginScreen> {
   //metodo que pinta la pantalla principal del controlador de Kupi, en la misma se pregunta si el usuario
   //quiere loguearse o por defecto registrarse dentro de la app.
   Widget myScaffold(BuildContext context) {
-    return Metodos.mediaQuery(context, body(context));
+    return body(context);
   }
 
   @override
