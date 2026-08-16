@@ -4,6 +4,7 @@ import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/core/api/api_exceptions.dart';
 import 'package:be_energy/utils/metodos.dart';
+import 'package:be_energy/widgets/app_info_dialog.dart';
 import '../../../data/fake_data_january_2026.dart';
 import '../../../models/consumer_offer.dart';
 import '../../../models/my_user.dart';
@@ -28,10 +29,12 @@ class ConsumerMarketplaceScreen extends StatefulWidget {
   });
 
   @override
-  State<ConsumerMarketplaceScreen> createState() => _ConsumerMarketplaceScreenState();
+  State<ConsumerMarketplaceScreen> createState() =>
+      _ConsumerMarketplaceScreenState();
 }
 
-class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> with SingleTickerProviderStateMixin {
+class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final _apiService = ConsumerOfferApiService();
@@ -71,8 +74,19 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       final month = int.parse(parts[1]);
 
       const months = [
-        '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        '',
+        'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre'
       ];
 
       if (month < 1 || month > 12) return period;
@@ -84,7 +98,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   }
 
   /// Obtiene el nombre formateado del período actual
-  String get _currentPeriodDisplayName => _formatPeriodToDisplayName(_currentPeriod);
+  String get _currentPeriodDisplayName =>
+      _formatPeriodToDisplayName(_currentPeriod);
 
   /// Verifica si existe una oferta para el período actual
   Future<void> _checkExistingOffer() async {
@@ -96,12 +111,14 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     });
 
     try {
-      final offer = await _apiService.getBuyerOfferForPeriod( widget.myUser.idUser!, _currentPeriod );
+      final offer = await _apiService.getBuyerOfferForPeriod(
+          widget.myUser.idUser!, _currentPeriod);
 
       if (mounted) {
         setState(() {
           _existingOffer = offer;
-          _hasExistingOffer = offer != null && offer.status == ConsumerOfferStatus.pending;
+          _hasExistingOffer =
+              offer != null && offer.status == ConsumerOfferStatus.pending;
           _isCheckingOffer = false;
           _loadError = null;
         });
@@ -136,7 +153,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     });
 
     try {
-      final allOffers = await _apiService.getBuyerOffers(widget.myUser.idUser ?? 0);
+      final allOffers =
+          await _apiService.getBuyerOffers(widget.myUser.idUser ?? 0);
       final recentOffers = allOffers.take(3).toList();
 
       if (mounted) {
@@ -145,7 +163,7 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
           _isLoadingOffers = false;
         });
       }
-    } on ApiException catch (e) {
+    } on ApiException {
       if (mounted) {
         setState(() {
           _recentOffers = [];
@@ -170,7 +188,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancelar Oferta'),
-        content: const Text('¿Estás seguro de que deseas cancelar esta oferta?\n\nEsta acción no se puede deshacer.'),
+        content: const Text(
+            '¿Estás seguro de que deseas cancelar esta oferta?\n\nEsta acción no se puede deshacer.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -316,70 +335,56 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   // ============================================================================
 
   void _showPDEHelpDialog() {
-    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final minValue =
+        FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
     final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+            FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) *
+        0.95;
 
-    showDialog(
+    showAppInfoDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.help_outline, color: AppTokens.primaryColor),
-            const SizedBox(width: 12),
-            const Text('¿Qué son los PDE?'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Porcentaje de Distribución de Excedentes (PDE)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'El PDE es el % del excedente Tipo 2 que se distribuye en los miembros comunitarios según la resoluciòn CREG 101 072 Art 3.4.',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '¿Por qué crear una oferta?',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'El proceso de crear una oferta se hace con el fin de buscar favorabilidad en la asignación de los PDE.',
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Rango de Precios:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh',
-                style: const TextStyle(fontSize: 14),
-              ),
-              Text(
-                'Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh',
-                style: const TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Los valores mínimo y máximo están limitados para que los consumidores puedan generar un ahorro y los prosumidores un valor agregado sobre el precio mínimo de los mercados regulados.',
-                style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
-              ),
-            ],
+      title: '¿Qué son los PDE?',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Porcentaje de Distribución de Excedentes (PDE)',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido'),
+          const SizedBox(height: 12),
+          const Text(
+            'El PDE es el % del excedente Tipo 2 que se distribuye en los miembros comunitarios según la resoluciòn CREG 101 072 Art 3.4.',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '¿Por qué crear una oferta?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'El proceso de crear una oferta se hace con el fin de buscar favorabilidad en la asignación de los PDE.',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Rango de Precios:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh',
+            style: const TextStyle(fontSize: 14),
+          ),
+          Text(
+            'Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Los valores mínimo y máximo están limitados para que los consumidores puedan generar un ahorro y los prosumidores un valor agregado sobre el precio mínimo de los mercados regulados.',
+            style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
           ),
         ],
       ),
@@ -529,58 +534,46 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   }
 
   void _showHowItWorksDialog() {
-    final minValue = FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
+    final minValue =
+        FakeDataJanuary2026.pdeConstantsJan2026.mcmValorEnergiaPromedio * 1.1;
     final maxValue = (FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia -
-                      FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) * 0.95;
+            FakeDataJanuary2026.pdeConstantsJan2026.costoComercializacion) *
+        0.95;
 
-    showDialog(
+    showAppInfoDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: AppTokens.primaryColor),
-            const SizedBox(width: 12),
-            const Text('¿Cómo funciona?'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Modelo de Ofertas PDE',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '¿Cómo funciona?',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text('• Los consumidores crean ofertas de compra'),
-              const Text('• Las ofertas se basan en % del PDE disponible'),
-              const Text('• Un administrador hace la liquidación mensual'),
-              const SizedBox(height: 16),
-              const Text(
-                'Rango de Precios:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text('Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh'),
-              Text('Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh'),
-              const SizedBox(height: 12),
-              const Text(
-                'Estos límites garantizan ahorro para consumidores y valor agregado para prosumidores.',
-                style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
-              ),
-            ],
+      title: '¿Cómo funciona?',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Modelo de Ofertas PDE',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido'),
+          const SizedBox(height: 12),
+          const Text(
+            '¿Cómo funciona?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          const Text('• Los consumidores crean ofertas de compra'),
+          const Text('• Las ofertas se basan en % del PDE disponible'),
+          const Text('• Un administrador hace la liquidación mensual'),
+          const SizedBox(height: 16),
+          const Text(
+            'Rango de Precios:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+              'Mínimo: ${Formatters.formatCurrency(minValue, decimals: 2)} COP/kWh'),
+          Text(
+              'Máximo: ${Formatters.formatCurrency(maxValue, decimals: 2)} COP/kWh'),
+          const SizedBox(height: 12),
+          const Text(
+            'Estos límites garantizan ahorro para consumidores y valor agregado para prosumidores.',
+            style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
           ),
         ],
       ),
@@ -590,7 +583,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   /// Widget compacto que muestra el resumen de la oferta existente con ícono de edición
   Widget _buildExistingOfferSummary(ConsumerOffer offer) {
     const double pdeMesAnterior = 720.0;
-    final double tarifaTradicional = FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia;
+    final double tarifaTradicional =
+        FakeDataJanuary2026.pdeConstantsJan2026.costoEnergia;
     final double pdePercentage = offer.pdePercentageRequested * 100;
     final double kwhEstimados = (pdePercentage * pdeMesAnterior) / 100;
     final double ahorroPorKwh = tarifaTradicional - offer.pricePerKwh;
@@ -674,8 +668,11 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildMetricColumn('PDE Solicitado', '${Formatters.formatEnergy(pdePercentage, unit: '', decimals: 2)}%'),
-                    _buildMetricColumn('Precio', Formatters.formatCurrency(offer.pricePerKwh), subtitle: 'COP/kWh'),
+                    _buildMetricColumn('PDE Solicitado',
+                        '${Formatters.formatEnergy(pdePercentage, unit: '', decimals: 2)}%'),
+                    _buildMetricColumn(
+                        'Precio', Formatters.formatCurrency(offer.pricePerKwh),
+                        subtitle: 'COP/kWh'),
                   ],
                 ),
 
@@ -709,10 +706,10 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
                     icon: const Icon(Icons.cancel, size: 18),
                     label: const Text('Cancelar Oferta'),
                     style: OutlinedButton.styleFrom(
-                      
                       foregroundColor: AppTokens.white,
                       side: const BorderSide(color: Colors.white, width: 1.5),
-                      padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+                      padding:
+                          EdgeInsets.symmetric(vertical: AppTokens.space12),
                     ),
                   ),
                 ),
@@ -758,7 +755,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
   }
 
   /// Widget reutilizable para filas de información
-  Widget _buildInfoRow(IconData icon, String label, String value, Color iconColor) {
+  Widget _buildInfoRow(
+      IconData icon, String label, String value, Color iconColor) {
     return Container(
       padding: EdgeInsets.all(AppTokens.space12),
       decoration: BoxDecoration(
@@ -897,7 +895,8 @@ class _ConsumerMarketplaceScreenState extends State<ConsumerMarketplaceScreen> w
     );
   }
 
-  Widget _buildStatusInfo(IconData icon, Color color, String title, String description) {
+  Widget _buildStatusInfo(
+      IconData icon, Color color, String title, String description) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

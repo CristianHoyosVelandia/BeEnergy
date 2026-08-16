@@ -1,11 +1,9 @@
-
 // ignore_for_file: prefer_const_constructors
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:be_energy/routes.dart';
 import 'package:flutter/material.dart';
 import '../models/callmodels.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 
 class NavPages extends StatefulWidget {
   final MyUser myUser;
@@ -15,12 +13,10 @@ class NavPages extends StatefulWidget {
   State<NavPages> createState() => _NavPagesState();
 }
 
-
 class _NavPagesState extends State<NavPages> {
-
   int currentIndex = 0;
 
-  void onTap(int index){
+  void onTap(int index) {
     setState(() {
       currentIndex = index;
     });
@@ -32,17 +28,21 @@ class _NavPagesState extends State<NavPages> {
   void initState() {
     super.initState();
     pages = [
-      HomeScreen(myUser: widget.myUser,),
+      HomeScreen(
+        myUser: widget.myUser,
+      ),
       EnergyScreen(myUser: widget.myUser),
       TradingScreen(),
       NotificacionesScreen(),
-      MicuentaScreen(myUser: widget.myUser,),
+      MicuentaScreen(
+        myUser: widget.myUser,
+      ),
     ];
   }
 
-  BottomNavigationBarItem btnNavigation(String titulo, String icono, [double? height, double? width, Color? color]) {
-    
-    if(height != null && width != null){
+  BottomNavigationBarItem btnNavigation(String titulo, String icono,
+      [double? height, double? width, Color? color]) {
+    if (height != null && width != null) {
       return BottomNavigationBarItem(
         label: titulo,
         icon: SvgPicture.asset(
@@ -50,26 +50,30 @@ class _NavPagesState extends State<NavPages> {
           height: height,
           width: width,
         ),
-        backgroundColor: (color != null) ? color : Colors.white.withAlpha((0.5 * 255).toInt()),
+        backgroundColor: (color != null)
+            ? color
+            : Colors.white.withAlpha((0.5 * 255).toInt()),
       );
-    }
-    else{
+    } else {
       return BottomNavigationBarItem(
         label: titulo,
         icon: SvgPicture.asset(
           icono,
         ),
-        backgroundColor: (color != null) ? color : Colors.white.withAlpha((0.5 * 255).toInt()),
+        backgroundColor: (color != null)
+            ? color
+            : Colors.white.withAlpha((0.5 * 255).toInt()),
       );
     }
   }
 
-  MaterialButton btnNavBar(int currentIndexTap, BuildContext context, String tituloBtn, IconData icon){
+  MaterialButton btnNavBar(int currentIndexTap, BuildContext context,
+      String tituloBtn, IconData icon) {
     return MaterialButton(
       minWidth: 15,
       onPressed: () {
         setState(() {
-          currentIndex=currentIndexTap;
+          currentIndex = currentIndexTap;
         });
       },
       child: Column(
@@ -77,7 +81,9 @@ class _NavPagesState extends State<NavPages> {
         children: [
           Icon(
             icon,
-            color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
+            color: currentIndex == currentIndexTap
+                ? Theme.of(context).canvasColor
+                : Theme.of(context).focusColor,
             size: 24,
           ),
           const SizedBox(height: 4),
@@ -89,7 +95,9 @@ class _NavPagesState extends State<NavPages> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: currentIndex == currentIndexTap ? Theme.of(context).canvasColor : Theme.of(context).focusColor,
+              color: currentIndex == currentIndexTap
+                  ? Theme.of(context).canvasColor
+                  : Theme.of(context).focusColor,
             ),
           )
         ],
@@ -97,126 +105,100 @@ class _NavPagesState extends State<NavPages> {
     );
   }
 
-  Widget btnCenterHome(context){
-    return Container(
-        margin: const EdgeInsets.symmetric(vertical: 40),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            width: 2.0
-          )
+  Widget btnCenterHome(context) {
+    return IgnorePointer(
+      child: Opacity(
+        opacity: 0,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 40),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              width: 2.0,
+            ),
+          ),
+          child: FloatingActionButton(
+            onPressed: null,
+            backgroundColor: Theme.of(context).canvasColor,
+            child: Icon(
+              Icons.add_outlined,
+              size: 35,
+              color: Theme.of(context).scaffoldBackgroundColor,
+            ),
+          ),
         ),
-        child: FloatingActionButton(
-          onPressed: (){
-            setState(() {
-              currentIndex=2;
-            });
-          },
-          backgroundColor: Theme.of(context).canvasColor,
-          // child: SvgPicture.asset(
-          //   BeenergyIcons.climatechange,
-          //   height: 30,
-          //   width: 30,
-          // ),
-          // child: const Image(
-          //   alignment: AlignmentDirectional.center,
-          //   image:  AssetImage("assets/img/logo.png"),
-          //   width: 30,
-          //   height: 30,
-          // ),
-          child: Icon(
-            Icons.add_outlined,
-            size: 35,
-            color: Theme.of(context).scaffoldBackgroundColor,
-          )
-        ),
-      );
+      ),
+    );
   }
-  
+
   final PageStorageBucket bucket = PageStorageBucket();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      
       body: PageStorage(
         child: pages[currentIndex],
         bucket: bucket,
       ),
-      
       floatingActionButton: btnCenterHome(context),
-      
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      
       bottomNavigationBar: Container(
         margin: const EdgeInsets.only(bottom: 0),
-        
         child: BottomAppBar(
           //Cambiar color aqui
           color: Theme.of(context).scaffoldBackgroundColor,
           shape: const CircularNotchedRectangle(),
           notchMargin: 15,
           elevation: 20.0,
-        
+
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: SizedBox(
               height: 56,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-
-                  Expanded(
-                    flex: 2,
-                    child: Row(
-
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-
-                        Expanded(
-                          child: btnNavBar(0, context, 'Home', Icons.dashboard)
-                        ),
-
-                        Expanded(
-                          child: btnNavBar(1, context, 'Energía', Icons.energy_savings_leaf)
-                        ),
-
-                      ],
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                              child: btnNavBar(
+                                  0, context, 'Home', Icons.dashboard)),
+                          Expanded(
+                              child: btnNavBar(1, context, 'Energía',
+                                  Icons.energy_savings_leaf)),
+                        ],
+                      ),
                     ),
-                  ),
-
-                  Expanded(
-                    flex: 1,
-                    child: Container(),
-                  ),
-
-                  Expanded(
-                    flex: 2,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-
-                        Expanded(
-                          child: btnNavBar(3, context, 'Alertas', Icons.notification_add),
-                        ),
-                        Expanded(
-                          child: btnNavBar(4, context, 'Perfil', Icons.person_outline),
-                        )
-                      ],
+                    Expanded(
+                      flex: 1,
+                      child: Container(),
                     ),
-                  )
-
-
-                ]
-              ),
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: btnNavBar(
+                                3, context, 'Alertas', Icons.notification_add),
+                          ),
+                          Expanded(
+                            child: btnNavBar(
+                                4, context, 'Perfil', Icons.person_outline),
+                          )
+                        ],
+                      ),
+                    )
+                  ]),
             ),
           ),
         ),
       ),
-      
     );
   }
 }
-

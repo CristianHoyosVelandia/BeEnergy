@@ -38,7 +38,7 @@ class EnergyRecordSummary {
 class UserPeriodItem {
   final String period;
   final String displayName;
-  final String status;              // "current" | "historical"
+  final String status; // "current" | "historical"
   final bool hasData;
   final int pdeStatusCode;
   final bool pdeAvailable;
@@ -103,16 +103,61 @@ class UserPeriodItem {
   }
 }
 
+class UserCurrentSummary {
+  final String currentPeriod;
+  final double currentConsumptionKwh;
+  final double lastConsumptionKwh;
+  final double communityAverageConsumptionKwh;
+  final double userPdeKwh;
+  final double userPdePercentage;
+
+  UserCurrentSummary({
+    required this.currentPeriod,
+    required this.currentConsumptionKwh,
+    required this.lastConsumptionKwh,
+    required this.communityAverageConsumptionKwh,
+    required this.userPdeKwh,
+    required this.userPdePercentage,
+  });
+
+  factory UserCurrentSummary.fromJson(Map<String, dynamic> json) {
+    return UserCurrentSummary(
+      currentPeriod: json['current_period'] ?? '',
+      currentConsumptionKwh:
+          (json['current_consumption_kwh'] as num? ?? 0).toDouble(),
+      lastConsumptionKwh:
+          (json['last_consumption_kwh'] as num? ?? 0).toDouble(),
+      communityAverageConsumptionKwh:
+          (json['community_average_consumption_kwh'] as num? ?? 0).toDouble(),
+      userPdeKwh: (json['user_pde_kwh'] as num? ?? 0).toDouble(),
+      userPdePercentage: (json['user_pde_percentage'] as num? ?? 0).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'current_period': currentPeriod,
+      'current_consumption_kwh': currentConsumptionKwh,
+      'last_consumption_kwh': lastConsumptionKwh,
+      'community_average_consumption_kwh': communityAverageConsumptionKwh,
+      'user_pde_kwh': userPdeKwh,
+      'user_pde_percentage': userPdePercentage,
+    };
+  }
+}
+
 /// Historial de períodos del usuario
 class UserPeriodHistory {
   final String currentPeriod;
   final List<UserPeriodItem> periods;
   final int totalPeriods;
+  final UserCurrentSummary? summary;
 
   UserPeriodHistory({
     required this.currentPeriod,
     required this.periods,
     required this.totalPeriods,
+    this.summary,
   });
 
   factory UserPeriodHistory.fromJson(Map<String, dynamic> json) {
@@ -122,6 +167,9 @@ class UserPeriodHistory {
           .map((item) => UserPeriodItem.fromJson(item))
           .toList(),
       totalPeriods: json['total_periods'],
+      summary: json['summary'] == null
+          ? null
+          : UserCurrentSummary.fromJson(json['summary']),
     );
   }
 
@@ -130,6 +178,7 @@ class UserPeriodHistory {
       'current_period': currentPeriod,
       'periods': periods.map((p) => p.toJson()).toList(),
       'total_periods': totalPeriods,
+      'summary': summary?.toJson(),
     };
   }
 

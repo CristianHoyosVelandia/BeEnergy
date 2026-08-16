@@ -45,6 +45,19 @@ class HomeController extends ChangeNotifier {
   List<CommunityPriceReference> priceReferences = [];
   bool isLoadingPriceReferences = false;
   String? priceReferencesError;
+  bool _isDisposed = false;
+
+  void _notify() {
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
 
   Future<void> initialize({
     required MyUser? user,
@@ -71,12 +84,12 @@ class HomeController extends ChangeNotifier {
   }) async {
     if (useFakeData) {
       isLoadingPeriods = false;
-      notifyListeners();
+      _notify();
       return;
     }
 
     isLoadingPeriods = true;
-    notifyListeners();
+    _notify();
 
     try {
       final history = await _pdePeriodRepository.getUserPeriodHistory(
@@ -89,7 +102,7 @@ class HomeController extends ChangeNotifier {
       selectedPeriod = history.currentPeriod;
     } finally {
       isLoadingPeriods = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -98,7 +111,7 @@ class HomeController extends ChangeNotifier {
     required int communityId,
   }) async {
     isLoadingPDEStatus = true;
-    notifyListeners();
+    _notify();
 
     try {
       pdePeriodStatus = await _pdePeriodRepository.getPeriodStatus(
@@ -107,7 +120,7 @@ class HomeController extends ChangeNotifier {
       );
     } finally {
       isLoadingPDEStatus = false;
-      notifyListeners();
+      _notify();
     }
 
     if (pdePeriodStatus?.statusCode == 6) {
@@ -129,7 +142,7 @@ class HomeController extends ChangeNotifier {
     }
 
     isLoadingPdeRenuncia = true;
-    notifyListeners();
+    _notify();
 
     try {
       pdeRenunciaStatus = await _pdeRenunciaService.getUserStatus(
@@ -139,7 +152,7 @@ class HomeController extends ChangeNotifier {
       );
     } finally {
       isLoadingPdeRenuncia = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -155,7 +168,7 @@ class HomeController extends ChangeNotifier {
     }
 
     isLoadingPdeRenuncia = true;
-    notifyListeners();
+    _notify();
 
     try {
       await _pdeRenunciaService.createRenuncia(
@@ -172,7 +185,7 @@ class HomeController extends ChangeNotifier {
       );
     } finally {
       isLoadingPdeRenuncia = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -186,7 +199,7 @@ class HomeController extends ChangeNotifier {
     }
 
     isLoadingPdeRenuncia = true;
-    notifyListeners();
+    _notify();
 
     try {
       await _pdeRenunciaService.closeFlow(
@@ -200,7 +213,7 @@ class HomeController extends ChangeNotifier {
       );
     } finally {
       isLoadingPdeRenuncia = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -212,7 +225,7 @@ class HomeController extends ChangeNotifier {
     }
 
     isLoadingBuyerOffer = true;
-    notifyListeners();
+    _notify();
 
     try {
       buyerOffer = await _consumerOfferService.getBuyerOfferForPeriod(
@@ -221,7 +234,7 @@ class HomeController extends ChangeNotifier {
       );
     } finally {
       isLoadingBuyerOffer = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -232,7 +245,7 @@ class HomeController extends ChangeNotifier {
     required bool shouldLoadPriceReferences,
   }) async {
     selectedPeriod = period;
-    notifyListeners();
+    _notify();
 
     await loadPDEPeriodStatus(user: user, communityId: communityId);
 
@@ -252,13 +265,13 @@ class HomeController extends ChangeNotifier {
     );
 
     pdePeriodStatus = updatedStatus;
-    notifyListeners();
+    _notify();
     return updatedStatus;
   }
 
   void toggleAdminView() {
     isAdminView = !isAdminView;
-    notifyListeners();
+    _notify();
   }
 
   Future<void> loadPriceReferences({
@@ -267,7 +280,7 @@ class HomeController extends ChangeNotifier {
   }) async {
     isLoadingPriceReferences = true;
     priceReferencesError = null;
-    notifyListeners();
+    _notify();
 
     try {
       priceReferences = await _priceReferenceService.getPriceReferences(
@@ -279,7 +292,7 @@ class HomeController extends ChangeNotifier {
       priceReferencesError = e.toString();
     } finally {
       isLoadingPriceReferences = false;
-      notifyListeners();
+      _notify();
     }
   }
 }

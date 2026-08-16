@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_tokens.dart';
 import '../core/utils/formatters.dart';
+import 'app_info_dialog.dart';
 
 /// Widget indicador de PDE (Porcentaje de Distribución de Excedentes)
 ///
@@ -43,7 +44,8 @@ class PDEIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kwh = percentage * totalPDEAvailable;
-    final percentageText = '${Formatters.formatNumber(percentage * 100, decimals: 1)}%';
+    final percentageText =
+        '${Formatters.formatNumber(percentage * 100, decimals: 1)}%';
     final kwhText = '≈ ${Formatters.formatNumber(kwh, decimals: 2)} kWh';
 
     final color = customColor ?? AppTokens.primaryColor;
@@ -265,7 +267,7 @@ class PDEAvailabilitySummary extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppTokens.space16),
-          
+
           // Container(
           //   padding: EdgeInsets.all(AppTokens.space16),
           //   decoration: BoxDecoration(
@@ -286,7 +288,7 @@ class PDEAvailabilitySummary extends StatelessWidget {
           //     ],
           //   ),
           // ),
-          
+
           SizedBox(height: AppTokens.space8),
           Text(
             'Hasta un máximo del 9.99 % disponible',
@@ -302,50 +304,36 @@ class PDEAvailabilitySummary extends StatelessWidget {
   }
 
   void _showPDEHelp(BuildContext context) {
-    showDialog(
+    showAppInfoDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.info_outline, color: AppTokens.primaryPurple),
-            SizedBox(width: 12),
-            Text('¿Qué es el PDE?'),
-          ],
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'El Programa de Distribución de Excedentes (PDE) es el 10% '
-              'del excedente Tipo 2 que se distribuye solidariamente según '
-              'CREG 101 072 Art 3.4.',
-              style: TextStyle(fontSize: 14),
+      title: '¿Qué es el PDE?',
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'El Programa de Distribución de Excedentes (PDE) es el 10% '
+            'del excedente Tipo 2 que se distribuye solidariamente según '
+            'CREG 101 072 Art 3.4.',
+            style: TextStyle(fontSize: 14),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'En Enero 2026, como consumidor puedes:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text('• Solicitar un % del PDE disponible'),
+          Text('• Especificar cuánto estás dispuesto a pagar'),
+          Text('• Esperar la liquidación del administrador'),
+          SizedBox(height: 16),
+          Text(
+            'Nota: En Diciembre 2025 el PDE era gratis. Ahora se paga según tu oferta.',
+            style: TextStyle(
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+              color: Colors.grey,
             ),
-            SizedBox(height: 16),
-            Text(
-              'En Enero 2026, como consumidor puedes:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('• Solicitar un % del PDE disponible'),
-            Text('• Especificar cuánto estás dispuesto a pagar'),
-            Text('• Esperar la liquidación del administrador'),
-            SizedBox(height: 16),
-            Text(
-              'Nota: En Diciembre 2025 el PDE era gratis. Ahora se paga según tu oferta.',
-              style: TextStyle(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido'),
           ),
         ],
       ),

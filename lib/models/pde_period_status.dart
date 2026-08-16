@@ -50,7 +50,7 @@ class PDEPeriodStatus {
   String getDisplayMessage() {
     switch (statusCode) {
       case 1:
-        return '⚡ Nuevo PDE: disponible';
+        return 'PDE disponible';
       case 2:
         return 'Periodo cerrado';
       case 3:

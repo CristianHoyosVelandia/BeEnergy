@@ -31,13 +31,17 @@ class HomeHeader extends StatelessWidget {
               fontWeight: AppTokens.fontWeightBold,
             ),
           ),
-          SizedBox(height: AppTokens.space4),
-          Text(
-            '$periodLabel • $membersLabel',
-            style: context.textStyles.bodyMedium?.copyWith(
-              color: context.colors.onSurfaceVariant,
+          if (periodLabel.isNotEmpty || membersLabel.isNotEmpty) ...[
+            SizedBox(height: AppTokens.space4),
+            Text(
+              [periodLabel, membersLabel]
+                  .where((item) => item.isNotEmpty)
+                  .join(' • '),
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colors.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

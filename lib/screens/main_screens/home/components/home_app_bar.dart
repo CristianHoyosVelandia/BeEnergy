@@ -7,7 +7,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool canToggleAdminView;
   final bool isAdminView;
   final VoidCallback onToggleAdminView;
-  final VoidCallback onNotificationsTap;
+  final VoidCallback onLogoutTap;
 
   const HomeAppBar({
     super.key,
@@ -15,7 +15,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.canToggleAdminView,
     required this.isAdminView,
     required this.onToggleAdminView,
-    required this.onNotificationsTap,
+    required this.onLogoutTap,
   });
 
   @override
@@ -95,9 +95,9 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             onPressed: onToggleAdminView,
           ),
         _RoundActionButton(
-          tooltip: 'Notificaciones',
-          icon: Icons.notifications,
-          onPressed: onNotificationsTap,
+          tooltip: 'Cerrar sesión',
+          icon: Icons.logout_rounded,
+          onPressed: onLogoutTap,
           marginRight: 15,
         ),
       ],

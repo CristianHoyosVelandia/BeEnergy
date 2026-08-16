@@ -1,5 +1,6 @@
 import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
+import 'package:be_energy/widgets/app_info_dialog.dart';
 import 'package:flutter/material.dart';
 
 class PdeProgressTimeline extends StatelessWidget {
@@ -96,20 +97,10 @@ class PdeProgressTimeline extends StatelessWidget {
 
   void _showStepExplanation(
       BuildContext context, int statusCode, String title) {
-    showDialog<void>(
+    showAppInfoDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
-        title: Text(title),
-        content: Text(_stepExplanation(statusCode)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
+      title: title,
+      message: _stepExplanation(statusCode),
     );
   }
 

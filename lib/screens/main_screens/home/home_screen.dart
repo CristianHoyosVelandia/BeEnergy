@@ -10,7 +10,6 @@ import 'package:be_energy/data/fake_periods_data.dart';
 import 'package:be_energy/models/models.dart';
 import 'package:be_energy/routes.dart';
 import 'package:flutter/material.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../admin/admin_community_offers_screen.dart';
 import '../consumer/consumer_marketplace_screen.dart';
@@ -18,7 +17,6 @@ import '../consumer/pde_suggestion_selection_screen.dart';
 // import 'components/home_activity_section.dart';
 import 'components/home_activity_section.dart';
 import 'components/home_app_bar.dart';
-import 'components/home_energy_card.dart';
 import 'components/home_header.dart';
 import 'components/pde_state_machine/pde_state_machine_card.dart';
 import 'controllers/home_controller.dart';
@@ -204,225 +202,215 @@ class _HomeScreenState extends State<HomeScreen> {
     };
   }
 
-  List<GGData> _getChartData() {
-    if (!DataSourceConfig.isFake && _controller.userPeriodHistory != null) {
-      final energyData = _selectedPeriodEnergyData;
-      final chartData = <GGData>[];
-
-      if (energyData['generated']! > 0) {
-        chartData.add(GGData('Generada', energyData['generated']!.toInt()));
-      }
-      if (energyData['consumed']! > 0) {
-        chartData.add(GGData('Consumida', energyData['consumed']!.toInt()));
-      }
-      if (energyData['exported']! > 0) {
-        chartData.add(GGData('Exportada', energyData['exported']!.toInt()));
-      }
-      if (energyData['imported']! > 0) {
-        chartData.add(GGData('Importada', energyData['imported']!.toInt()));
-      }
-
-      return chartData.isEmpty ? [GGData('Sin datos', 1)] : chartData;
+  double _previousConsumption() {
+    final summary = _controller.userPeriodHistory?.summary;
+    if (!DataSourceConfig.isFake && summary != null) {
+      return summary.lastConsumptionKwh;
     }
 
-    late dynamic stats;
-    late int p2pEnergy;
-    double? gridImportOverride;
+    final history = _controller.userPeriodHistory;
+    if (!DataSourceConfig.isFake && history != null) {
+      final currentIndex =
+          history.periods.indexWhere((p) => p.period == _selectedPeriod);
+      if (currentIndex >= 0 && currentIndex + 1 < history.periods.length) {
+        return history.periods[currentIndex + 1].energyRecord.energyConsumed;
+      }
+    }
 
     switch (_selectedPeriod) {
       case '2026-01':
-        stats = _isAdminView
-            ? FakeDataPhase2.communityStats
-            : FakeDataPhase2.cristianIndividualStatsDec2025;
-        p2pEnergy = FakeDataPhase2.allContracts
-            .fold<double>(0, (sum, c) => sum + c.energyCommitted)
-            .toInt();
-        gridImportOverride = _isAdminView ? 120 : 0;
-        break;
+        return 145;
       case '2025-12':
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-        p2pEnergy = _isAdminView ? 650 : 30;
-        break;
+        return 132;
       default:
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-        p2pEnergy = _isAdminView ? 650 : 30;
+        return 145;
     }
-
-    return [
-      GGData('Directa Solar', stats.totalEnergyGenerated.toInt()),
-      GGData('Red', (gridImportOverride ?? stats.totalEnergyImported).toInt()),
-      GGData('Intercambios P2P', p2pEnergy),
-    ];
   }
 
-  Widget _energyChart() {
-    return SfCircularChart(
-      legend: Legend(
-        isVisible: true,
-        overflowMode: LegendItemOverflowMode.wrap,
-        textStyle: context.textStyles.bodySmall?.copyWith(
-          fontSize: AppTokens.fontSize10,
-        ),
-        position: LegendPosition.bottom,
-      ),
-      series: <CircularSeries>[
-        DoughnutSeries<GGData, String>(
-          dataSource: _getChartData(),
-          xValueMapper: (data, _) => data.source,
-          yValueMapper: (data, _) => data.value,
-          dataLabelSettings: DataLabelSettings(
-            isVisible: true,
-            labelPosition: ChartDataLabelPosition.outside,
-            connectorLineSettings: const ConnectorLineSettings(
-              type: ConnectorType.curve,
-              length: '10%',
-            ),
-            textStyle: TextStyle(
-              color: context.colors.onSurface,
-              fontSize: AppTokens.fontSize10,
-              fontWeight: AppTokens.fontWeightMedium,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _energyCards() {
-    if (!DataSourceConfig.isFake) {
-      final energyData = _selectedPeriodEnergyData;
-      return Column(
-        children: [
-          HomeEnergyCard(
-            title: 'Generada',
-            energy: energyData['generated']!,
-            amount: 0,
-            icon: Icons.wb_sunny_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          HomeEnergyCard(
-            title: 'Consumida',
-            energy: energyData['consumed']!,
-            amount: 0,
-            icon: Icons.electric_bolt_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          HomeEnergyCard(
-            title: 'Exportada',
-            energy: energyData['exported']!,
-            amount: 0,
-            icon: Icons.trending_up_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-          SizedBox(height: AppTokens.space8),
-          HomeEnergyCard(
-            title: 'Importada',
-            energy: energyData['imported']!,
-            amount: 0,
-            icon: Icons.trending_down_rounded,
-            color: AppTokens.primaryColor,
-            hideAmount: true,
-          ),
-        ],
-      );
+  double _currentConsumption() {
+    final summary = _controller.userPeriodHistory?.summary;
+    if (!DataSourceConfig.isFake && summary != null) {
+      return summary.currentConsumptionKwh;
     }
 
-    late CommunityStats stats;
-    late double costPerKwh;
+    final consumed = _selectedPeriodEnergyData['consumed'] ?? 0;
+    if (consumed > 0) return consumed;
 
     switch (_selectedPeriod) {
       case '2026-01':
-        stats = _isAdminView
-            ? FakeDataPhase2.communityStats
-            : FakeDataPhase2.cristianIndividualStatsDec2025;
-        costPerKwh = FakeDataPhase2.mc;
-        break;
+        return 120;
+      case '2025-12':
+        return 138;
       default:
-        stats = _isAdminView
-            ? FakeData.communityStats
-            : FakeData.cristianIndividualStatsNov2025;
-        costPerKwh = FakeData.regulatedCosts.totalCostPerKwh;
+        return 0;
     }
-
-    final isJan2026 = _selectedPeriod == '2026-01';
-    final firstTitle = isJan2026
-        ? (_isAdminView ? 'Importada de red' : 'Autoconsumo solar')
-        : 'Importe';
-    final firstEnergy =
-        isJan2026 ? (_isAdminView ? 120.0 : 107.7) : stats.totalEnergyImported;
-    final firstIcon = isJan2026 && !_isAdminView
-        ? Icons.light_mode_rounded
-        : Icons.trending_down_rounded;
-    final firstColor =
-        isJan2026 && !_isAdminView ? AppTokens.energyGreen : AppTokens.error;
-
-    return Column(
-      children: [
-        HomeEnergyCard(
-          title: firstTitle,
-          energy: firstEnergy,
-          amount: firstEnergy * costPerKwh,
-          icon: firstIcon,
-          color: firstColor,
-        ),
-        SizedBox(height: AppTokens.space8),
-        HomeEnergyCard(
-          title: 'Exportada',
-          energy: stats.totalEnergyExported,
-          amount: stats.totalEnergyExported * costPerKwh,
-          icon: Icons.trending_up_rounded,
-          color: AppTokens.primaryColor,
-        ),
-        if (isJan2026) ...[
-          SizedBox(height: AppTokens.space8),
-          HomeEnergyCard(
-            title: 'Excedentes totales',
-            energy: FakeDataPhase2.pdeDec2025.excessEnergy,
-            amount: 0,
-            icon: Icons.bolt_rounded,
-            color: AppTokens.primaryPurple,
-            subtitle: 'Disponibles para la comunidad',
-            hideAmount: true,
-          ),
-        ],
-      ],
-    );
   }
 
-  Widget _energySummary() {
+  Widget _consumptionComparison() {
+    final current = _currentConsumption();
+    final previous = _previousConsumption();
+    final summary = _controller.userPeriodHistory?.summary;
+    final communityAverage = !DataSourceConfig.isFake && summary != null
+        ? summary.communityAverageConsumptionKwh
+        : 132.0;
+    final maxValue = [current, previous, communityAverage]
+        .reduce((value, element) => value > element ? value : element);
+    final delta = previous == 0 ? 0 : ((current - previous) / previous) * 100;
+    final deltaText = current == 0
+        ? 'Aún no hay consumo registrado para este periodo.'
+        : delta <= 0
+            ? 'Consumes ${Formatters.formatNumber(delta.abs(), decimals: 0)}% menos que el periodo anterior.'
+            : 'Consumes ${Formatters.formatNumber(delta, decimals: 0)}% más que el periodo anterior.';
+
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
-      padding: EdgeInsets.all(AppTokens.space12),
+      padding: EdgeInsets.all(AppTokens.space16),
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusLarge,
         border:
             Border.all(color: context.colors.outline.withValues(alpha: 0.1)),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Consumo del periodo',
+            style: context.textStyles.titleMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightBold,
+              color: AppTokens.grey900,
+            ),
+          ),
+          SizedBox(height: AppTokens.space4),
+          Text(
+            deltaText,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+          SizedBox(height: AppTokens.space16),
+          _ConsumptionBar(
+            label: 'Actual',
+            value: current,
+            maxValue: maxValue,
+            color: AppTokens.primaryColor,
+          ),
+          SizedBox(height: AppTokens.space12),
+          _ConsumptionBar(
+            label: 'Mes anterior',
+            value: previous,
+            maxValue: maxValue,
+            color: AppTokens.primaryColor.withValues(alpha: 0.72),
+          ),
+          SizedBox(height: AppTokens.space12),
+          _ConsumptionBar(
+            label: 'Promedio comunidad',
+            value: communityAverage,
+            maxValue: maxValue,
+            color: AppTokens.primaryColor.withValues(alpha: 0.48),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _userPdeSummary() {
+    if (_isAdminView) return const SizedBox.shrink();
+
+    final offer = _controller.buyerOffer;
+    final status = _controller.pdePeriodStatus;
+    final summary = _controller.userPeriodHistory?.summary;
+    final pdeKwh = offer?.energyKwhCalculated;
+    final assignedPercentage = offer?.pdePercentageAssigned;
+    final requestedPercentage = offer?.pdePercentageRequested;
+
+    final summaryPdeKwh = !DataSourceConfig.isFake ? summary?.userPdeKwh : null;
+    final summaryPdePercentage =
+        !DataSourceConfig.isFake ? summary?.userPdePercentage : null;
+
+    final value = (summaryPdeKwh != null && summaryPdeKwh > 0)
+        ? Formatters.formatEnergy(summaryPdeKwh, decimals: 2)
+        : pdeKwh == null
+            ? 'Sin asignación'
+            : Formatters.formatEnergy(pdeKwh, decimals: 2);
+    final detail = (summaryPdePercentage != null && summaryPdePercentage > 0)
+        ? 'Asignado: ${Formatters.formatNumber(summaryPdePercentage * 100, decimals: 2)}% del PDE'
+        : assignedPercentage != null
+            ? 'Asignado: ${Formatters.formatNumber(assignedPercentage * 100, decimals: 2)}% del PDE'
+            : requestedPercentage != null
+                ? 'Solicitado: ${Formatters.formatNumber(requestedPercentage * 100, decimals: 2)}% del PDE'
+                : status?.canCreateOffers == true
+                    ? 'Hay PDE disponible para este periodo.'
+                    : 'No tienes PDE asignado en este periodo.';
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: AppTokens.primaryColor.withValues(alpha: 0.08),
+        borderRadius: AppTokens.borderRadiusLarge,
+        border:
+            Border.all(color: AppTokens.primaryColor.withValues(alpha: 0.18)),
+      ),
       child: Row(
         children: [
-          Expanded(flex: 2, child: _energyChart()),
+          Container(
+            padding: EdgeInsets.all(AppTokens.space12),
+            decoration: BoxDecoration(
+              color: AppTokens.primaryColor.withValues(alpha: 0.14),
+              borderRadius: AppTokens.borderRadiusMedium,
+            ),
+            child: Icon(
+              Icons.bolt_rounded,
+              color: AppTokens.primaryColor,
+              size: 26,
+            ),
+          ),
           SizedBox(width: AppTokens.space12),
-          Expanded(flex: 3, child: _energyCards()),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tu PDE actual',
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: AppTokens.grey700,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space4),
+                Text(
+                  value,
+                  style: context.textStyles.titleLarge?.copyWith(
+                    color: AppTokens.primaryColor,
+                    fontWeight: AppTokens.fontWeightBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space4),
+                Text(
+                  detail,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _header() {
-    final periodLabel = _currentPeriodData.status == PeriodStatus.current
-        ? 'Actual'
-        : 'Histórico';
-    final title = _isAdminView ? _currentCommunityName : 'Mi Energía';
+    final periodLabel = _isAdminView
+        ? (_currentPeriodData.status == PeriodStatus.current
+            ? 'Actual'
+            : 'Histórico')
+        : '';
+    final title = _isAdminView
+        ? _currentCommunityName
+        : 'Resumen de $_selectedPeriodDisplayName';
     final totalMembers = _isAdminView
         ? (_selectedPeriod == '2026-01'
             ? FakeDataPhase2.allMembers.length
@@ -432,8 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return HomeHeader(
       title: title,
       periodLabel: periodLabel,
-      membersLabel:
-          _isAdminView ? '$totalMembers miembros' : 'Vista Individual',
+      membersLabel: _isAdminView ? '$totalMembers miembros' : '',
     );
   }
 
@@ -444,7 +431,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return _StatusIndicator(
         statusColor: periodData.getStatusColor(),
         statusIcon: periodData.getStatusIcon(),
-        statusText: periodData.getStatusText(),
+        statusText: periodData.status == PeriodStatus.current
+            ? 'Periodo actual'
+            : 'Periodo histórico',
         periodLabel: periodData.displayName,
         isCurrentMonth: periodData.status == PeriodStatus.current,
         onTap: _showPeriodSelectorModal,
@@ -456,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return _StatusIndicator(
         statusColor: context.colors.onSurfaceVariant,
         statusIcon: Icons.calendar_month_outlined,
-        statusText: 'SIN DATOS',
+        statusText: 'Periodo actual',
         periodLabel: Formatters.formatCurrentPeriodDisplayName(),
         isCurrentMonth: false,
         onTap: _showPeriodSelectorModal,
@@ -470,7 +459,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return _StatusIndicator(
         statusColor: periodItem.getStatusColor(),
         statusIcon: periodItem.getStatusIcon(),
-        statusText: periodItem.getStatusText(),
+        statusText:
+            periodItem.isCurrentPeriod ? 'Periodo actual' : 'Periodo histórico',
         periodLabel: periodItem.displayName,
         isCurrentMonth: periodItem.isCurrentPeriod,
         onTap: _showPeriodSelectorModal,
@@ -483,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
           isCurrent ? AppTokens.primaryColor : context.colors.onSurfaceVariant,
       statusIcon:
           isCurrent ? Icons.auto_awesome : Icons.calendar_month_outlined,
-      statusText: isCurrent ? 'NUEVO MODELO' : 'MES CERRADO',
+      statusText: isCurrent ? 'Periodo actual' : 'Periodo cerrado',
       periodLabel: Formatters.formatPeriodToDisplayName(_selectedPeriod),
       isCurrentMonth: isCurrent,
       onTap: _showPeriodSelectorModal,
@@ -525,18 +515,14 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: AppTokens.space16),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppTokens.space20),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_month_rounded,
-                        color: this.context.colors.primary),
-                    SizedBox(width: AppTokens.space12),
-                    Text(
-                      'Seleccionar Período',
-                      style: this.context.textStyles.titleLarge?.copyWith(
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                    ),
-                  ],
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Seleccionar período',
+                    style: this.context.textStyles.titleLarge?.copyWith(
+                          fontWeight: AppTokens.fontWeightBold,
+                        ),
+                  ),
                 ),
               ),
               SizedBox(height: AppTokens.space20),
@@ -587,9 +573,7 @@ class _HomeScreenState extends State<HomeScreen> {
           period: history.currentPeriod,
           selectedPeriod: _selectedPeriod,
           title: Formatters.formatPeriodToDisplayName(history.currentPeriod),
-          subtitle: _controller.pdePeriodStatus?.canCreateOffers == true
-              ? 'PDE Disponible - Puedes crear ofertas'
-              : 'Sin datos disponibles',
+          subtitle: 'Periodo actual',
           icon: Icons.auto_awesome,
           iconColor: AppTokens.primaryColor,
           badge: '✨',
@@ -865,6 +849,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showLogoutDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+        title: Text(
+          'Cerrar sesión',
+          style: context.textStyles.titleLarge?.copyWith(
+            fontWeight: AppTokens.fontWeightBold,
+          ),
+        ),
+        content: const Text('¿Quieres cerrar tu sesión actual?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              DatabaseHelper().deleteUserLocal(widget.myUser?.idUser);
+              AppTokens.resetToDefaultColors();
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const Beenergy()),
+                (Route<dynamic> route) => false,
+              );
+            },
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _body() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -875,9 +896,11 @@ class _HomeScreenState extends State<HomeScreen> {
         SizedBox(height: AppTokens.space16),
         _periodStatusIndicator(),
         SizedBox(height: AppTokens.space16),
+        _userPdeSummary(),
+        if (!_isAdminView) SizedBox(height: AppTokens.space16),
         _pdeCard(),
         SizedBox(height: AppTokens.space16),
-        _energySummary(),
+        _consumptionComparison(),
         SizedBox(height: AppTokens.space24),
         if (_isAdminView && _isCurrentPeriod) ...[
           _priceCardsAdmin(),
@@ -928,7 +951,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : 'Vista: Usuario',
               );
         },
-        onNotificationsTap: () => context.push(const NotificacionesScreen()),
+        onLogoutTap: _showLogoutDialog,
       ),
       backgroundColor: context.colors.surface,
       body: RefreshIndicator(
@@ -1065,35 +1088,22 @@ class _PeriodOption extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppTokens.space20,
-          vertical: AppTokens.space16,
+          vertical: 14,
         ),
         child: Row(
           children: [
-            Container(
-              padding: EdgeInsets.all(AppTokens.space12),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
-                borderRadius: AppTokens.borderRadiusSmall,
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
-            SizedBox(width: AppTokens.space16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: context.textStyles.bodyLarge?.copyWith(
-                          fontWeight: AppTokens.fontWeightSemiBold,
-                        ),
-                      ),
-                      SizedBox(width: AppTokens.space8),
-                      Text(badge,
-                          style: TextStyle(fontSize: AppTokens.fontSize16)),
-                    ],
+                  Text(
+                    title,
+                    style: context.textStyles.bodyLarge?.copyWith(
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                      color: enabled
+                          ? context.colors.onSurface
+                          : context.colors.onSurfaceVariant,
+                    ),
                   ),
                   SizedBox(height: AppTokens.space4),
                   Text(
@@ -1106,7 +1116,7 @@ class _PeriodOption extends StatelessWidget {
               ),
             ),
             Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              isSelected ? Icons.check_circle : Icons.circle_outlined,
               color: isSelected
                   ? iconColor
                   : context.colors.onSurfaceVariant.withValues(alpha: 0.4),
@@ -1118,9 +1128,57 @@ class _PeriodOption extends StatelessWidget {
   }
 }
 
-class GGData {
-  final String source;
-  final int value;
+class _ConsumptionBar extends StatelessWidget {
+  final String label;
+  final double value;
+  final double maxValue;
+  final Color color;
 
-  GGData(this.source, this.value);
+  const _ConsumptionBar({
+    required this.label,
+    required this.value,
+    required this.maxValue,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safeMax = maxValue <= 0 ? 1 : maxValue;
+    final factor = (value / safeMax).clamp(0.0, 1.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightSemiBold,
+                color: AppTokens.grey800,
+              ),
+            ),
+            Text(
+              Formatters.formatEnergy(value, decimals: 0),
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppTokens.space8),
+        ClipRRect(
+          borderRadius: AppTokens.borderRadiusCircular,
+          child: LinearProgressIndicator(
+            value: factor,
+            minHeight: 10,
+            backgroundColor: color.withValues(alpha: 0.12),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
 }
