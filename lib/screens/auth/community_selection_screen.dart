@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_tokens.dart';
 import '../../core/utils/logger.dart';
-import '../../models/auth_models.dart';
 import '../../models/community_models.dart';
 import '../../services/community_service.dart';
 import '../../services/community_theme_storage.dart';
@@ -10,12 +9,10 @@ import '../../services/community_theme_storage.dart';
 /// Pantalla de selección de comunidad.
 /// Se muestra cuando el usuario pertenece a múltiples comunidades.
 class CommunitySelectionScreen extends StatefulWidget {
-  final AuthUser? user;
   final Future<void> Function(Community) onCommunitySelected;
 
   const CommunitySelectionScreen({
     super.key,
-    this.user,
     required this.onCommunitySelected,
   });
 
@@ -27,10 +24,10 @@ class CommunitySelectionScreen extends StatefulWidget {
 class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
   late final CommunityService _communityService;
   late final CommunityThemeStorage _themeStorage;
-  List<Community> communities = [];
-  bool isLoading = true;
-  int? selectingCommunityId;
-  String? errorMessage;
+  List<Community> _communities = [];
+  bool _isLoading = true;
+  int? _selectingCommunityId;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -43,22 +40,22 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
   Future<void> _loadCommunities() async {
     try {
       setState(() {
-        isLoading = true;
-        errorMessage = null;
+        _isLoading = true;
+        _errorMessage = null;
       });
 
       final loadedCommunities = await _communityService.getMyCommunities();
 
       if (!mounted) return;
       setState(() {
-        communities = loadedCommunities;
-        isLoading = false;
+        _communities = loadedCommunities;
+        _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
+        _errorMessage = e.toString();
+        _isLoading = false;
       });
       AppLogger.error('Error en _loadCommunities', error: e.toString());
     }
@@ -66,7 +63,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
 
   Future<void> _selectCommunity(Community community) async {
     try {
-      setState(() => selectingCommunityId = community.id);
+      setState(() => _selectingCommunityId = community.id);
 
       final selectedCommunity =
           await _communityService.selectCommunity(community.id);
@@ -85,7 +82,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
       await widget.onCommunitySelected(selectedCommunity);
     } catch (e) {
       if (mounted) {
-        setState(() => selectingCommunityId = null);
+        setState(() => _selectingCommunityId = null);
       }
 
       if (!mounted) return;
@@ -137,7 +134,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
               borderRadius: AppTokens.borderRadiusCircular,
             ),
             child: Text(
-              'Tienes acceso a ${communities.length} comunidades',
+              'Tienes acceso a ${_communities.length} comunidades',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppTokens.primaryColor,
                     fontWeight: AppTokens.fontWeightSemiBold,
@@ -197,7 +194,7 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
             ),
             SizedBox(height: AppTokens.space8),
             Text(
-              errorMessage ?? 'Intenta nuevamente en unos segundos.',
+              _errorMessage ?? 'Intenta nuevamente en unos segundos.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppTokens.grey600,
@@ -260,9 +257,9 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
   }
 
   Widget _content(BuildContext context) {
-    if (isLoading) return _loadingState(context);
-    if (errorMessage != null) return _errorState(context);
-    if (communities.isEmpty) return _emptyState(context);
+    if (_isLoading) return _loadingState(context);
+    if (_errorMessage != null) return _errorState(context);
+    if (_communities.isEmpty) return _emptyState(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,13 +273,13 @@ class _CommunitySelectionScreenState extends State<CommunitySelectionScreen> {
               AppTokens.space16,
               AppTokens.space32,
             ),
-            itemCount: communities.length,
+            itemCount: _communities.length,
             itemBuilder: (context, index) {
-              final community = communities[index];
+              final community = _communities[index];
               return _CommunityCard(
                 community: community,
-                isLoading: selectingCommunityId == community.id,
-                isDisabled: selectingCommunityId != null,
+                isLoading: _selectingCommunityId == community.id,
+                isDisabled: _selectingCommunityId != null,
                 onSelected: () => _selectCommunity(community),
               );
             },

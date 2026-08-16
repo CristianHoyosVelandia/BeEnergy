@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:be_energy/core/services/auth_service.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/validators.dart';
@@ -60,8 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Consumir el WS definitivo de registro asociado a comunidad y enviar
-      // communityCode/communityId cuando el backend exponga ese contrato.
+      // #por implementar: enviar communityCode/communityId cuando backend exponga el contrato definitivo.
       final response = await _authService.signUp(
         email: _email.text.trim(),
         password: _password.text,
