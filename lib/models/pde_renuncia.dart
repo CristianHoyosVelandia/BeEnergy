@@ -60,6 +60,24 @@ class PdeRenunciaStatus {
   }
 }
 
+class PdeAporteEnergyContext {
+  final double? pdeActualPorcentaje;
+  final double? pdeActualKwh;
+  final double? consumoActualKwh;
+  final double? consumoMesAnteriorKwh;
+  final double? consumoPromedioHistoricoKwh;
+  final double? generacionComunitariaPromedioKwh;
+
+  const PdeAporteEnergyContext({
+    this.pdeActualPorcentaje,
+    this.pdeActualKwh,
+    this.consumoActualKwh,
+    this.consumoMesAnteriorKwh,
+    this.consumoPromedioHistoricoKwh,
+    this.generacionComunitariaPromedioKwh,
+  });
+}
+
 class PdeRenunciaOption {
   final String id;
   final double renunciaPorcentaje;

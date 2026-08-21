@@ -13,6 +13,7 @@ class PdeRenunciaScreen extends StatefulWidget {
   final String period;
   final String periodDisplayName;
   final bool isAdminView;
+  final PdeAporteEnergyContext? energyContext;
 
   const PdeRenunciaScreen({
     super.key,
@@ -21,6 +22,7 @@ class PdeRenunciaScreen extends StatefulWidget {
     required this.period,
     required this.periodDisplayName,
     required this.isAdminView,
+    this.energyContext,
   });
 
   @override
@@ -64,14 +66,14 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       }
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Error cargando renuncia PDE',
+        'Error cargando aporte PDE',
         tag: 'PdeRenunciaScreen',
         error: e,
         stackTrace: stackTrace,
       );
       if (mounted) {
         setState(() => _isLoading = false);
-        context.showInfoSnackbar('No fue posible cargar la renuncia PDE.');
+        context.showInfoSnackbar('No fue posible cargar el aporte PDE.');
       }
     }
   }
@@ -80,7 +82,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       {PdeRenuncia? renuncia}) async {
     final current = _status?.pdeActual ?? 0;
     if (pdeRenunciado < 0 || pdeRenunciado > current) {
-      context.showInfoSnackbar('El porcentaje de renuncia no es válido.');
+      context.showInfoSnackbar('El porcentaje de aporte no es válido.');
       return;
     }
     if (pdeRenunciado - _maxRenunciable(current) > _decimalTolerance) {
@@ -97,7 +99,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           usuarioId: widget.myUser.idUser!,
           periodo: widget.period,
           pdeRenunciado: pdeRenunciado,
-          renunciaKwh: (_status?.consumoKwh ?? 0) * pdeRenunciado,
+          renunciaKwh: _pdeKwhForPercent(pdeRenunciado),
           motivo: motivo,
         );
       } else {
@@ -137,19 +139,19 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       if (mounted) {
         context.showInfoSnackbar(
           renuncia == null
-              ? 'Renuncia PDE enviada para revisión.'
-              : 'Renuncia PDE actualizada.',
+              ? 'Aporte PDE enviado para revisión.'
+              : 'Aporte PDE actualizado.',
         );
       }
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Error enviando renuncia PDE',
+        'Error enviando aporte PDE',
         tag: 'PdeRenunciaScreen',
         error: e,
         stackTrace: stackTrace,
       );
       if (mounted) {
-        context.showInfoSnackbar('Error enviando renuncia PDE: $e');
+        context.showInfoSnackbar('Error enviando aporte PDE: $e');
       }
     } finally {
       if (mounted) {
@@ -168,18 +170,18 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       );
       if (mounted) {
         context.showInfoSnackbar(
-            'Renuncias cerradas. Periodo abierto para ofertas.');
+            'Aportes cerrados. Periodo abierto para ofertas.');
         Navigator.pop(context, true);
       }
     } catch (e, stackTrace) {
       AppLogger.error(
-        'Error cerrando renuncias PDE',
+        'Error cerrando aportes PDE',
         tag: 'PdeRenunciaScreen',
         error: e,
         stackTrace: stackTrace,
       );
       if (mounted) {
-        context.showInfoSnackbar('Error cerrando renuncias PDE: $e');
+        context.showInfoSnackbar('Error cerrando aportes PDE: $e');
       }
     } finally {
       if (mounted) {
@@ -203,6 +205,10 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final status = _status;
+          final conservedValue =
+              (current - selectedValue).clamp(0, current).toDouble();
+
           void updateFromSlider(double value) {
             selectedValue = value;
             inputController.text =
@@ -219,118 +225,160 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             setDialogState(() {});
           }
 
-          return AlertDialog(
+          return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: AppTokens.borderRadiusLarge,
             ),
-            title: Text(
-              'Renuncia manual PDE',
-              style: context.textStyles.titleLarge?.copyWith(
-                fontWeight: AppTokens.fontWeightBold,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+                maxHeight: MediaQuery.of(context).size.height * 0.78,
               ),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'PDE disponible para aportar: ${_formatPercent(maxRenunciable)}',
-                  style: context.textStyles.bodyMedium,
-                ),
-                SizedBox(height: AppTokens.space16),
-                Slider(
-                  value: selectedValue.clamp(0, maxRenunciable).toDouble(),
-                  min: 0,
-                  max: maxRenunciable == 0 ? 0.0001 : maxRenunciable,
-                  divisions: maxRenunciable == 0 ? 1 : 100,
-                  activeColor: AppTokens.primaryColor,
-                  onChanged: maxRenunciable == 0 ? null : updateFromSlider,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Padding(
+                padding: EdgeInsets.all(AppTokens.space20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('0%', style: context.textStyles.bodySmall),
-                    Text(_formatPercent(maxRenunciable),
-                        style: context.textStyles.bodySmall),
+                    Text(
+                      'Aporte manual PDE',
+                      style: context.textStyles.titleLarge?.copyWith(
+                        fontWeight: AppTokens.fontWeightBold,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space16),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PDE disponible para aportar: ${_formatPercent(maxRenunciable)}',
+                              style: context.textStyles.bodyMedium,
+                            ),
+                            if (status != null) ...[
+                              SizedBox(height: AppTokens.space12),
+                              _Rows(rows: [
+                                MapEntry(
+                                    'Aportas', _formatPercent(selectedValue)),
+                                MapEntry('Conservas',
+                                    _formatPercent(conservedValue)),
+                                MapEntry(
+                                  'Equivale a',
+                                  Formatters.formatEnergy(
+                                    _pdeKwhForPercent(conservedValue),
+                                    decimals: 2,
+                                  ),
+                                ),
+                              ]),
+                              SizedBox(height: AppTokens.space12),
+                              _PdeCoverageBar(
+                                pdeKwh: _pdeKwhForPercent(conservedValue),
+                                referenceKwh: _referenceConsumption(status),
+                              ),
+                            ],
+                            SizedBox(height: AppTokens.space16),
+                            Slider(
+                              value: selectedValue
+                                  .clamp(0, maxRenunciable)
+                                  .toDouble(),
+                              min: 0,
+                              max:
+                                  maxRenunciable == 0 ? 0.0001 : maxRenunciable,
+                              divisions: maxRenunciable == 0 ? 1 : 100,
+                              activeColor: AppTokens.primaryColor,
+                              onChanged:
+                                  maxRenunciable == 0 ? null : updateFromSlider,
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('0%', style: context.textStyles.bodySmall),
+                                Text(_formatPercent(maxRenunciable),
+                                    style: context.textStyles.bodySmall),
+                              ],
+                            ),
+                            SizedBox(height: AppTokens.space16),
+                            TextField(
+                              controller: inputController,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              onChanged: updateFromInput,
+                              decoration: InputDecoration(
+                                labelText: 'Porcentaje a aportar',
+                                suffixText: '%',
+                                filled: true,
+                                fillColor: context
+                                    .colors.surfaceContainerHighest
+                                    .withValues(alpha: 0.5),
+                                border: OutlineInputBorder(
+                                  borderRadius: AppTokens.borderRadiusMedium,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: AppTokens.space12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppTokens.borderRadiusMedium,
+                              ),
+                              side: BorderSide(color: AppTokens.primaryColor),
+                            ),
+                            child: const Text('Cancelar'),
+                          ),
+                        ),
+                        SizedBox(width: AppTokens.space12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              final value = double.tryParse(
+                                inputController.text
+                                    .trim()
+                                    .replaceAll(',', '.'),
+                              );
+                              if (value == null) {
+                                context.showInfoSnackbar(
+                                    'Ingresa un porcentaje válido.');
+                                return;
+                              }
+                              Navigator.pop(dialogContext);
+                              _submitRenuncia(
+                                value / 100,
+                                renuncia == null
+                                    ? 'Aporte manual voluntario'
+                                    : 'Cambio de porcentaje de aporte voluntario',
+                                renuncia: renuncia,
+                              );
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppTokens.primaryColor,
+                              padding: EdgeInsets.symmetric(
+                                  vertical: AppTokens.space12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppTokens.borderRadiusMedium,
+                              ),
+                            ),
+                            child: const Text('Enviar'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                SizedBox(height: AppTokens.space16),
-                TextField(
-                  controller: inputController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: updateFromInput,
-                  decoration: InputDecoration(
-                    labelText: 'Porcentaje a renunciar',
-                    suffixText: '%',
-                    filled: true,
-                    fillColor: context.colors.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                    border: OutlineInputBorder(
-                      borderRadius: AppTokens.borderRadiusMedium,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            actionsPadding: EdgeInsets.fromLTRB(
-              AppTokens.space24,
-              0,
-              AppTokens.space24,
-              AppTokens.space20,
-            ),
-            actions: [
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      style: OutlinedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(vertical: AppTokens.space12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppTokens.borderRadiusMedium,
-                        ),
-                        side: BorderSide(color: AppTokens.primaryColor),
-                      ),
-                      child: const Text('Cancelar'),
-                    ),
-                  ),
-                  SizedBox(width: AppTokens.space12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        final value = double.tryParse(
-                          inputController.text.trim().replaceAll(',', '.'),
-                        );
-                        if (value == null) {
-                          context.showInfoSnackbar(
-                              'Ingresa un porcentaje válido.');
-                          return;
-                        }
-                        Navigator.pop(dialogContext);
-                        _submitRenuncia(
-                          value / 100,
-                          renuncia == null
-                              ? 'Renuncia manual voluntaria'
-                              : 'Cambio de porcentaje de renuncia voluntaria',
-                          renuncia: renuncia,
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppTokens.primaryColor,
-                        padding:
-                            EdgeInsets.symmetric(vertical: AppTokens.space12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppTokens.borderRadiusMedium,
-                        ),
-                      ),
-                      child: const Text('Enviar'),
-                    ),
-                  ),
-                ],
               ),
-            ],
+            ),
           );
         },
       ),
@@ -361,7 +409,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       elevation: 0,
       foregroundColor: Colors.white,
       title: const Text(
-        'Renuncia PDE',
+        'Aporte PDE',
         style: TextStyle(
           color: Colors.white,
           fontSize: 20,
@@ -392,7 +440,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         children: [
           _TitleRow(
             icon: Icons.volunteer_activism,
-            title: 'Gestionar renuncias PDE',
+            title: 'Gestionar aportes PDE',
             subtitle: widget.periodDisplayName,
           ),
           SizedBox(height: AppTokens.space16),
@@ -411,7 +459,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Cerrar Renuncias y Abrir Ofertas'),
+                : const Text('Cerrar Aportes y Abrir Ofertas'),
           ),
         ],
       ),
@@ -422,7 +470,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     final status = _status;
     if (status == null) {
       return Text(
-        'No hay información de renuncia PDE para este periodo.',
+        'No hay información de aporte PDE para este periodo.',
         style: context.textStyles.bodyMedium,
       );
     }
@@ -441,35 +489,63 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         children: [
           _TitleRow(
             icon: Icons.volunteer_activism,
-            title: 'Renuncia Voluntaria PDE',
+            title: 'Aporte Comunitario PDE',
             subtitle: widget.periodDisplayName,
           ),
           SizedBox(height: AppTokens.space16),
-          _Rows(rows: [
-            MapEntry('PDE actual', _formatPercent(pdeBase)),
-            MapEntry(
-                'Consumo del mes', Formatters.formatEnergy(status.consumoKwh)),
-            MapEntry(
-              renuncia == null ? 'Aporte a bolsa' : 'Aporte registrado',
+          _SectionLabel('Energía'),
+          SizedBox(height: AppTokens.space4),
+          _MetricStrip(items: [
+            _MetricItem(
+              'Promedio',
+              Formatters.formatEnergy(_referenceConsumption(status)),
+            ),
+            if (_currentConsumption() != null)
+              _MetricItem(
+                  'Actual', Formatters.formatEnergy(_currentConsumption()!)),
+            if (_previousConsumption() != null)
+              _MetricItem('Mes anterior',
+                  Formatters.formatEnergy(_previousConsumption()!)),
+          ]),
+          SizedBox(height: AppTokens.space12),
+          _SectionLabel('PDE'),
+          SizedBox(height: AppTokens.space4),
+          _MetricStrip(items: [
+            _MetricItem(
+              renuncia == null ? 'Aporte bolsa' : 'Aporte registrado',
               _formatPercent(pdeRenunciado),
             ),
-            MapEntry(
+            _MetricItem(
               renuncia == null ? 'PDE conservado' : 'Nuevo PDE',
               _formatPercent(pdeConservado),
             ),
-            if (renuncia != null)
-              MapEntry('Renuncia registrada', _formatPercent(pdeRenunciado)),
-            if (renuncia != null) MapEntry('Estado', renuncia.estado),
+            _MetricItem(
+              'Equivale',
+              Formatters.formatEnergy(_pdeKwhForPercent(pdeConservado),
+                  decimals: 2),
+            ),
           ]),
+          if (renuncia != null) ...[
+            SizedBox(height: AppTokens.space12),
+            _Rows(rows: [
+              MapEntry('Estado', renuncia.estado),
+            ]),
+          ],
+          SizedBox(height: AppTokens.space16),
+          _PdeCoverageBar(
+            pdeKwh: _pdeKwhForPercent(pdeConservado),
+            referenceKwh: _referenceConsumption(status),
+          ),
           SizedBox(height: AppTokens.space16),
           Text(
             renuncia == null
-                ? 'Puedes liberar parte de tu PDE para que otros miembros oferten por él cuando el admin abra el periodo.'
+                ? 'Puedes aportar parte de tu PDE para liberarlo a la comunidad.'
                 : renuncia.pdeRenunciado == 0
                     ? 'Tu decisión de conservar todo tu PDE quedó registrada para este periodo.'
-                    : 'Tu renuncia fue registrada y queda pendiente de revisión del administrador.',
-            style: context.textStyles.bodyMedium?.copyWith(
+                    : 'Tu aporte fue registrado y queda pendiente de revisión del administrador.',
+            style: context.textStyles.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
+              height: 1.35,
             ),
           ),
           if (renuncia == null) ...[
@@ -477,6 +553,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             Text(
               'Opciones recomendadas',
               style: context.textStyles.titleMedium?.copyWith(
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
               ),
             ),
@@ -495,7 +572,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                       borderRadius: AppTokens.borderRadiusMedium,
                     ),
                   ),
-                  child: const Text('Renuncia manual'),
+                  child: const Text('Aporte manual'),
                 ),
               ),
             ],
@@ -514,7 +591,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                 ),
-                child: const Text('Cambiar porcentaje de renuncia'),
+                child: const Text('Cambiar porcentaje de aporte'),
               ),
             ),
           ] else ...[
@@ -532,7 +609,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                 ),
-                child: const Text('Registrar nueva decisión'),
+                child: const Text('Registrar nuevo aporte'),
               ),
             ),
           ],
@@ -542,26 +619,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   }
 
   List<Widget> _buildRecommendedOptions(PdeRenunciaStatus status) {
-    final rawOptions = status.opciones.isEmpty
-        ? [
-            PdeRenunciaOption(
-              id: 'sugerida',
-              renunciaPorcentaje: status.pdeSugeridoRenuncia * 100,
-              descripcion: 'Liberar PDE sugerido',
-            ),
-            PdeRenunciaOption(
-              id: 'moderada',
-              renunciaPorcentaje: status.pdeActual * 25,
-              descripcion: 'Liberar una parte menor del PDE',
-            ),
-            PdeRenunciaOption(
-              id: 'maxima',
-              renunciaPorcentaje: _maxRenunciable(status.pdeActual) * 100,
-              descripcion: 'Liberar el máximo manteniendo 0.1%',
-            ),
-          ]
-        : status.opciones;
-    final options = _uniqueOptionsByRenuncia(rawOptions);
+    final options = _effectiveOptions(status);
 
     return [
       for (var i = 0; i < options.length; i++) ...[
@@ -607,16 +665,40 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     }).toList();
   }
 
+  List<PdeRenunciaOption> _effectiveOptions(PdeRenunciaStatus status) {
+    final rawOptions = status.opciones.isEmpty
+        ? [
+            PdeRenunciaOption(
+              id: 'sugerida',
+              renunciaPorcentaje: status.pdeSugeridoRenuncia * 100,
+              descripcion: 'Aportar PDE sugerido',
+            ),
+            PdeRenunciaOption(
+              id: 'moderada',
+              renunciaPorcentaje: status.pdeActual * 25,
+              descripcion: 'Aportar una parte menor del PDE',
+            ),
+            PdeRenunciaOption(
+              id: 'maxima',
+              renunciaPorcentaje: _maxRenunciable(status.pdeActual) * 100,
+              descripcion: 'Aportar el máximo manteniendo 0.1%',
+            ),
+          ]
+        : status.opciones;
+
+    return _uniqueOptionsByRenuncia(rawOptions);
+  }
+
   String _optionTitle(String id) {
     switch (id) {
       case 'moderada':
-        return 'Renuncia moderada';
+        return 'Aporte moderado';
       case 'total':
-        return 'Renuncia total';
+        return 'Aporte total';
       case 'maxima':
         return 'Aporte máximo';
       default:
-        return 'Renuncia sugerida';
+        return 'Aporte sugerido';
     }
   }
 
@@ -625,16 +707,16 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   }
 
   double _selectedRenunciaValue(PdeRenunciaStatus status) {
-    if (status.opciones.isNotEmpty &&
-        _selectedOptionIndex < status.opciones.length) {
-      return status.opciones[_selectedOptionIndex].renunciaPorcentaje / 100;
+    final options = _effectiveOptions(status);
+    if (options.isNotEmpty && _selectedOptionIndex < options.length) {
+      return options[_selectedOptionIndex].renunciaPorcentaje / 100;
     }
 
     switch (_selectedOptionIndex) {
       case 1:
         return status.pdeActual * 0.25;
       case 2:
-        return status.pdeActual;
+        return _maxRenunciable(status.pdeActual);
       default:
         return status.pdeSugeridoRenuncia;
     }
@@ -645,6 +727,31 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       return 0;
     }
     return (pdeActual - _minimumPdeToKeep).clamp(0, pdeActual).toDouble();
+  }
+
+  double? _currentConsumption() => widget.energyContext?.consumoActualKwh;
+
+  double? _previousConsumption() => widget.energyContext?.consumoMesAnteriorKwh;
+
+  double _referenceConsumption(PdeRenunciaStatus status) {
+    return widget.energyContext?.consumoPromedioHistoricoKwh ??
+        widget.energyContext?.consumoActualKwh ??
+        status.consumoKwh;
+  }
+
+  double _pdeKwhForPercent(double pdeDecimal) {
+    final generation = widget.energyContext?.generacionComunitariaPromedioKwh;
+    if (generation != null && generation > 0) {
+      return generation * pdeDecimal;
+    }
+
+    final currentPde = _status?.pdeActual;
+    final currentKwh = widget.energyContext?.pdeActualKwh;
+    if (currentPde != null && currentPde > 0 && currentKwh != null) {
+      return currentKwh * (pdeDecimal / currentPde);
+    }
+
+    return (_status?.consumoKwh ?? 0) * pdeDecimal;
   }
 }
 
@@ -660,8 +767,10 @@ class _CardContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: AppTokens.borderRadiusLarge,
-        border:
-            Border.all(color: context.colors.outline.withValues(alpha: 0.12)),
+        border: Border.all(
+          color: AppTokens.primaryColor.withValues(alpha: 0.22),
+          width: 1.2,
+        ),
       ),
       child: child,
     );
@@ -710,6 +819,94 @@ class _TitleRow extends StatelessWidget {
   }
 }
 
+class _MetricItem {
+  final String label;
+  final String value;
+
+  const _MetricItem(this.label, this.value);
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: context.textStyles.labelLarge?.copyWith(
+        color: AppTokens.grey900,
+        fontWeight: AppTokens.fontWeightBold,
+      ),
+    );
+  }
+}
+
+class _MetricStrip extends StatelessWidget {
+  final List<_MetricItem> items;
+
+  const _MetricStrip({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space12,
+        vertical: AppTokens.space12,
+      ),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.32),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    items[i].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppTokens.grey700,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    items[i].value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.grey900,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (i != items.length - 1)
+              Container(
+                width: 1,
+                height: 34,
+                margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+                color: context.colors.outline.withValues(alpha: 0.12),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _Rows extends StatelessWidget {
   final List<MapEntry<String, String>> rows;
 
@@ -737,6 +934,148 @@ class _Rows extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _PdeCoverageBar extends StatelessWidget {
+  final double pdeKwh;
+  final double referenceKwh;
+
+  const _PdeCoverageBar({
+    required this.pdeKwh,
+    required this.referenceKwh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safePde = pdeKwh < 0 ? 0.0 : pdeKwh;
+    final safeReference = referenceKwh <= 0 ? safePde : referenceKwh;
+    final total = safePde > safeReference ? safePde : safeReference;
+    final pdeCovered = safePde > safeReference ? safeReference : safePde;
+    final excess = safePde > safeReference ? safePde - safeReference : 0.0;
+
+    if (total <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Cubiertos PDE',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.primaryColor,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+            Text(
+              'Consumo promedio',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.grey700,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppTokens.space8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final coveredWidth = width * (pdeCovered / total);
+            final excessWidth = width * (excess / total);
+            final pdeLabelLeft =
+                (coveredWidth - 42).clamp(0.0, width - 84).toDouble();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    width: double.infinity,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: AppTokens.primaryColor.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: AppTokens.primaryColor.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            width: coveredWidth,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: AppTokens.primaryColor,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                        if (excess > 0)
+                          Positioned(
+                            left: coveredWidth,
+                            child: Container(
+                              width: excessWidth,
+                              height: 22,
+                              color:
+                                  AppTokens.energyGreen.withValues(alpha: 0.35),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: AppTokens.space8),
+                SizedBox(
+                  height: 22,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: pdeLabelLeft,
+                        child: Text(
+                          Formatters.formatEnergy(safePde, decimals: 2),
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: AppTokens.primaryColor,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: Text(
+                          Formatters.formatEnergy(safeReference),
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: AppTokens.grey700,
+                            fontWeight: AppTokens.fontWeightBold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        if (excess > 0) ...[
+          SizedBox(height: AppTokens.space4),
+          Text(
+            'Exceso disponible: ${Formatters.formatEnergy(excess, decimals: 2)}',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: AppTokens.energyGreen,
+              fontWeight: AppTokens.fontWeightSemiBold,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

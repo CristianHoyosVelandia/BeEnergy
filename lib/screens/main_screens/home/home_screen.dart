@@ -726,6 +726,17 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    final summary = _controller.userPeriodHistory?.summary;
+    final pdePercentage =
+        !DataSourceConfig.isFake ? summary?.userPdePercentage : null;
+    final communityAverageGeneration =
+        !DataSourceConfig.isFake ? summary?.energiaComunitariaPromedio : null;
+    final equivalentKwh = pdePercentage != null &&
+            pdePercentage > 0 &&
+            communityAverageGeneration != null
+        ? communityAverageGeneration * (pdePercentage / 100)
+        : null;
+
     final shouldReload = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -735,6 +746,14 @@ class _HomeScreenState extends State<HomeScreen> {
           period: _selectedPeriod,
           periodDisplayName: _selectedPeriodDisplayName,
           isAdminView: _isAdminView,
+          energyContext: PdeAporteEnergyContext(
+            pdeActualPorcentaje: pdePercentage,
+            pdeActualKwh: equivalentKwh,
+            consumoActualKwh: _currentConsumption(),
+            consumoMesAnteriorKwh: _previousConsumption(),
+            consumoPromedioHistoricoKwh: _historicalAverageConsumption(),
+            generacionComunitariaPromedioKwh: communityAverageGeneration,
+          ),
         ),
       ),
     );
