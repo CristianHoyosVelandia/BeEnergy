@@ -711,6 +711,8 @@ class _OfferPdeBar extends StatelessWidget {
     final safeAdditional = additionalPde < 0 ? 0.0 : additionalPde;
     final safeMax = maxPde <= 0 ? 10.0 : maxPde;
     final total = safeMax;
+    final finalPde =
+        (safeCurrent + safeAdditional).clamp(0.0, safeMax).toDouble();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -738,9 +740,7 @@ class _OfferPdeBar extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final currentWidth = width * (safeCurrent / total).clamp(0.0, 1.0);
-            final additionalWidth =
-                width * (safeAdditional / total).clamp(0.0, 1.0);
+            final finalWidth = width * (finalPde / total).clamp(0.0, 1.0);
 
             return ClipRRect(
               borderRadius: BorderRadius.circular(999),
@@ -760,20 +760,12 @@ class _OfferPdeBar extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Container(
-                        width: currentWidth,
+                        width: finalWidth,
                         height: 22,
                         decoration: BoxDecoration(
                           color: AppTokens.primaryColor,
                           borderRadius: BorderRadius.circular(999),
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      left: currentWidth,
-                      child: Container(
-                        width: additionalWidth,
-                        height: 22,
-                        color: AppTokens.primaryColor.withValues(alpha: 0.38),
                       ),
                     ),
                   ],
