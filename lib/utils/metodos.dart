@@ -204,71 +204,98 @@ class Metodos {
                 ]));
   }
 
-  static Widget _brandFlushbarIcon(
-      Color backgroundColor, IconData fallbackIcon) {
-    return Container(
+  static Widget _brandFlushbarIcon(IconData fallbackIcon) {
+    return SizedBox(
       width: 34,
       height: 34,
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
       child: Image.asset(
         'assets/img/logo.png',
         fit: BoxFit.contain,
+        color: Colors.white,
+        colorBlendMode: BlendMode.srcIn,
         errorBuilder: (context, error, stackTrace) => Icon(
           fallbackIcon,
-          color: backgroundColor,
-          size: 20,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );
   }
 
-  static Future flushbarPositivo(context, mensaje) {
+  static Future _showFlushbar(
+    BuildContext context, {
+    required String title,
+    required dynamic message,
+    required Color color,
+    required IconData fallbackIcon,
+    required Duration duration,
+  }) {
     return Flushbar(
-      title: 'BeEnergy',
+      title: title,
       titleColor: Colors.white,
-      message: mensaje,
-      backgroundColor: AppTokens.energyGreen,
+      message: message?.toString() ?? '',
+      backgroundColor: color,
       messageColor: Colors.white,
-      duration: const Duration(seconds: 3),
+      duration: duration,
       margin: const EdgeInsets.all(12),
       borderRadius: BorderRadius.circular(16),
-      icon:
-          _brandFlushbarIcon(AppTokens.energyGreen, Icons.check_circle_rounded),
+      icon: _brandFlushbarIcon(fallbackIcon),
     ).show(context);
+  }
+
+  static Future flushbarPositivo(context, mensaje) {
+    return _showFlushbar(
+      context,
+      title: 'Éxito',
+      message: mensaje,
+      color: AppTokens.energyGreen,
+      fallbackIcon: Icons.check_circle_rounded,
+      duration: const Duration(seconds: 3),
+    );
   }
 
   static Future flushbarPositivoLargo(context, mensaje) {
-    return Flushbar(
-      title: 'BeEnergy',
-      titleColor: Colors.white,
+    return _showFlushbar(
+      context,
+      title: 'Éxito',
       message: mensaje,
-      backgroundColor: AppTokens.energyGreen,
-      messageColor: Colors.white,
+      color: AppTokens.energyGreen,
+      fallbackIcon: Icons.check_circle_rounded,
       duration: const Duration(seconds: 5),
-      margin: const EdgeInsets.all(12),
-      borderRadius: BorderRadius.circular(16),
-      icon:
-          _brandFlushbarIcon(AppTokens.energyGreen, Icons.check_circle_rounded),
-    ).show(context);
+    );
   }
 
   static Future flushbarNegativo(context, mensaje) {
-    return Flushbar(
-      title: 'BeEnergy',
-      titleColor: Colors.white,
+    return _showFlushbar(
+      context,
+      title: 'Error',
       message: mensaje,
-      backgroundColor: AppTokens.primaryColor,
-      messageColor: Colors.white,
+      color: AppTokens.primaryColor,
+      fallbackIcon: Icons.error_outline_rounded,
       duration: const Duration(seconds: 3),
-      margin: const EdgeInsets.all(12),
-      borderRadius: BorderRadius.circular(16),
-      icon: _brandFlushbarIcon(
-          AppTokens.primaryColor, Icons.warning_amber_rounded),
-    ).show(context);
+    );
+  }
+
+  static Future flushbarAdvertencia(context, mensaje) {
+    return _showFlushbar(
+      context,
+      title: 'Advertencia',
+      message: mensaje,
+      color: AppTokens.energySolar,
+      fallbackIcon: Icons.warning_amber_rounded,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  static Future flushbarInformacion(context, mensaje) {
+    return _showFlushbar(
+      context,
+      title: 'Información',
+      message: mensaje,
+      color: AppTokens.secondaryColor,
+      fallbackIcon: Icons.info_outline_rounded,
+      duration: const Duration(seconds: 3),
+    );
   }
 
   static bool validateEmail(String value) {

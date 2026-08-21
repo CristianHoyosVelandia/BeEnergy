@@ -112,6 +112,8 @@ class UserCurrentSummary {
   final double? energiaComunitariaPromedio;
   final double? userPdeKwh;
   final double? userPdePercentage;
+  final double? lastUserPdeKwh;
+  final double? lastUserPdePercentage;
 
   UserCurrentSummary({
     required this.currentPeriod,
@@ -122,6 +124,8 @@ class UserCurrentSummary {
     required this.energiaComunitariaPromedio,
     required this.userPdeKwh,
     required this.userPdePercentage,
+    required this.lastUserPdeKwh,
+    required this.lastUserPdePercentage,
   });
 
   factory UserCurrentSummary.fromJson(Map<String, dynamic> json) {
@@ -138,6 +142,9 @@ class UserCurrentSummary {
           (json['energia_comunitaria_promedio'] as num?)?.toDouble(),
       userPdeKwh: (json['user_pde_kwh'] as num?)?.toDouble(),
       userPdePercentage: (json['user_pde_percentage'] as num?)?.toDouble(),
+      lastUserPdeKwh: (json['last_user_pde_kwh'] as num?)?.toDouble(),
+      lastUserPdePercentage:
+          (json['last_user_pde_percentage'] as num?)?.toDouble(),
     );
   }
 
@@ -152,6 +159,8 @@ class UserCurrentSummary {
       'energia_comunitaria_promedio': energiaComunitariaPromedio,
       'user_pde_kwh': userPdeKwh,
       'user_pde_percentage': userPdePercentage,
+      'last_user_pde_kwh': lastUserPdeKwh,
+      'last_user_pde_percentage': lastUserPdePercentage,
     };
   }
 }
