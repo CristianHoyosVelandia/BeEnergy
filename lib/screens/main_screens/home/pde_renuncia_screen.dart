@@ -259,13 +259,19 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                             ),
                             if (status != null) ...[
                               SizedBox(height: AppTokens.space12),
-                              _Rows(rows: [
-                                MapEntry(
-                                    'Aportas', _formatPercent(selectedValue)),
-                                MapEntry('Conservas',
-                                    _formatPercent(conservedValue)),
-                                MapEntry(
-                                  'Equivale a',
+                              _SectionLabel('PDE'),
+                              SizedBox(height: AppTokens.space4),
+                              _MetricStrip(items: [
+                                _MetricItem(
+                                  'Aporte bolsa',
+                                  _formatPercent(selectedValue),
+                                ),
+                                _MetricItem(
+                                  'Conservado',
+                                  _formatPercent(conservedValue),
+                                ),
+                                _MetricItem(
+                                  'Equivale',
                                   Formatters.formatEnergy(
                                     _pdeKwhForPercent(conservedValue),
                                     decimals: 2,
@@ -512,11 +518,11 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           SizedBox(height: AppTokens.space4),
           _MetricStrip(items: [
             _MetricItem(
-              renuncia == null ? 'Aporte bolsa' : 'Aporte registrado',
+              renuncia == null ? 'Aporte' : 'Registrado',
               _formatPercent(pdeRenunciado),
             ),
             _MetricItem(
-              renuncia == null ? 'PDE conservado' : 'Nuevo PDE',
+              renuncia == null ? 'Conservado' : 'Nuevo',
               _formatPercent(pdeConservado),
             ),
             _MetricItem(
@@ -551,7 +557,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           if (renuncia == null) ...[
             SizedBox(height: AppTokens.space20),
             Text(
-              'Opciones recomendadas',
+              'Elige tu aporte',
               style: context.textStyles.titleMedium?.copyWith(
                 color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
@@ -572,7 +578,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                       borderRadius: AppTokens.borderRadiusMedium,
                     ),
                   ),
-                  child: const Text('Aporte manual'),
+                  child: const Text('Elegir otro aporte'),
                 ),
               ),
             ],
@@ -591,7 +597,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                     borderRadius: AppTokens.borderRadiusMedium,
                   ),
                 ),
-                child: const Text('Cambiar porcentaje de aporte'),
+                child: const Text('Cambiar Aporte'),
               ),
             ),
           ] else ...[
@@ -619,7 +625,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   }
 
   List<Widget> _buildRecommendedOptions(PdeRenunciaStatus status) {
-    final options = _effectiveOptions(status);
+    final options = _compactOptions(status);
 
     return [
       for (var i = 0; i < options.length; i++) ...[
@@ -631,15 +637,14 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           final keepsAllPde = renuncia == 0;
 
           return _RecommendedOptionCard(
-            title: keepsAllPde
-                ? 'Te recomendamos conservar todo tu PDE'
-                : _optionTitle(options[i].id),
+            title:
+                keepsAllPde ? 'Conservar mi PDE' : _optionTitle(options[i].id),
             pdeLabel: keepsAllPde
-                ? 'Te quedas con ${_formatPercent(conservado)} PDE'
-                : 'Aportas ${_formatPercent(renuncia)} PDE',
+                ? 'Te quedas con ${_formatPercent(conservado)}'
+                : 'Aportas ${_formatPercent(renuncia)}',
             detail: keepsAllPde
-                ? 'No aportas PDE a la bolsa comunitaria'
-                : 'Conservas ${_formatPercent(conservado)} PDE. ${options[i].descripcion}',
+                ? 'No envías energía a la bolsa comunitaria'
+                : 'Conservas ${_formatPercent(conservado)}',
             selected: _selectedOptionIndex == i,
             enabled: !_isSubmitting && status.pdeActual > 0,
             onTap: () => setState(() => _selectedOptionIndex = i),
@@ -687,6 +692,24 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         : status.opciones;
 
     return _uniqueOptionsByRenuncia(rawOptions);
+  }
+
+  List<PdeRenunciaOption> _compactOptions(PdeRenunciaStatus status) {
+    final options = _effectiveOptions(status);
+    if (options.length <= 2) return options;
+
+    final keepAll = options.where((option) =>
+        (option.renunciaPorcentaje / 100).abs() <= _decimalTolerance);
+    final maximum = options.where((option) => option.id == 'maxima');
+
+    final compact = <PdeRenunciaOption>[
+      if (keepAll.isNotEmpty) keepAll.first,
+      if (maximum.isNotEmpty) maximum.first,
+    ];
+
+    if (compact.length == 2) return compact;
+
+    return [options.first, options.last];
   }
 
   String _optionTitle(String id) {
@@ -1107,7 +1130,10 @@ class _RecommendedOptionCard extends StatelessWidget {
       borderRadius: AppTokens.borderRadiusLarge,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(AppTokens.space16),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppTokens.space16,
+          vertical: AppTokens.space12,
+        ),
         decoration: BoxDecoration(
           color: context.colors.surface,
           borderRadius: AppTokens.borderRadiusLarge,
@@ -1135,9 +1161,9 @@ class _RecommendedOptionCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: context.textStyles.labelMedium?.copyWith(
+                    style: context.textStyles.bodyMedium?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
-                      color: context.colors.onSurfaceVariant,
+                      color: AppTokens.grey900,
                     ),
                   ),
                   SizedBox(height: AppTokens.space4),
@@ -1149,7 +1175,12 @@ class _RecommendedOptionCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: AppTokens.space4),
-                  Text(detail, style: context.textStyles.bodySmall),
+                  Text(
+                    detail,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
