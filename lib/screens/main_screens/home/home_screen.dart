@@ -821,6 +821,10 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    final summary = _controller.userPeriodHistory?.summary;
+    final communityAverageGeneration =
+        !DataSourceConfig.isFake ? summary?.energiaComunitariaPromedio : null;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -829,7 +833,9 @@ class _HomeScreenState extends State<HomeScreen> {
           myUser: widget.myUser!,
           communityId: _currentCommunityId,
           energyConsumed: _selectedPeriodEnergyData['consumed'] ?? 0,
-          totalPDEAvailable: FakeDataJanuary2026.pdeJan2026.allocatedEnergy,
+          totalPDEAvailable: communityAverageGeneration ??
+              FakeDataJanuary2026.pdeJan2026.allocatedEnergy,
+          communityAverageGenerationKwh: communityAverageGeneration,
         ),
       ),
     );

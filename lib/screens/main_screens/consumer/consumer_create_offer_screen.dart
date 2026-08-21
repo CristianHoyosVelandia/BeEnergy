@@ -435,6 +435,26 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
               ],
             ),
             SizedBox(height: AppTokens.space16),
+            _ManualPdeMetricStrip(items: [
+              _ManualPdeMetricItem(
+                'Solicitas',
+                '${Formatters.formatNumber(_pdePercentageRequested, decimals: 2)}%',
+              ),
+              _ManualPdeMetricItem(
+                'Equivale',
+                Formatters.formatEnergy(_totalEnergyKwh, decimals: 2),
+              ),
+              _ManualPdeMetricItem(
+                'Precio',
+                Formatters.formatCurrency(_pricePerKwh, decimals: 0),
+              ),
+            ]),
+            SizedBox(height: AppTokens.space16),
+            _ManualPdeBar(
+              requestedPde: _pdePercentageRequested,
+              maxPde: 9.99,
+            ),
+            SizedBox(height: AppTokens.space16),
             Slider(
               value: _pdePercentageRequested,
               min: 0.01,
@@ -819,6 +839,154 @@ class _ConsumerCreateOfferScreenState extends State<ConsumerCreateOfferScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ManualPdeMetricItem {
+  final String label;
+  final String value;
+
+  const _ManualPdeMetricItem(this.label, this.value);
+}
+
+class _ManualPdeMetricStrip extends StatelessWidget {
+  final List<_ManualPdeMetricItem> items;
+
+  const _ManualPdeMetricStrip({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space12,
+        vertical: AppTokens.space12,
+      ),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.32),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    items[i].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppTokens.grey700,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    items[i].value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.grey900,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (i != items.length - 1)
+              Container(
+                width: 1,
+                height: 34,
+                margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+                color: context.colors.outline.withValues(alpha: 0.12),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ManualPdeBar extends StatelessWidget {
+  final double requestedPde;
+  final double maxPde;
+
+  const _ManualPdeBar({
+    required this.requestedPde,
+    required this.maxPde,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safeMax = maxPde <= 0 ? 1.0 : maxPde;
+    final safeRequested = requestedPde.clamp(0.0, safeMax).toDouble();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Solicitado',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.primaryColor,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+            Text(
+              'Máximo recomendado',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.grey700,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppTokens.space8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final requestedWidth = width * (safeRequested / safeMax);
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: double.infinity,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: AppTokens.primaryColor.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppTokens.primaryColor.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: requestedWidth,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: AppTokens.primaryColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

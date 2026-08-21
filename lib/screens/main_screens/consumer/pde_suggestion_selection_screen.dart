@@ -16,6 +16,7 @@ class PdeSuggestionSelectionScreen extends StatefulWidget {
   final int communityId;
   final double energyConsumed;
   final double totalPDEAvailable;
+  final double? communityAverageGenerationKwh;
 
   const PdeSuggestionSelectionScreen({
     super.key,
@@ -24,6 +25,7 @@ class PdeSuggestionSelectionScreen extends StatefulWidget {
     required this.communityId,
     required this.energyConsumed,
     required this.totalPDEAvailable,
+    this.communityAverageGenerationKwh,
   });
 
   @override
@@ -39,6 +41,7 @@ class _PdeSuggestionSelectionScreenState
   bool _isLoadingForecast = true;
   bool _isCreatingOffer = false;
   String? _errorMessage;
+  int _selectedSuggestionIndex = 0;
 
   @override
   void initState() {
@@ -88,7 +91,7 @@ class _PdeSuggestionSelectionScreenState
     final forecast = _forecast;
     if (forecast == null) return const [];
 
-    return forecast.escenarios.map((scenario) {
+    final suggestions = forecast.escenarios.map((scenario) {
       final additionalPde = (scenario.pdePorcentaje - forecast.pdeActual)
           .clamp(0, scenario.pdePorcentaje)
           .toDouble();
@@ -106,6 +109,42 @@ class _PdeSuggestionSelectionScreenState
         color: AppTokens.primaryColor,
       );
     }).toList();
+
+    return _uniqueSuggestions(suggestions);
+  }
+
+  List<_PdeSuggestion> _uniqueSuggestions(List<_PdeSuggestion> suggestions) {
+    final seen = <String>{};
+    final sorted = [...suggestions]..sort((a, b) {
+        if (a.id == 'medio') return -1;
+        if (b.id == 'medio') return 1;
+        return a.id.compareTo(b.id);
+      });
+
+    return sorted.where((suggestion) {
+      final key = [
+        suggestion.additionalPdePercentage.toStringAsFixed(4),
+        suggestion.pdePercentage.toStringAsFixed(4),
+        suggestion.estimatedSavings.toStringAsFixed(0),
+      ].join('|');
+      return seen.add(key);
+    }).toList();
+  }
+
+  _PdeSuggestion? _selectedSuggestion(List<_PdeSuggestion> suggestions) {
+    if (suggestions.isEmpty) return null;
+    final index = _selectedSuggestionIndex.clamp(0, suggestions.length - 1);
+    return suggestions[index];
+  }
+
+  double _estimatedEnergyKwh(_PdeSuggestion suggestion) {
+    final communityEnergy = widget.communityAverageGenerationKwh ??
+        _forecast?.generacionEstimadaComunidadKwh ??
+        widget.totalPDEAvailable;
+    if (communityEnergy > 0) {
+      return communityEnergy * (suggestion.pdePercentage / 100);
+    }
+    return suggestion.energyKwh;
   }
 
   String _scenarioName(String id) {
@@ -116,6 +155,18 @@ class _PdeSuggestionSelectionScreenState
         return 'Escenario alto';
       default:
         return 'Escenario recomendado';
+    }
+  }
+
+  String _scenarioActionName(String id) {
+    switch (id) {
+      case 'alto':
+      case 'maxima':
+        return 'Solicitar máximo';
+      case 'bajo':
+        return 'Solicitar conservador';
+      default:
+        return 'Solicitar recomendado';
     }
   }
 
@@ -147,7 +198,7 @@ class _PdeSuggestionSelectionScreenState
         communityId: widget.communityId,
         period: widget.period,
         pdePercentage: suggestion.pdePercentage,
-        pdeKwh: suggestion.energyKwh,
+        pdeKwh: _estimatedEnergyKwh(suggestion),
         pricePerKwh: suggestion.pricePerKwh,
         origen: 'forecast',
         escenarioId: suggestion.id,
@@ -196,9 +247,7 @@ class _PdeSuggestionSelectionScreenState
   @override
   Widget build(BuildContext context) {
     final suggestions = _suggestions;
-    final recommendedSavings = suggestions.isEmpty
-        ? 0.0
-        : suggestions[(suggestions.length / 2).floor()].estimatedSavings;
+    final selectedSuggestion = _selectedSuggestion(suggestions);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -226,21 +275,26 @@ class _PdeSuggestionSelectionScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildHeroCard(recommendedSavings, suggestions),
+                  _buildHeroCard(selectedSuggestion),
                   SizedBox(height: AppTokens.space16),
                   Text(
-                    'Opciones recomendadas',
+                    'Tu oferta',
                     style: context.textStyles.titleMedium?.copyWith(
+                      color: AppTokens.primaryColor,
                       fontWeight: AppTokens.fontWeightBold,
                     ),
                   ),
                   SizedBox(height: AppTokens.space12),
-                  for (var i = 0; i < suggestions.length; i++)
-                    _buildSuggestionCard(
-                      suggestions[i],
-                      highlight: suggestions[i].id == 'medio',
-                    ),
-                  SizedBox(height: AppTokens.space8),
+                  _buildSuggestionChips(suggestions),
+                  if (selectedSuggestion != null) ...[
+                    SizedBox(height: AppTokens.space12),
+                    _buildSelectedOfferSummary(selectedSuggestion),
+                  ],
+                  if (selectedSuggestion != null) ...[
+                    SizedBox(height: AppTokens.space12),
+                    _buildSelectedAction(selectedSuggestion),
+                    SizedBox(height: AppTokens.space8),
+                  ],
                   _buildManualOption(),
                   if (_errorMessage != null) ...[
                     SizedBox(height: AppTokens.space16),
@@ -260,17 +314,8 @@ class _PdeSuggestionSelectionScreenState
     );
   }
 
-  Widget _buildHeroCard(
-    double recommendedSavings,
-    List<_PdeSuggestion> suggestions,
-  ) {
+  Widget _buildHeroCard(_PdeSuggestion? selectedSuggestion) {
     final forecast = _forecast;
-    final recommended = suggestions.isEmpty
-        ? null
-        : suggestions.firstWhere(
-            (item) => item.id == 'medio',
-            orElse: () => suggestions[(suggestions.length / 2).floor()],
-          );
 
     return Container(
       width: double.infinity,
@@ -285,22 +330,11 @@ class _PdeSuggestionSelectionScreenState
         children: [
           Row(
             children: [
-              Container(
-                padding: EdgeInsets.all(AppTokens.space12),
-                decoration: BoxDecoration(
-                  color: AppTokens.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: AppTokens.borderRadiusMedium,
-                ),
-                child: Icon(
-                  Icons.auto_awesome,
-                  color: AppTokens.primaryColor,
-                ),
-              ),
-              SizedBox(width: AppTokens.space12),
               Expanded(
                 child: Text(
                   Formatters.formatPeriodToDisplayName(widget.period),
-                  style: context.textStyles.titleSmall?.copyWith(
+                  style: context.textStyles.titleMedium?.copyWith(
+                    color: AppTokens.primaryColor,
                     fontWeight: AppTokens.fontWeightBold,
                   ),
                 ),
@@ -309,136 +343,152 @@ class _PdeSuggestionSelectionScreenState
           ),
           SizedBox(height: AppTokens.space16),
           Text(
-            forecast == null || recommended == null
-                ? 'Hola $_firstName, de acuerdo con tu consumo y la generación comunitaria disponible, revisa las opciones recomendadas para este periodo.'
-                : 'Hola $_firstName, tu PDE actual es ${_formatPde(forecast.pdeActual)}. Para este periodo te recomendamos solicitar ${_formatPde(recommended.additionalPdePercentage)} más, hasta quedar en ${_formatPde(recommended.pdePercentage)}.',
-            style: context.textStyles.bodyMedium?.copyWith(
+            forecast == null || selectedSuggestion == null
+                ? 'Hola $_firstName, revisa las opciones para este periodo.'
+                : 'Hola $_firstName, puedes solicitar más PDE para este periodo.',
+            style: context.textStyles.bodySmall?.copyWith(
               height: 1.4,
-              color: AppTokens.black,
+              color: context.colors.onSurfaceVariant,
             ),
-          )
+          ),
+          if (forecast != null && selectedSuggestion != null) ...[
+            SizedBox(height: AppTokens.space16),
+            _OfferPdeBar(
+              currentPde: forecast.pdeActual,
+              additionalPde: selectedSuggestion.additionalPdePercentage,
+              maxPde: 10,
+            ),
+            SizedBox(height: AppTokens.space12),
+            Text(
+              'PDE',
+              style: context.textStyles.labelLarge?.copyWith(
+                color: AppTokens.grey900,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+            SizedBox(height: AppTokens.space4),
+            _OfferMetricStrip(items: [
+              _OfferMetricItem('Actual', _formatPde(forecast.pdeActual)),
+              _OfferMetricItem('Solicitado',
+                  _formatPde(selectedSuggestion.additionalPdePercentage)),
+              _OfferMetricItem(
+                  'Final', _formatPde(selectedSuggestion.pdePercentage)),
+            ]),
+            SizedBox(height: AppTokens.space12),
+            _EstimatedEnergyBlock(
+              value: Formatters.formatEnergy(
+                _estimatedEnergyKwh(selectedSuggestion),
+                decimals: 2,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildSuggestionCard(
-    _PdeSuggestion suggestion, {
-    bool highlight = false,
-  }) {
-    final hasAdditionalPde = suggestion.additionalPdePercentage > 0;
+  Widget _buildSuggestionChips(List<_PdeSuggestion> suggestions) {
+    return Wrap(
+      spacing: AppTokens.space8,
+      runSpacing: AppTokens.space8,
+      children: [
+        for (var i = 0; i < suggestions.length; i++)
+          ChoiceChip(
+            label: Text(
+              suggestions[i].additionalPdePercentage > 0
+                  ? _scenarioActionName(suggestions[i].id)
+                  : 'Mantener actual',
+            ),
+            selected: i == _selectedSuggestionIndex,
+            selectedColor: AppTokens.primaryColor.withValues(alpha: 0.14),
+            checkmarkColor: AppTokens.white,
+            labelStyle: context.textStyles.bodySmall?.copyWith(
+              color: i == _selectedSuggestionIndex
+                  ? AppTokens.white
+                  : AppTokens.grey700,
+              fontWeight: AppTokens.fontWeightSemiBold,
+            ),
+            side: BorderSide(
+              color: i == _selectedSuggestionIndex
+                  ? AppTokens.primaryColor
+                  : AppTokens.grey300,
+            ),
+            onSelected: _isCreatingOffer
+                ? null
+                : (_) => setState(() => _selectedSuggestionIndex = i),
+          ),
+      ],
+    );
+  }
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: AppTokens.space8),
-      child: Material(
+  Widget _buildSelectedOfferSummary(_PdeSuggestion suggestion) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: AppTokens.borderRadiusLarge,
-        child: InkWell(
-          onTap: _isCreatingOffer || !hasAdditionalPde
-              ? null
-              : () => _createSuggestedOffer(suggestion),
-          borderRadius: AppTokens.borderRadiusLarge,
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: AppTokens.space16,
-              vertical: AppTokens.space12,
+        border:
+            Border.all(color: AppTokens.primaryColor.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _OfferMetricStrip(items: [
+            _OfferMetricItem(
+              'Solicitas',
+              _formatPde(suggestion.additionalPdePercentage),
             ),
-            decoration: BoxDecoration(
-              color: hasAdditionalPde
-                  ? Colors.white
-                  : AppTokens.grey100.withValues(alpha: 0.6),
-              borderRadius: AppTokens.borderRadiusLarge,
-              border: Border.all(
-                color: highlight && hasAdditionalPde
-                    ? AppTokens.primaryColor
-                    : AppTokens.grey300,
-                width: highlight && hasAdditionalPde ? 2 : 1,
+            _OfferMetricItem('PDE final', _formatPde(suggestion.pdePercentage)),
+            _OfferMetricItem(
+              'Estimado',
+              Formatters.formatEnergy(_estimatedEnergyKwh(suggestion),
+                  decimals: 2),
+            ),
+          ]),
+          SizedBox(height: AppTokens.space12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Ahorro estimado',
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: suggestion.color.withValues(
-                      alpha: hasAdditionalPde ? 0.12 : 0.06,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    suggestion.icon,
-                    color: hasAdditionalPde
-                        ? suggestion.color
-                        : suggestion.color.withValues(alpha: 0.45),
-                    size: 28,
-                  ),
+              Text(
+                Formatters.formatCurrency(suggestion.estimatedSavings,
+                    decimals: 0),
+                style: context.textStyles.titleMedium?.copyWith(
+                  color: AppTokens.primaryColor,
+                  fontWeight: AppTokens.fontWeightBold,
                 ),
-                SizedBox(width: AppTokens.space12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        suggestion.name,
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: AppTokens.black,
-                          fontWeight: AppTokens.fontWeightSemiBold,
-                        ),
-                      ),
-                      Text(
-                        hasAdditionalPde
-                            ? 'Solicitar ${_formatPde(suggestion.additionalPdePercentage)} más'
-                            : 'No necesitas solicitar más',
-                        style: context.textStyles.titleSmall?.copyWith(
-                          fontWeight: AppTokens.fontWeightBold,
-                          color: hasAdditionalPde
-                              ? suggestion.color
-                              : context.colors.onSurfaceVariant,
-                        ),
-                      ),
-                      SizedBox(height: AppTokens.space4),
-                      Text(
-                        hasAdditionalPde
-                            ? 'Tu PDE quedaría en ${_formatPde(suggestion.pdePercentage)} · ${Formatters.formatCurrency(suggestion.pricePerKwh, decimals: 0)} COP/kWh'
-                            : 'Tu PDE actual ya es ${_formatPde(suggestion.currentPdePercentage)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.textStyles.bodySmall?.copyWith(
-                          color: AppTokens.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(width: AppTokens.space12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      Formatters.formatCurrency(
-                        suggestion.estimatedSavings,
-                        decimals: 0,
-                      ),
-                      style: context.textStyles.titleMedium?.copyWith(
-                        fontWeight: AppTokens.fontWeightBold,
-                        color: AppTokens.primaryColor,
-                      ),
-                    ),
-                    SizedBox(height: AppTokens.space4),
-                    Text(
-                      'Ahorro Potencial',
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedAction(_PdeSuggestion suggestion) {
+    final enabled = suggestion.additionalPdePercentage > 0 && !_isCreatingOffer;
+
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(
+        onPressed: enabled ? () => _createSuggestedOffer(suggestion) : null,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppTokens.primaryColor,
+          padding: EdgeInsets.symmetric(vertical: AppTokens.space12),
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusMedium,
+          ),
+        ),
+        child: Text(
+          enabled
+              ? 'Crear oferta con esta opción'
+              : 'No necesitas crear oferta',
         ),
       ),
     );
@@ -456,19 +506,19 @@ class _PdeSuggestionSelectionScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Si ninguna de estas opciones se ajusta a tus necesidades, recuerda que también puedes crear tu oferta de manera manual.',
+            '¿Quieres ajustar el porcentaje?',
             style: context.textStyles.bodyMedium?.copyWith(
-              color: AppTokens.grey700,
-              height: 1.35,
+              color: AppTokens.grey900,
+              fontWeight: AppTokens.fontWeightBold,
             ),
           ),
-          SizedBox(height: AppTokens.space12),
+          SizedBox(height: AppTokens.space8),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _isCreatingOffer ? null : _continueManual,
               icon: const Icon(Icons.tune),
-              label: const Text('Crear oferta manualmente'),
+              label: const Text('Elegir otro valor'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTokens.primaryColor,
                 side: BorderSide(color: AppTokens.primaryColor),
@@ -528,4 +578,211 @@ class _PdeSuggestion {
     required this.icon,
     required this.color,
   });
+}
+
+class _OfferMetricItem {
+  final String label;
+  final String value;
+
+  const _OfferMetricItem(this.label, this.value);
+}
+
+class _OfferMetricStrip extends StatelessWidget {
+  final List<_OfferMetricItem> items;
+
+  const _OfferMetricStrip({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space12,
+        vertical: AppTokens.space12,
+      ),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.32),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: context.colors.outline.withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    items[i].label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: AppTokens.grey700,
+                      fontWeight: AppTokens.fontWeightSemiBold,
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space4),
+                  Text(
+                    items[i].value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: AppTokens.grey900,
+                      fontWeight: AppTokens.fontWeightBold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (i != items.length - 1)
+              Container(
+                width: 1,
+                height: 34,
+                margin: EdgeInsets.symmetric(horizontal: AppTokens.space8),
+                color: context.colors.outline.withValues(alpha: 0.12),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EstimatedEnergyBlock extends StatelessWidget {
+  final String value;
+
+  const _EstimatedEnergyBlock({required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppTokens.space12,
+        vertical: AppTokens.space12,
+      ),
+      decoration: BoxDecoration(
+        color: AppTokens.primaryColor.withValues(alpha: 0.06),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(
+          color: AppTokens.primaryColor.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Estimado (kWh)',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: AppTokens.grey700,
+              fontWeight: AppTokens.fontWeightSemiBold,
+            ),
+          ),
+          SizedBox(height: AppTokens.space4),
+          Text(
+            value,
+            style: context.textStyles.displaySmall?.copyWith(
+              color: AppTokens.grey900,
+              fontWeight: AppTokens.fontWeightBold,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfferPdeBar extends StatelessWidget {
+  final double currentPde;
+  final double additionalPde;
+  final double maxPde;
+
+  const _OfferPdeBar({
+    required this.currentPde,
+    required this.additionalPde,
+    this.maxPde = 10,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final safeCurrent = currentPde < 0 ? 0.0 : currentPde;
+    final safeAdditional = additionalPde < 0 ? 0.0 : additionalPde;
+    final safeMax = maxPde <= 0 ? 10.0 : maxPde;
+    final total = safeMax;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'PDE actual',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.primaryColor,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+            Text(
+              '10% máximo',
+              style: context.textStyles.labelMedium?.copyWith(
+                color: AppTokens.grey700,
+                fontWeight: AppTokens.fontWeightBold,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: AppTokens.space8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final currentWidth = width * (safeCurrent / total).clamp(0.0, 1.0);
+            final additionalWidth =
+                width * (safeAdditional / total).clamp(0.0, 1.0);
+
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: Container(
+                width: double.infinity,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: AppTokens.primaryColor.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppTokens.primaryColor.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: currentWidth,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: AppTokens.primaryColor,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: currentWidth,
+                      child: Container(
+                        width: additionalWidth,
+                        height: 22,
+                        color: AppTokens.primaryColor.withValues(alpha: 0.38),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
 }
