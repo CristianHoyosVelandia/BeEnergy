@@ -15,6 +15,8 @@ class PdeStateMachineCard extends StatelessWidget {
   final String periodDisplayName;
   final PDEPeriodStatus? status;
   final ConsumerOffer? buyerOffer;
+  final bool hasUserContribution;
+  final Map<int, bool> enabledSteps;
   final VoidCallback onAvailableTap;
   final VoidCallback onAdminClosedTap;
   final VoidCallback onMoveToReconciliationTap;
@@ -29,6 +31,8 @@ class PdeStateMachineCard extends StatelessWidget {
     required this.periodDisplayName,
     required this.status,
     required this.buyerOffer,
+    this.hasUserContribution = false,
+    required this.enabledSteps,
     required this.onAvailableTap,
     required this.onAdminClosedTap,
     required this.onMoveToReconciliationTap,
@@ -47,13 +51,43 @@ class PdeStateMachineCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    switch (currentStatus.statusCode) {
+    if (currentStatus.statusCode == 6 && !(enabledSteps[6] ?? true)) {
+      return _InfoCard(
+        statusCode: 6,
+        title: 'Aporte Comunitario',
+        periodDisplayName: periodDisplayName,
+        message:
+            'Estamos preparando automáticamente la fase de aporte comunitario. Te avisaremos cuando el ciclo PDE esté disponible para participar.',
+        icon: Icons.volunteer_activism,
+        enabledSteps: enabledSteps,
+      );
+    }
+
+    final statusCode = _effectiveStatusCode(currentStatus.statusCode);
+    if (statusCode == null) {
+      return const SizedBox.shrink();
+    }
+
+    switch (statusCode) {
       case 1:
-        return currentStatus.isPDEAvailable
+        if (!isAdminView && hasUserContribution) {
+          return _InfoCard(
+            statusCode: 1,
+            title: 'PDE Disponible',
+            periodDisplayName: periodDisplayName,
+            message:
+                'Ya aportaste parte de tu PDE en este ciclo. Ahora estamos esperando que los demás miembros de la comunidad realicen sus ofertas; te avisaremos cuando el proceso avance.',
+            icon: Icons.hourglass_top,
+            enabledSteps: enabledSteps,
+          );
+        }
+        return currentStatus.isPDEAvailable ||
+                statusCode != currentStatus.statusCode
             ? _AvailableCard(
                 isAdminView: isAdminView,
                 periodDisplayName: periodDisplayName,
-                message: currentStatus.getDisplayMessage(),
+                message: 'PDE disponible',
+                enabledSteps: enabledSteps,
                 onTap: onAvailableTap,
               )
             : const SizedBox.shrink();
@@ -67,6 +101,7 @@ class PdeStateMachineCard extends StatelessWidget {
                     'El periodo de ofertas ha cerrado. Puede proceder a realizar la asignación de PDE.',
                 ctaLabel: 'Realizar Asignación de PDE',
                 icon: Icons.assignment_turned_in,
+                enabledSteps: enabledSteps,
                 onTap: onAdminClosedTap,
               )
             : _ConsumerOfferCard(
@@ -80,6 +115,7 @@ class PdeStateMachineCard extends StatelessWidget {
                     'No alcanzaste a crear una oferta para este periodo. Te guiaremos cuando el próximo PDE esté disponible.',
                 footerMessage:
                     'Se te notificará cuando se realice la asignación de PDE',
+                enabledSteps: enabledSteps,
                 rowsBuilder: _closedRows,
               );
       case 3:
@@ -92,6 +128,7 @@ class PdeStateMachineCard extends StatelessWidget {
                     'Las ofertas han sido liquidadas. Puede proceder a cambiar el estado a En Conciliación.',
                 ctaLabel: 'Pasar a Conciliación',
                 icon: Icons.check_circle,
+                enabledSteps: enabledSteps,
                 onTap: onMoveToReconciliationTap,
               )
             : _ConsumerOfferCard(
@@ -105,6 +142,7 @@ class PdeStateMachineCard extends StatelessWidget {
                     'No tienes una oferta PDE registrada para este periodo. Las ofertas de la comunidad ya fueron finalizadas.',
                 footerMessage:
                     'Apenas se concilie con el comercializador podrá ver el ahorro real en su tarifa energética.',
+                enabledSteps: enabledSteps,
                 rowsBuilder: _finalizedRows,
               );
       case 4:
@@ -115,6 +153,7 @@ class PdeStateMachineCard extends StatelessWidget {
                 periodDisplayName: periodDisplayName,
                 message: 'Esperando conciliación con el comercializador.',
                 icon: Icons.sync,
+                enabledSteps: enabledSteps,
               )
             : _ConsumerOfferCard(
                 statusCode: 4,
@@ -127,6 +166,7 @@ class PdeStateMachineCard extends StatelessWidget {
                     'No tienes asignación PDE para conciliar en este periodo. Te notificaremos cuando haya un nuevo PDE disponible.',
                 footerMessage:
                     'A la espera de conciliación con el comercializador.',
+                enabledSteps: enabledSteps,
                 rowsBuilder: _reconciliationRows,
               );
       case 6:
@@ -139,6 +179,7 @@ class PdeStateMachineCard extends StatelessWidget {
               : 'Puedes aportar parte del PDE asignado para liberarlo a la comunidad.',
           ctaLabel: isAdminView ? 'Gestionar Aportes PDE' : 'Ir a Aporte PDE',
           icon: Icons.volunteer_activism,
+          enabledSteps: enabledSteps,
           onTap: onVoluntaryWaiverTap,
         );
       case 7:
@@ -151,6 +192,7 @@ class PdeStateMachineCard extends StatelessWidget {
               : 'Tienes una liquidación pendiente del periodo anterior.',
           ctaLabel: isAdminView ? 'Gestionar Cobros' : 'Ver Cobro',
           icon: Icons.receipt_long,
+          enabledSteps: enabledSteps,
           onTap: onPaymentTap,
         );
       default:
@@ -158,8 +200,32 @@ class PdeStateMachineCard extends StatelessWidget {
           isAdminView: isAdminView,
           loading: isLoadingOffer,
           offer: buyerOffer,
+          enabledSteps: enabledSteps,
         );
     }
+  }
+
+  int? _effectiveStatusCode(int statusCode) {
+    const flowOrder = [6, 1, 2, 3, 4, 5, 7];
+    if (statusCode == 0) return null;
+    if (enabledSteps[statusCode] ?? true) return statusCode;
+
+    final currentIndex = flowOrder.indexOf(statusCode);
+    if (currentIndex == -1) {
+      return enabledSteps[5] ?? true ? 5 : null;
+    }
+
+    for (var index = currentIndex + 1; index < flowOrder.length; index++) {
+      final nextStatus = flowOrder[index];
+      if (enabledSteps[nextStatus] ?? true) return nextStatus;
+    }
+
+    for (var index = currentIndex - 1; index >= 0; index--) {
+      final previousStatus = flowOrder[index];
+      if (enabledSteps[previousStatus] ?? true) return previousStatus;
+    }
+
+    return null;
   }
 
   static List<MapEntry<String, String>> _closedRows(ConsumerOffer offer) => [
@@ -228,12 +294,14 @@ class _AvailableCard extends StatelessWidget {
   final bool isAdminView;
   final String periodDisplayName;
   final String message;
+  final Map<int, bool> enabledSteps;
   final VoidCallback onTap;
 
   const _AvailableCard({
     required this.isAdminView,
     required this.periodDisplayName,
     required this.message,
+    required this.enabledSteps,
     required this.onTap,
   });
 
@@ -259,7 +327,7 @@ class _AvailableCard extends StatelessWidget {
             onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
-          const PdeProgressTimeline(currentStatus: 1),
+          PdeProgressTimeline(currentStatus: 1, enabledSteps: enabledSteps),
           SizedBox(height: AppTokens.space16),
           Row(
             children: [
@@ -300,6 +368,7 @@ class _InfoCard extends StatelessWidget {
   final String message;
   final IconData icon;
   final String? ctaLabel;
+  final Map<int, bool> enabledSteps;
   final VoidCallback? onTap;
 
   const _InfoCard({
@@ -308,6 +377,7 @@ class _InfoCard extends StatelessWidget {
     required this.periodDisplayName,
     required this.message,
     required this.icon,
+    required this.enabledSteps,
     this.ctaLabel,
     this.onTap,
   });
@@ -326,7 +396,10 @@ class _InfoCard extends StatelessWidget {
             onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
-          PdeProgressTimeline(currentStatus: statusCode),
+          PdeProgressTimeline(
+            currentStatus: statusCode,
+            enabledSteps: enabledSteps,
+          ),
           SizedBox(height: AppTokens.space16),
           _MessageBox(message: message),
           if (ctaLabel != null) ...[
@@ -348,6 +421,7 @@ class _ConsumerOfferCard extends StatelessWidget {
   final String? emptyTitle;
   final String? emptyMessage;
   final String footerMessage;
+  final Map<int, bool> enabledSteps;
   final List<MapEntry<String, String>> Function(ConsumerOffer offer)
       rowsBuilder;
 
@@ -358,6 +432,7 @@ class _ConsumerOfferCard extends StatelessWidget {
     required this.loading,
     required this.offer,
     required this.footerMessage,
+    required this.enabledSteps,
     required this.rowsBuilder,
     this.emptyTitle,
     this.emptyMessage,
@@ -401,7 +476,11 @@ class _ConsumerOfferCard extends StatelessWidget {
               ),
             ),
             SizedBox(height: AppTokens.space16),
-            PdeProgressTimeline(currentStatus: statusCode, onDark: false),
+            PdeProgressTimeline(
+              currentStatus: statusCode,
+              onDark: false,
+              enabledSteps: enabledSteps,
+            ),
           ],
         ),
       );
@@ -413,7 +492,10 @@ class _ConsumerOfferCard extends StatelessWidget {
         children: [
           _Header(icon: Icons.timer, title: title, subtitle: periodDisplayName),
           SizedBox(height: AppTokens.space20),
-          PdeProgressTimeline(currentStatus: statusCode),
+          PdeProgressTimeline(
+            currentStatus: statusCode,
+            enabledSteps: enabledSteps,
+          ),
           SizedBox(height: AppTokens.space16),
           _RowsBox(rows: rowsBuilder(currentOffer)),
           SizedBox(height: AppTokens.space16),
@@ -428,11 +510,13 @@ class _HistoricalCard extends StatelessWidget {
   final bool isAdminView;
   final bool loading;
   final ConsumerOffer? offer;
+  final Map<int, bool> enabledSteps;
 
   const _HistoricalCard({
     required this.isAdminView,
     required this.loading,
     required this.offer,
+    required this.enabledSteps,
   });
 
   @override
@@ -487,7 +571,7 @@ class _HistoricalCard extends StatelessWidget {
             subtitle: rows.isEmpty ? '' : 'Resumen financiero',
           ),
           SizedBox(height: AppTokens.space16),
-          const PdeProgressTimeline(currentStatus: 5),
+          PdeProgressTimeline(currentStatus: 5, enabledSteps: enabledSteps),
           SizedBox(height: AppTokens.space16),
           Text(
             rows.isEmpty

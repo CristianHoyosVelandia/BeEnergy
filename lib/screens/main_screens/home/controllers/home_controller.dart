@@ -8,6 +8,7 @@ import 'package:be_energy/repositories/domain/pde_period_repository.dart';
 import 'package:be_energy/repositories/impl/pde_period_repository_api.dart';
 import 'package:be_energy/services/consumer_offer_api_service.dart';
 import 'package:be_energy/services/community_price_reference_service.dart';
+import 'package:be_energy/services/community_service.dart' as community_config;
 import 'package:be_energy/services/pde_renuncia_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -18,18 +19,22 @@ class HomeController extends ChangeNotifier {
   final PDEPeriodRepository _pdePeriodRepository;
   final ConsumerOfferApiService _consumerOfferService;
   final PdeRenunciaService _pdeRenunciaService;
+  final community_config.CommunityService _communityService;
 
   HomeController({
     CommunityPriceReferenceService? priceReferenceService,
     PDEPeriodRepository? pdePeriodRepository,
     ConsumerOfferApiService? consumerOfferService,
     PdeRenunciaService? pdeRenunciaService,
+    community_config.CommunityService? communityService,
   })  : _priceReferenceService =
             priceReferenceService ?? CommunityPriceReferenceService(),
         _pdePeriodRepository = pdePeriodRepository ?? PDEPeriodRepositoryApi(),
         _consumerOfferService =
             consumerOfferService ?? ConsumerOfferApiService(),
-        _pdeRenunciaService = pdeRenunciaService ?? PdeRenunciaService();
+        _pdeRenunciaService = pdeRenunciaService ?? PdeRenunciaService(),
+        _communityService =
+            communityService ?? community_config.CommunityService();
 
   String selectedPeriod = '';
   bool isAdminView = false;
@@ -38,6 +43,7 @@ class HomeController extends ChangeNotifier {
   UserPeriodHistory? userPeriodHistory;
   ConsumerOffer? buyerOffer;
   PdeRenunciaStatus? pdeRenunciaStatus;
+  Map<int, bool> strategySteps = Map<int, bool>.from(_defaultStrategySteps);
 
   bool isLoadingPDEStatus = false;
   bool isLoadingEnergyData = false;
@@ -50,6 +56,27 @@ class HomeController extends ChangeNotifier {
   String? priceReferencesError;
   bool _isDisposed = false;
   String? _cacheKey;
+
+  static const Map<int, bool> _defaultStrategySteps = {
+    1: true,
+    2: true,
+    3: true,
+    4: true,
+    5: true,
+    6: true,
+    7: true,
+  };
+
+  bool isStrategyStepEnabled(int statusCode) {
+    return strategySteps[statusCode] ?? true;
+  }
+
+  bool _boolFromJson(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return true;
+  }
 
   void _notify() {
     if (!_isDisposed) {
@@ -90,6 +117,10 @@ class HomeController extends ChangeNotifier {
       communityId: communityId,
       useFakeData: useFakeData,
     );
+    await loadCommunityStrategy(
+      communityId: communityId,
+      useFakeData: useFakeData,
+    );
     await loadPDEPeriodStatus(
       user: user,
       communityId: communityId,
@@ -102,6 +133,7 @@ class HomeController extends ChangeNotifier {
         userPeriodHistory: userPeriodHistory,
         buyerOffer: buyerOffer,
         pdeRenunciaStatus: pdeRenunciaStatus,
+        strategySteps: strategySteps,
       );
     }
   }
@@ -112,11 +144,38 @@ class HomeController extends ChangeNotifier {
     userPeriodHistory = cached.userPeriodHistory;
     buyerOffer = cached.buyerOffer;
     pdeRenunciaStatus = cached.pdeRenunciaStatus;
+    strategySteps = Map<int, bool>.from(cached.strategySteps);
     isLoadingPDEStatus = false;
     isLoadingEnergyData = false;
     isLoadingPeriods = false;
     isLoadingBuyerOffer = false;
     isLoadingPdeRenuncia = false;
+  }
+
+  Future<void> loadCommunityStrategy({
+    required int communityId,
+    required bool useFakeData,
+  }) async {
+    if (useFakeData) {
+      strategySteps = Map<int, bool>.from(_defaultStrategySteps);
+      return;
+    }
+
+    try {
+      final data = await _communityService.getCommunityData(communityId);
+      strategySteps = {
+        1: _boolFromJson(data['strategy_step_available']),
+        2: _boolFromJson(data['strategy_step_closed']),
+        3: _boolFromJson(data['strategy_step_assigned']),
+        4: _boolFromJson(data['strategy_step_reconciliation']),
+        5: _boolFromJson(data['strategy_step_historical']),
+        6: _boolFromJson(data['strategy_step_contribution']),
+        7: _boolFromJson(data['strategy_step_payment']),
+      };
+    } catch (_) {
+      strategySteps = Map<int, bool>.from(_defaultStrategySteps);
+    }
+    _notify();
   }
 
   Future<void> loadUserPeriods({
@@ -168,8 +227,13 @@ class HomeController extends ChangeNotifier {
       _notify();
     }
 
-    if (pdePeriodStatus?.statusCode == 6) {
-      await loadPdeRenunciaStatus(user: user, communityId: communityId);
+    if (pdePeriodStatus?.statusCode == 1) {
+      try {
+        await loadPdeRenunciaStatus(user: user, communityId: communityId);
+      } catch (_) {
+        pdeRenunciaStatus = null;
+      }
+      await loadBuyerOffer(user: user);
     } else {
       pdeRenunciaStatus = null;
       await loadBuyerOffer(user: user);
@@ -348,6 +412,7 @@ class _HomeCacheEntry {
   final UserPeriodHistory? userPeriodHistory;
   final ConsumerOffer? buyerOffer;
   final PdeRenunciaStatus? pdeRenunciaStatus;
+  final Map<int, bool> strategySteps;
 
   const _HomeCacheEntry({
     required this.selectedPeriod,
@@ -355,5 +420,6 @@ class _HomeCacheEntry {
     required this.userPeriodHistory,
     required this.buyerOffer,
     required this.pdeRenunciaStatus,
+    required this.strategySteps,
   });
 }

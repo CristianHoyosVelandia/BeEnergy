@@ -678,13 +678,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _pdeCard() {
+    final statusCode = _controller.pdePeriodStatus?.statusCode;
+    if (statusCode == 0) {
+      return const SizedBox.shrink();
+    }
+
     return PdeStateMachineCard(
-      isLoadingStatus: _controller.isLoadingPDEStatus,
+      isLoadingStatus: _controller.isLoadingPDEStatus ||
+          (!_isAdminView &&
+              statusCode == 1 &&
+              _controller.isLoadingPdeRenuncia),
       isLoadingOffer: _controller.isLoadingBuyerOffer,
       isAdminView: _isAdminView,
       periodDisplayName: _selectedPeriodDisplayName,
       status: _controller.pdePeriodStatus,
       buyerOffer: _controller.buyerOffer,
+      hasUserContribution:
+          (_controller.pdeRenunciaStatus?.renuncia?.pdeRenunciado ?? 0) > 0,
+      enabledSteps: _controller.strategySteps,
       onAvailableTap: _handleAvailablePdeTap,
       onAdminClosedTap: _navigateToAdminOffers,
       onMoveToReconciliationTap: _showConfirmReconciliationModal,

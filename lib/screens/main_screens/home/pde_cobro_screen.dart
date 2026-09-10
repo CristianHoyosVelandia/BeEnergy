@@ -236,7 +236,7 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
 
     if (charge.isCredit) {
       return Text(
-        'Cediste PDE a la comunidad. Este valor queda como compensación a tu favor; la dispersión real se habilitará cuando se integre la pasarela de pago.',
+        'Tus aportes generaron ${Formatters.formatCurrency(charge.amount)} para la comunidad. Estos valores serán gestionados próximamente según el proceso comunitario.',
         style: textStyle,
       );
     }

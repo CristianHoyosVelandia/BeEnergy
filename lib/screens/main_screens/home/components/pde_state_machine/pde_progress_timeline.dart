@@ -6,24 +6,33 @@ import 'package:flutter/material.dart';
 class PdeProgressTimeline extends StatelessWidget {
   final int currentStatus;
   final bool onDark;
+  final Map<int, bool> enabledSteps;
 
   const PdeProgressTimeline({
     super.key,
     required this.currentStatus,
     this.onDark = true,
+    this.enabledSteps = const {},
   });
 
   @override
   Widget build(BuildContext context) {
-    const steps = [
-      MapEntry(7, 'Cobro'),
+    const allSteps = [
       MapEntry(6, 'Aporte'),
       MapEntry(1, 'Disponible'),
       MapEntry(2, 'Cerrado'),
       MapEntry(3, 'Asignado'),
       MapEntry(4, 'Conciliación'),
       MapEntry(5, 'Histórico'),
+      MapEntry(7, 'Cobro'),
     ];
+    final steps = allSteps
+        .where((step) =>
+            step.key == currentStatus || (enabledSteps[step.key] ?? true))
+        .toList(growable: false);
+    if (steps.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final baseColor = onDark ? Colors.white : AppTokens.primaryColor;
     final mutedColor =
         onDark ? Colors.white.withValues(alpha: 0.55) : AppTokens.grey500;
@@ -107,7 +116,7 @@ class PdeProgressTimeline extends StatelessWidget {
   String _stepExplanation(int statusCode) {
     switch (statusCode) {
       case 7:
-        return 'Cobro del periodo anterior. Aquí se revisa el valor pendiente antes de continuar con el ciclo PDE.';
+        return 'Cobro del periodo. Aquí se revisa el valor pendiente o a favor del ciclo PDE.';
       case 6:
         return 'Aporte comunitario. El usuario puede liberar parte del PDE asignado para que la comunidad lo use nuevamente.';
       case 1:

@@ -8,6 +8,13 @@ class Community {
   final String? urlImg;
   final String? primaryColor;
   final String? secondColor;
+  final bool strategyStepPayment;
+  final bool strategyStepContribution;
+  final bool strategyStepAvailable;
+  final bool strategyStepClosed;
+  final bool strategyStepAssigned;
+  final bool strategyStepReconciliation;
+  final bool strategyStepHistorical;
   final int? role;
   final String? roleName;
   final double? pdeShare;
@@ -23,11 +30,25 @@ class Community {
     this.urlImg,
     this.primaryColor,
     this.secondColor,
+    this.strategyStepPayment = true,
+    this.strategyStepContribution = true,
+    this.strategyStepAvailable = true,
+    this.strategyStepClosed = true,
+    this.strategyStepAssigned = true,
+    this.strategyStepReconciliation = true,
+    this.strategyStepHistorical = true,
     this.role,
     this.roleName,
     this.pdeShare,
     this.installedCapacity,
   });
+
+  static bool _boolFromJson(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return true;
+  }
 
   factory Community.fromJson(Map<String, dynamic> json) {
     return Community(
@@ -42,6 +63,15 @@ class Community {
       urlImg: json['url_img'] as String?,
       primaryColor: json['primary_color'] as String?,
       secondColor: json['second_color'] as String?,
+      strategyStepPayment: _boolFromJson(json['strategy_step_payment']),
+      strategyStepContribution:
+          _boolFromJson(json['strategy_step_contribution']),
+      strategyStepAvailable: _boolFromJson(json['strategy_step_available']),
+      strategyStepClosed: _boolFromJson(json['strategy_step_closed']),
+      strategyStepAssigned: _boolFromJson(json['strategy_step_assigned']),
+      strategyStepReconciliation:
+          _boolFromJson(json['strategy_step_reconciliation']),
+      strategyStepHistorical: _boolFromJson(json['strategy_step_historical']),
       role: json['role'] as int?,
       roleName: json['role_name'] as String?,
       pdeShare: (json['pde_share'] as num?)?.toDouble(),
@@ -60,6 +90,13 @@ class Community {
       'url_img': urlImg,
       'primary_color': primaryColor,
       'second_color': secondColor,
+      'strategy_step_payment': strategyStepPayment,
+      'strategy_step_contribution': strategyStepContribution,
+      'strategy_step_available': strategyStepAvailable,
+      'strategy_step_closed': strategyStepClosed,
+      'strategy_step_assigned': strategyStepAssigned,
+      'strategy_step_reconciliation': strategyStepReconciliation,
+      'strategy_step_historical': strategyStepHistorical,
       'role': role,
       'role_name': roleName,
       'pde_share': pdeShare,
