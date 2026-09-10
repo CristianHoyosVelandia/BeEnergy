@@ -3,6 +3,7 @@ import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/data/fake_data_january_2026.dart';
 import 'package:be_energy/models/consumer_offer.dart';
+import 'package:be_energy/models/pde_eligibility.dart';
 import 'package:be_energy/models/pde_period_status.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,7 @@ class PdeStateMachineCard extends StatelessWidget {
   final String periodDisplayName;
   final PDEPeriodStatus? status;
   final ConsumerOffer? buyerOffer;
+  final PdeEligibility? eligibility;
   final bool hasUserContribution;
   final Map<int, bool> enabledSteps;
   final VoidCallback onAvailableTap;
@@ -31,6 +33,7 @@ class PdeStateMachineCard extends StatelessWidget {
     required this.periodDisplayName,
     required this.status,
     required this.buyerOffer,
+    this.eligibility,
     this.hasUserContribution = false,
     required this.enabledSteps,
     required this.onAvailableTap,
@@ -70,13 +73,17 @@ class PdeStateMachineCard extends StatelessWidget {
 
     switch (statusCode) {
       case 1:
-        if (!isAdminView && hasUserContribution) {
+        if (!isAdminView &&
+            ((eligibility != null &&
+                    (!eligibility!.allowed || !eligibility!.manualEnabled)) ||
+                hasUserContribution)) {
           return _InfoCard(
             statusCode: 1,
             title: 'PDE Disponible',
             periodDisplayName: periodDisplayName,
-            message:
-                'Ya aportaste parte de tu PDE en este ciclo. Ahora estamos esperando que los demás miembros de la comunidad realicen sus ofertas; te avisaremos cuando el proceso avance.',
+            message: _eligibilityMessage(
+              'Ya aportaste parte de tu PDE en este ciclo. Ahora estamos esperando que los demás miembros de la comunidad realicen sus ofertas; te avisaremos cuando el proceso avance.',
+            ),
             icon: Icons.hourglass_top,
             enabledSteps: enabledSteps,
           );
@@ -170,6 +177,20 @@ class PdeStateMachineCard extends StatelessWidget {
                 rowsBuilder: _reconciliationRows,
               );
       case 6:
+        if (!isAdminView &&
+            eligibility != null &&
+            (!eligibility!.allowed || !eligibility!.manualEnabled)) {
+          return _InfoCard(
+            statusCode: 6,
+            title: 'Aporte Comunitario',
+            periodDisplayName: periodDisplayName,
+            message: _eligibilityMessage(
+              'Estamos preparando automáticamente tu fase de aporte comunitario. Te avisaremos cuando el ciclo PDE avance.',
+            ),
+            icon: Icons.volunteer_activism,
+            enabledSteps: enabledSteps,
+          );
+        }
         return _InfoCard(
           statusCode: 6,
           title: 'Aporte Comunitario',
@@ -203,6 +224,11 @@ class PdeStateMachineCard extends StatelessWidget {
           enabledSteps: enabledSteps,
         );
     }
+  }
+
+  String _eligibilityMessage(String fallback) {
+    final message = eligibility?.message.trim();
+    return message == null || message.isEmpty ? fallback : message;
   }
 
   int? _effectiveStatusCode(int statusCode) {

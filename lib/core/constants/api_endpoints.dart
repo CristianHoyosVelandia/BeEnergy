@@ -149,6 +149,9 @@ class ApiEndpoints {
   /// Endpoint para resumen de cobro o compensación PDE
   static const String pdeCobroResumen = '/pde/cobro-resumen';
 
+  /// Endpoint para elegibilidad PDE por fase
+  static const String pdeEligibility = '/pde/eligibility';
+
   // ==================== BILLING ENDPOINTS ====================
   /// Endpoint para obtener facturación de usuario
   static String userBilling(int userId) => '/billing/user/$userId';

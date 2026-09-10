@@ -13,6 +13,7 @@ export 'community_price_reference.dart';
 export 'pde_period_status.dart';
 export 'pde_renuncia.dart';
 export 'pde_cobro_resumen.dart';
+export 'pde_eligibility.dart';
 export 'user_period_history.dart';
 export 'forecast_pde.dart';
 

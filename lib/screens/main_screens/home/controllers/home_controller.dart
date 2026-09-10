@@ -2,6 +2,7 @@ import 'package:be_energy/models/community_price_reference.dart';
 import 'package:be_energy/models/consumer_offer.dart';
 import 'package:be_energy/models/my_user.dart';
 import 'package:be_energy/models/pde_period_status.dart';
+import 'package:be_energy/models/pde_eligibility.dart';
 import 'package:be_energy/models/pde_renuncia.dart';
 import 'package:be_energy/models/user_period_history.dart';
 import 'package:be_energy/repositories/domain/pde_period_repository.dart';
@@ -9,6 +10,7 @@ import 'package:be_energy/repositories/impl/pde_period_repository_api.dart';
 import 'package:be_energy/services/consumer_offer_api_service.dart';
 import 'package:be_energy/services/community_price_reference_service.dart';
 import 'package:be_energy/services/community_service.dart' as community_config;
+import 'package:be_energy/services/pde_eligibility_service.dart';
 import 'package:be_energy/services/pde_renuncia_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -18,6 +20,7 @@ class HomeController extends ChangeNotifier {
   final CommunityPriceReferenceService _priceReferenceService;
   final PDEPeriodRepository _pdePeriodRepository;
   final ConsumerOfferApiService _consumerOfferService;
+  final PdeEligibilityService _pdeEligibilityService;
   final PdeRenunciaService _pdeRenunciaService;
   final community_config.CommunityService _communityService;
 
@@ -25,6 +28,7 @@ class HomeController extends ChangeNotifier {
     CommunityPriceReferenceService? priceReferenceService,
     PDEPeriodRepository? pdePeriodRepository,
     ConsumerOfferApiService? consumerOfferService,
+    PdeEligibilityService? pdeEligibilityService,
     PdeRenunciaService? pdeRenunciaService,
     community_config.CommunityService? communityService,
   })  : _priceReferenceService =
@@ -32,6 +36,8 @@ class HomeController extends ChangeNotifier {
         _pdePeriodRepository = pdePeriodRepository ?? PDEPeriodRepositoryApi(),
         _consumerOfferService =
             consumerOfferService ?? ConsumerOfferApiService(),
+        _pdeEligibilityService =
+            pdeEligibilityService ?? PdeEligibilityService(),
         _pdeRenunciaService = pdeRenunciaService ?? PdeRenunciaService(),
         _communityService =
             communityService ?? community_config.CommunityService();
@@ -42,6 +48,7 @@ class HomeController extends ChangeNotifier {
   PDEPeriodStatus? pdePeriodStatus;
   UserPeriodHistory? userPeriodHistory;
   ConsumerOffer? buyerOffer;
+  PdeEligibility? pdeEligibility;
   PdeRenunciaStatus? pdeRenunciaStatus;
   Map<int, bool> strategySteps = Map<int, bool>.from(_defaultStrategySteps);
 
@@ -49,6 +56,7 @@ class HomeController extends ChangeNotifier {
   bool isLoadingEnergyData = false;
   bool isLoadingPeriods = false;
   bool isLoadingBuyerOffer = false;
+  bool isLoadingPdeEligibility = false;
   bool isLoadingPdeRenuncia = false;
 
   List<CommunityPriceReference> priceReferences = [];
@@ -132,6 +140,7 @@ class HomeController extends ChangeNotifier {
         pdePeriodStatus: pdePeriodStatus,
         userPeriodHistory: userPeriodHistory,
         buyerOffer: buyerOffer,
+        pdeEligibility: pdeEligibility,
         pdeRenunciaStatus: pdeRenunciaStatus,
         strategySteps: strategySteps,
       );
@@ -143,12 +152,14 @@ class HomeController extends ChangeNotifier {
     pdePeriodStatus = cached.pdePeriodStatus;
     userPeriodHistory = cached.userPeriodHistory;
     buyerOffer = cached.buyerOffer;
+    pdeEligibility = cached.pdeEligibility;
     pdeRenunciaStatus = cached.pdeRenunciaStatus;
     strategySteps = Map<int, bool>.from(cached.strategySteps);
     isLoadingPDEStatus = false;
     isLoadingEnergyData = false;
     isLoadingPeriods = false;
     isLoadingBuyerOffer = false;
+    isLoadingPdeEligibility = false;
     isLoadingPdeRenuncia = false;
   }
 
@@ -227,16 +238,43 @@ class HomeController extends ChangeNotifier {
       _notify();
     }
 
-    if (pdePeriodStatus?.statusCode == 1) {
-      try {
-        await loadPdeRenunciaStatus(user: user, communityId: communityId);
-      } catch (_) {
-        pdeRenunciaStatus = null;
-      }
+    final statusCode = pdePeriodStatus?.statusCode;
+    if (statusCode == 1 || statusCode == 6) {
+      await loadPdeEligibility(
+        communityId: communityId,
+        phase: statusCode == 6 ? 'contribution' : 'available',
+      );
       await loadBuyerOffer(user: user);
     } else {
+      pdeEligibility = null;
       pdeRenunciaStatus = null;
       await loadBuyerOffer(user: user);
+    }
+  }
+
+  Future<void> loadPdeEligibility({
+    required int communityId,
+    required String phase,
+  }) async {
+    if (selectedPeriod.isEmpty) {
+      pdeEligibility = null;
+      return;
+    }
+
+    isLoadingPdeEligibility = true;
+    _notify();
+
+    try {
+      pdeEligibility = await _pdeEligibilityService.getEligibility(
+        communityId: communityId,
+        period: selectedPeriod,
+        phase: phase,
+      );
+    } catch (_) {
+      pdeEligibility = null;
+    } finally {
+      isLoadingPdeEligibility = false;
+      _notify();
     }
   }
 
@@ -411,6 +449,7 @@ class _HomeCacheEntry {
   final PDEPeriodStatus? pdePeriodStatus;
   final UserPeriodHistory? userPeriodHistory;
   final ConsumerOffer? buyerOffer;
+  final PdeEligibility? pdeEligibility;
   final PdeRenunciaStatus? pdeRenunciaStatus;
   final Map<int, bool> strategySteps;
 
@@ -419,6 +458,7 @@ class _HomeCacheEntry {
     required this.pdePeriodStatus,
     required this.userPeriodHistory,
     required this.buyerOffer,
+    required this.pdeEligibility,
     required this.pdeRenunciaStatus,
     required this.strategySteps,
   });

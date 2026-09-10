@@ -686,15 +686,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return PdeStateMachineCard(
       isLoadingStatus: _controller.isLoadingPDEStatus ||
           (!_isAdminView &&
-              statusCode == 1 &&
-              _controller.isLoadingPdeRenuncia),
+              (statusCode == 1 || statusCode == 6) &&
+              _controller.isLoadingPdeEligibility),
       isLoadingOffer: _controller.isLoadingBuyerOffer,
       isAdminView: _isAdminView,
       periodDisplayName: _selectedPeriodDisplayName,
       status: _controller.pdePeriodStatus,
       buyerOffer: _controller.buyerOffer,
-      hasUserContribution:
-          (_controller.pdeRenunciaStatus?.renuncia?.pdeRenunciado ?? 0) > 0,
+      eligibility: _controller.pdeEligibility,
+      hasUserContribution: _controller.pdeEligibility?.hasContribution == true,
       enabledSteps: _controller.strategySteps,
       onAvailableTap: _handleAvailablePdeTap,
       onAdminClosedTap: _navigateToAdminOffers,
