@@ -420,7 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           SizedBox(height: AppTokens.space20),
           Text(
-            'Nota: el valor de equivalencia corresponde a una comparación de energía histórica de la comunidad que puede variar.',
+            'Nota: el valor de equivalencia corresponde a una comparación de energía histórica de la comunidad que puede variar con el porcentaje de distribución de excedentes (PDE).',
             style: context.textStyles.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
               height: 1.35,
@@ -1058,6 +1058,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: HomeAppBar(
         userName: widget.myUser?.nombre ?? 'Cristian',
+        communityName: _currentCommunityName,
         canToggleAdminView: widget.myUser?.role != null &&
             (widget.myUser!.role == 3 || widget.myUser!.role == 4),
         isAdminView: _isAdminView,
@@ -1169,8 +1170,8 @@ class _StatusIndicator extends StatelessWidget {
                 color: statusColor.withValues(alpha: 0.15),
                 borderRadius: AppTokens.borderRadiusSmall,
               ),
-              child:
-                  Icon(Icons.swap_horiz_rounded, color: statusColor, size: 20),
+              child: Icon(Icons.calendar_month_outlined,
+                  color: statusColor, size: 20),
             ),
           ],
         ),

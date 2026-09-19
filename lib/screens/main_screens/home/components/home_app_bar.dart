@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String userName;
+  final String communityName;
   final bool canToggleAdminView;
   final bool isAdminView;
   final VoidCallback onToggleAdminView;
@@ -12,6 +13,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({
     super.key,
     required this.userName,
+    required this.communityName,
     required this.canToggleAdminView,
     required this.isAdminView,
     required this.onToggleAdminView,
@@ -19,12 +21,12 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => const Size.fromHeight(68);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      toolbarHeight: 60,
+      toolbarHeight: 68,
       elevation: 0,
       flexibleSpace: Container(
         decoration: BoxDecoration(
@@ -81,7 +83,19 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
+                if (communityName.trim().isNotEmpty)
+                  Text(
+                    communityName.trim(),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
               ],
             ),
           ),

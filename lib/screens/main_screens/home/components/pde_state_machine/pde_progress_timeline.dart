@@ -26,10 +26,7 @@ class PdeProgressTimeline extends StatelessWidget {
       MapEntry(5, 'Histórico'),
       MapEntry(7, 'Cobro'),
     ];
-    final steps = allSteps
-        .where((step) =>
-            step.key == currentStatus || (enabledSteps[step.key] ?? true))
-        .toList(growable: false);
+    final steps = allSteps;
     if (steps.isEmpty) {
       return const SizedBox.shrink();
     }

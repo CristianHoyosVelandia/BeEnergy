@@ -99,6 +99,18 @@ class PdeStateMachineCard extends StatelessWidget {
               )
             : const SizedBox.shrink();
       case 2:
+        if (!isAdminView && !(enabledSteps[1] ?? true)) {
+          return _InfoCard(
+            statusCode: 2,
+            title: 'Periodo Cerrado',
+            periodDisplayName: periodDisplayName,
+            message:
+                'Estamos ejecutando el algoritmo para encontrar el mejor emparejamiento de PDE en tu comunidad. Cuando el resultado esté disponible podrás observarlo aquí.',
+            icon: Icons.auto_awesome,
+            enabledSteps: enabledSteps,
+          );
+        }
+
         return isAdminView
             ? _InfoCard(
                 statusCode: 2,
@@ -349,8 +361,6 @@ class _AvailableCard extends StatelessWidget {
             subtitle: isAdminView
                 ? '$periodDisplayName - Gestión Comunitaria'
                 : '$periodDisplayName - Modelo de Ofertas',
-            showArrow: true,
-            onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
           PdeProgressTimeline(currentStatus: 1, enabledSteps: enabledSteps),
@@ -418,8 +428,6 @@ class _InfoCard extends StatelessWidget {
             icon: icon,
             title: title,
             subtitle: periodDisplayName,
-            showArrow: onTap != null,
-            onArrowTap: onTap,
           ),
           SizedBox(height: AppTokens.space20),
           PdeProgressTimeline(
@@ -655,15 +663,11 @@ class _Header extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final bool showArrow;
-  final VoidCallback? onArrowTap;
 
   const _Header({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.showArrow = false,
-    this.onArrowTap,
   });
 
   @override
@@ -702,16 +706,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        if (showArrow)
-          IconButton(
-            onPressed: onArrowTap,
-            icon: Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white.withValues(alpha: 0.7),
-              size: 20,
-            ),
-            tooltip: 'Ir al proceso',
-          ),
       ],
     );
   }
