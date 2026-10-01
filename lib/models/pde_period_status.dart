@@ -8,6 +8,9 @@ class PDEPeriodStatus {
   final int statusCode;
   final String statusName;
   final bool canCreateOffers;
+  final bool autoOffer;
+  final bool manualOfferEnabled;
+  final bool automaticOfferFlow;
 
   PDEPeriodStatus({
     required this.communityId,
@@ -15,6 +18,9 @@ class PDEPeriodStatus {
     required this.statusCode,
     required this.statusName,
     required this.canCreateOffers,
+    this.autoOffer = false,
+    this.manualOfferEnabled = true,
+    this.automaticOfferFlow = false,
   });
 
   /// Constructor desde JSON (API response)
@@ -25,6 +31,9 @@ class PDEPeriodStatus {
       statusCode: json['status_code'] as int,
       statusName: json['status_name'] as String,
       canCreateOffers: json['can_create_offers'] as bool,
+      autoOffer: json['auto_offer'] as bool? ?? false,
+      manualOfferEnabled: json['manual_offer_enabled'] as bool? ?? true,
+      automaticOfferFlow: json['automatic_offer_flow'] as bool? ?? false,
     );
   }
 
@@ -36,6 +45,9 @@ class PDEPeriodStatus {
       'status_code': statusCode,
       'status_name': statusName,
       'can_create_offers': canCreateOffers,
+      'auto_offer': autoOffer,
+      'manual_offer_enabled': manualOfferEnabled,
+      'automatic_offer_flow': automaticOfferFlow,
     };
   }
 

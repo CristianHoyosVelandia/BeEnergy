@@ -43,22 +43,15 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       title: Row(
         children: [
-          Container(
+          SizedBox(
             width: 55,
             height: 55,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.18),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Center(
-              child: Text(
-                userName.isEmpty ? 'U' : userName.substring(0, 1).toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Image.asset(
+                'assets/img/logo.png',
+                fit: BoxFit.contain,
+                color: Colors.white,
               ),
             ),
           ),
@@ -68,16 +61,8 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  '¡Hola,',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
                 Text(
-                  '$userName!',
+                  '¡Hola, $userName!',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,

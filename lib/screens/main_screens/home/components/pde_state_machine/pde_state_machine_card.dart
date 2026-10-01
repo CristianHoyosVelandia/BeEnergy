@@ -99,7 +99,8 @@ class PdeStateMachineCard extends StatelessWidget {
               )
             : const SizedBox.shrink();
       case 2:
-        if (!isAdminView && !(enabledSteps[1] ?? true)) {
+        if (!isAdminView &&
+            (currentStatus.automaticOfferFlow || !(enabledSteps[1] ?? true))) {
           return _InfoCard(
             statusCode: 2,
             title: 'Periodo Cerrado',
@@ -157,8 +158,9 @@ class PdeStateMachineCard extends StatelessWidget {
                 loading: isLoadingOffer,
                 offer: buyerOffer,
                 emptyTitle: 'Ofertas Finalizadas',
-                emptyMessage:
-                    'No tienes una oferta PDE registrada para este periodo. Las ofertas de la comunidad ya fueron finalizadas.',
+                emptyMessage: currentStatus.automaticOfferFlow
+                    ? 'La asignación de PDE fue realizada automáticamente por el algoritmo de la comunidad. Cuando el proceso avance podrás consultar el resultado económico del periodo.'
+                    : 'No tienes una oferta PDE registrada para este periodo. Las ofertas de la comunidad ya fueron finalizadas.',
                 footerMessage:
                     'Apenas se concilie con el comercializador podrá ver el ahorro real en su tarifa energética.',
                 enabledSteps: enabledSteps,
@@ -181,8 +183,9 @@ class PdeStateMachineCard extends StatelessWidget {
                 loading: isLoadingOffer,
                 offer: buyerOffer,
                 emptyTitle: 'En Conciliación',
-                emptyMessage:
-                    'No tienes asignación PDE para conciliar en este periodo. Te notificaremos cuando haya un nuevo PDE disponible.',
+                emptyMessage: currentStatus.automaticOfferFlow
+                    ? 'La asignación automática de PDE está en conciliación con el comercializador. Cuando finalice la validación podrás consultar el resultado económico del periodo.'
+                    : 'No tienes asignación PDE para conciliar en este periodo. Te notificaremos cuando haya un nuevo PDE disponible.',
                 footerMessage:
                     'A la espera de conciliación con el comercializador.',
                 enabledSteps: enabledSteps,

@@ -6,6 +6,8 @@ import 'package:be_energy/services/pde_cobro_service.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
+import 'pde_savings_screen.dart';
+
 class PdeCobroScreen extends StatefulWidget {
   final MyUser myUser;
   final int communityId;
@@ -104,7 +106,7 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
       elevation: 0,
       foregroundColor: Colors.white,
       title: const Text(
-        'Cobro PDE',
+        'Cobro',
         style: TextStyle(
           color: Colors.white,
           fontSize: 20,
@@ -137,6 +139,14 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
             icon: Icons.receipt_long,
             title: _screenTitle,
             subtitle: 'Liquidación ${widget.periodDisplayName}',
+            trailing: _charge?.hasCommunityRight == true
+                ? IconButton(
+                    tooltip: 'Ver ahorros',
+                    onPressed: _openSavings,
+                    icon: const Icon(Icons.add_circle_outline),
+                    color: AppTokens.primaryColor,
+                  )
+                : null,
           ),
           SizedBox(height: AppTokens.space20),
           _StatusPill(
@@ -187,7 +197,7 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
     }
 
     final charge = _charge;
-    if (charge == null || !charge.hasMovement) {
+    if (charge == null) {
       return Text(
         'No tienes cobros ni compensaciones PDE para este periodo.',
         style: context.textStyles.bodyMedium?.copyWith(
@@ -197,20 +207,78 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
       );
     }
 
-    final amountLabel = charge.isCredit ? 'Valor a recibir' : 'Valor a pagar';
-    final pdeLabel = charge.isCredit ? 'PDE cedido' : 'PDE comprado';
-    final energyLabel =
-        charge.isCredit ? 'Energía cedida' : 'Energía entregada';
+    if (!charge.hasMovement && !charge.hasCommunityRight) {
+      return Text(
+        'No tienes cobros ni compensaciones PDE para este periodo.',
+        style: context.textStyles.bodyMedium?.copyWith(
+          color: context.colors.onSurfaceVariant,
+          height: 1.35,
+        ),
+      );
+    }
 
-    return _Rows(rows: [
-      MapEntry(amountLabel, Formatters.formatCurrency(charge.amount)),
-      MapEntry(
-          energyLabel, Formatters.formatEnergy(charge.energyKwh, decimals: 2)),
-      MapEntry('PDE aplicado', _formatPercentValue(charge.pdeAppliedPct)),
-      MapEntry(pdeLabel, _formatPercentValue(charge.pdeTransactedPct)),
-      MapEntry('Precio energía comunitaria',
-          '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
-    ]);
+    if (charge.hasCommunityRight) {
+      return _CommunityRightSummary(
+        charge: charge,
+        formatPercentValue: _formatPercentValue,
+        onExplain: _showCommunityRightExplanation,
+      );
+    }
+
+    final rows = <MapEntry<String, String>>[];
+    if (charge.hasMovement) {
+      final amountLabel = charge.isCredit ? 'Valor a recibir' : 'Valor a pagar';
+      final pdeLabel = charge.isCredit ? 'PDE cedido' : 'PDE comprado';
+      final energyLabel =
+          charge.isCredit ? 'Energía cedida' : 'Energía entregada';
+
+      rows.addAll([
+        MapEntry(amountLabel, Formatters.formatCurrency(charge.amount)),
+        MapEntry(energyLabel,
+            Formatters.formatEnergy(charge.energyKwh, decimals: 2)),
+        if (!charge.hasCommunityRight)
+          MapEntry('PDE aplicado', _formatPercentValue(charge.pdeAppliedPct)),
+        MapEntry(pdeLabel, _formatPercentValue(charge.pdeTransactedPct)),
+        MapEntry('Precio energía comunitaria',
+            '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
+      ]);
+    }
+
+    return _Rows(rows: rows);
+  }
+
+  void _showCommunityRightExplanation() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
+        title: const Text('Cómo se calcula'),
+        content: const Text(
+          'Tu derecho comunitario es el PDE base que recibes sin costo por la generación comunitaria. Si usas más PDE que tu derecho, pagas solo ese excedente. Si cedes parte de tu derecho, recibes compensación por la diferencia.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openSavings() {
+    final charge = _charge;
+    if (charge == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdeSavingsScreen(
+          charge: charge,
+          periodDisplayName: widget.periodDisplayName,
+        ),
+      ),
+    );
   }
 
   Widget _buildMessage() {
@@ -220,9 +288,28 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
       height: 1.35,
     );
 
-    if (charge == null || !charge.hasMovement) {
+    if (charge == null || (!charge.hasMovement && !charge.hasCommunityRight)) {
       return Text(
         'Cuando tengas una compra o cesión PDE liquidada, el detalle aparecerá en esta sección.',
+        style: textStyle,
+      );
+    }
+
+    if (charge.hasCommunityRight) {
+      if (!charge.hasMovement) {
+        return Text(
+          'Tu PDE base proviene de generación comunitaria y se reconoce como derecho comunitario sin cobro. En este periodo no tienes diferencias por pagar o recibir.',
+          style: textStyle,
+        );
+      }
+      if (charge.shouldReceive || charge.isCredit) {
+        return Text(
+          'Tu PDE base por derecho comunitario no se cobra. La compensación corresponde únicamente a la diferencia que cediste a la comunidad.',
+          style: textStyle,
+        );
+      }
+      return Text(
+        'Tu PDE base por derecho comunitario no se cobra. El valor pendiente corresponde solo a la diferencia adicional recibida frente a tu derecho base.',
         style: textStyle,
       );
     }
@@ -251,10 +338,11 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
 
   Widget _buildActionButton() {
     final charge = _charge;
-    final pendingText = charge?.isCredit == true
-        ? 'Registrar compensación visual'
-        : 'Simular pago';
-    final paidText = charge?.isCredit == true
+    final pendingText =
+        charge?.shouldReceive == true || charge?.isCredit == true
+            ? 'Registrar compensación visual'
+            : 'Simular pago';
+    final paidText = charge?.shouldReceive == true || charge?.isCredit == true
         ? 'Compensación registrada'
         : 'Pago registrado';
 
@@ -337,6 +425,9 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
     if (charge?.isCommunityManagement == true) {
       return 'Gestión comunitaria';
     }
+    if (charge?.hasCommunityRight == true) {
+      return 'Energía Cooperativa';
+    }
     if (charge?.isCredit == true) {
       return 'Compensación PDE';
     }
@@ -347,7 +438,12 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
     if (_isLoading) return 'Cargando';
     if (_errorMessage != null) return 'Error';
     final charge = _charge;
-    if (charge == null || !charge.hasMovement) return 'Sin movimientos';
+    if (charge == null || (!charge.hasMovement && !charge.hasCommunityRight)) {
+      return 'Sin movimientos';
+    }
+    if (!charge.hasMovement && charge.hasCommunityRight) {
+      return 'Sin diferencia';
+    }
     if (charge.isCredit) return _isPaid ? 'Compensación registrada' : 'A favor';
     return _isPaid ? 'Pagado' : 'Pendiente';
   }
@@ -355,7 +451,12 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
   Color get _statusColor {
     if (_errorMessage != null) return AppTokens.error;
     final charge = _charge;
-    if (charge == null || !charge.hasMovement) return context.colors.outline;
+    if (charge == null || (!charge.hasMovement && !charge.hasCommunityRight)) {
+      return context.colors.outline;
+    }
+    if (!charge.hasMovement && charge.hasCommunityRight) {
+      return AppTokens.energyGreen;
+    }
     if (_isPaid || charge.isCredit) return AppTokens.energyGreen;
     return AppTokens.energySolar;
   }
@@ -389,11 +490,13 @@ class _TitleRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final Widget? trailing;
 
   const _TitleRow({
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.trailing,
   });
 
   @override
@@ -422,6 +525,7 @@ class _TitleRow extends StatelessWidget {
             ],
           ),
         ),
+        if (trailing != null) trailing!,
       ],
     );
   }
@@ -450,6 +554,146 @@ class _StatusPill extends StatelessWidget {
           color: color,
           fontWeight: AppTokens.fontWeightBold,
         ),
+      ),
+    );
+  }
+}
+
+class _CommunityRightSummary extends StatelessWidget {
+  final PdeCobroResumen charge;
+  final String Function(double value) formatPercentValue;
+  final VoidCallback onExplain;
+
+  const _CommunityRightSummary({
+    required this.charge,
+    required this.formatPercentValue,
+    required this.onExplain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPayment = charge.shouldPay;
+    final hasReceivable = charge.shouldReceive;
+    final movementTitle = hasReceivable
+        ? 'Compensación PDE'
+        : hasPayment
+            ? 'Valor a Pagar'
+            : 'Sin diferencia';
+    final movementValue = hasReceivable
+        ? Formatters.formatCurrency(charge.receivableValue)
+        : hasPayment
+            ? Formatters.formatCurrency(charge.payableValue)
+            : 'Sin pago';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SummaryTile(
+          icon: Icons.savings_outlined,
+          title: 'Ahorro cooperativo',
+          value: Formatters.formatCurrency(charge.rightSavingsValue),
+          subtitle:
+              '${formatPercentValue(charge.pdeBaseRightPct)} gratis · ${Formatters.formatEnergy(charge.pdeFreeRightKwh, decimals: 2)}',
+          color: AppTokens.energyGreen,
+        ),
+        SizedBox(height: AppTokens.space12),
+        _SummaryTile(
+          icon: hasReceivable
+              ? Icons.volunteer_activism
+              : hasPayment
+                  ? Icons.bolt
+                  : Icons.check_circle_outline,
+          title: movementTitle,
+          value: movementValue,
+          subtitle: hasReceivable
+              ? '${formatPercentValue(charge.pdeContributedPct)} cedido · ${Formatters.formatEnergy(charge.pdeContributedKwh, decimals: 2)}'
+              : hasPayment
+                  ? '${formatPercentValue(charge.pdePurchasedPct)} adicional · ${Formatters.formatEnergy(charge.pdePurchasedKwh, decimals: 2)}'
+                  : 'Usaste solo tu derecho comunitario',
+          color: hasReceivable
+              ? AppTokens.energyGreen
+              : hasPayment
+                  ? AppTokens.energySolar
+                  : AppTokens.primaryColor,
+        ),
+        SizedBox(height: AppTokens.space12),
+        _Rows(rows: [
+          MapEntry('PDE final', formatPercentValue(charge.pdeFinalPct)),
+          MapEntry('Precio comunitario',
+              '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
+        ]),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: onExplain,
+            icon: const Icon(Icons.info_outline, size: 18),
+            label: const Text('¿Cómo se calcula?'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+  final Color color;
+
+  const _SummaryTile({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(AppTokens.space12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: AppTokens.borderRadiusMedium,
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 28),
+          SizedBox(width: AppTokens.space12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: context.textStyles.bodyMedium?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                    fontWeight: AppTokens.fontWeightSemiBold,
+                  ),
+                ),
+                SizedBox(height: AppTokens.space4),
+                Text(
+                  subtitle,
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: AppTokens.space8),
+          Text(
+            value,
+            style: context.textStyles.titleMedium?.copyWith(
+              color: color,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
+          ),
+        ],
       ),
     );
   }
