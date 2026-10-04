@@ -73,8 +73,10 @@ class PdeStateMachineCard extends StatelessWidget {
 
     switch (statusCode) {
       case 1:
+        final manualOfferAllowed = currentStatus.manualOfferEnabled;
         if (!isAdminView &&
             ((eligibility != null &&
+                    !manualOfferAllowed &&
                     (!eligibility!.allowed || !eligibility!.manualEnabled)) ||
                 hasUserContribution)) {
           return _InfoCard(
@@ -89,6 +91,7 @@ class PdeStateMachineCard extends StatelessWidget {
           );
         }
         return currentStatus.isPDEAvailable ||
+                manualOfferAllowed ||
                 statusCode != currentStatus.statusCode
             ? _AvailableCard(
                 isAdminView: isAdminView,
