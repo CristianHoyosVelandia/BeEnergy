@@ -149,6 +149,9 @@ class ApiEndpoints {
   /// Endpoint para resumen de cobro o compensación PDE
   static const String pdeCobroResumen = '/pde/cobro-resumen';
 
+  /// Endpoint para resumen individual de asignación PDE
+  static const String pdeAsignacionResumen = '/pde/asignacion-resumen';
+
   /// Endpoint para elegibilidad PDE por fase
   static const String pdeEligibility = '/pde/eligibility';
 

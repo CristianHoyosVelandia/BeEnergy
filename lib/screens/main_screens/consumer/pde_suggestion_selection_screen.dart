@@ -369,7 +369,7 @@ class _PdeSuggestionSelectionScreenState
             SizedBox(height: AppTokens.space4),
             _OfferMetricStrip(items: [
               _OfferMetricItem('Actual', _formatPde(forecast.pdeActual)),
-              _OfferMetricItem('Solicitado',
+              _OfferMetricItem('Adicional solicitado',
                   _formatPde(selectedSuggestion.additionalPdePercentage)),
               _OfferMetricItem(
                   'Final', _formatPde(selectedSuggestion.pdePercentage)),

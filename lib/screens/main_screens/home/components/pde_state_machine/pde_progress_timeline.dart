@@ -7,12 +7,14 @@ class PdeProgressTimeline extends StatelessWidget {
   final int currentStatus;
   final bool onDark;
   final Map<int, bool> enabledSteps;
+  final String periodDisplayName;
 
   const PdeProgressTimeline({
     super.key,
     required this.currentStatus,
     this.onDark = true,
     this.enabledSteps = const {},
+    this.periodDisplayName = '',
   });
 
   @override
@@ -106,8 +108,74 @@ class PdeProgressTimeline extends StatelessWidget {
     showAppInfoDialog(
       context: context,
       title: title,
-      message: _stepExplanation(statusCode),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _stepSchedule(statusCode),
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: AppTokens.primaryColor,
+              fontWeight: AppTokens.fontWeightBold,
+            ),
+          ),
+          SizedBox(height: AppTokens.space12),
+          Text(
+            _stepExplanation(statusCode),
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: AppTokens.grey700,
+              height: 1.45,
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  String _stepSchedule(int statusCode) {
+    final month = periodDisplayName.trim().isEmpty
+        ? 'del mes actual'
+        : 'de $periodDisplayName';
+    switch (statusCode) {
+      case 6:
+        return 'Aporte del 5 al 8 $month';
+      case 1:
+        return 'Disponible del 9 al 11 $month';
+      case 2:
+        return 'Cerrado el 12 $month';
+      case 3:
+        return 'Asignado del 13 al 15 $month';
+      case 4:
+        return 'Conciliación del 15 al 25 $month';
+      case 7:
+        return 'Cobro del 25 al 30 $month';
+      case 5:
+        return 'Histórico del 1 al 4 de ${_nextMonthName()}';
+      default:
+        return 'Periodo $month';
+    }
+  }
+
+  String _nextMonthName() {
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+    final normalized = periodDisplayName.trim().toLowerCase();
+    final index = months.indexWhere(
+      (month) => normalized.contains(month.toLowerCase()),
+    );
+    if (index == -1) return 'el mes siguiente';
+    return months[(index + 1) % months.length];
   }
 
   String _stepExplanation(int statusCode) {

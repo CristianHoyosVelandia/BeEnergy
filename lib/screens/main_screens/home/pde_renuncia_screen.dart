@@ -160,6 +160,79 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     }
   }
 
+  Future<void> _confirmAndSubmitRenuncia(
+    double pdeRenunciado,
+    String motivo, {
+    PdeRenuncia? renuncia,
+  }) async {
+    final current = renuncia?.pdeOriginal ?? _status?.pdeActual ?? 0;
+    final pdeAportado = pdeRenunciado.clamp(0, current).toDouble();
+    final pdeConservado = (current - pdeAportado).clamp(0, current).toDouble();
+    final shouldSubmit = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: AppTokens.borderRadiusLarge,
+          ),
+          title: Text(
+            'Confirmar aporte PDE',
+            style: context.textStyles.titleLarge?.copyWith(
+              fontWeight: AppTokens.fontWeightBold,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Rows(rows: [
+                MapEntry('PDE actual', _formatPercent(current)),
+                MapEntry('Conservas', _formatPercent(pdeConservado)),
+                MapEntry('Aportas', _formatPercent(pdeAportado)),
+                MapEntry(
+                  'Energía conservada',
+                  Formatters.formatEnergy(
+                    _pdeKwhForPercent(pdeConservado),
+                    decimals: 2,
+                  ),
+                ),
+                MapEntry(
+                  'Energía aportada',
+                  Formatters.formatEnergy(
+                    _pdeKwhForPercent(pdeAportado),
+                    decimals: 2,
+                  ),
+                ),
+              ]),
+              SizedBox(height: AppTokens.space12),
+              Text(
+                'Al aportar este porcentaje, liberas parte de tu PDE para que la comunidad pueda reasignarlo.',
+                style: context.textStyles.bodySmall?.copyWith(
+                  color: context.colors.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Confirmar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldSubmit == true) {
+      await _submitRenuncia(pdeAportado, motivo, renuncia: renuncia);
+    }
+  }
+
   Future<void> _closeFlow() async {
     setState(() => _isSubmitting = true);
     try {
@@ -360,7 +433,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                                 return;
                               }
                               Navigator.pop(dialogContext);
-                              _submitRenuncia(
+                              _confirmAndSubmitRenuncia(
                                 value / 100,
                                 renuncia == null
                                     ? 'Aporte manual voluntario'
@@ -648,7 +721,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             selected: _selectedOptionIndex == i,
             enabled: !_isSubmitting && status.pdeActual > 0,
             onTap: () => setState(() => _selectedOptionIndex = i),
-            onDoubleTap: () => _submitRenuncia(
+            onDoubleTap: () => _confirmAndSubmitRenuncia(
               renuncia,
               keepsAllPde
                   ? 'Conservar todo el PDE asignado'

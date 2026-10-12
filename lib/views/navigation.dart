@@ -170,7 +170,7 @@ class _NavPagesState extends State<NavPages> {
                         children: [
                           Expanded(
                               child: btnNavBar(
-                                  0, context, 'Home', Icons.dashboard)),
+                                  0, context, 'Inicio', Icons.dashboard)),
                           Expanded(
                               child: btnNavBar(1, context, 'Energía',
                                   Icons.energy_savings_leaf)),

@@ -9,6 +9,7 @@ import 'package:be_energy/data/fake_data_phase2.dart';
 import 'package:be_energy/data/fake_periods_data.dart';
 import 'package:be_energy/models/models.dart';
 import 'package:be_energy/routes.dart';
+import 'package:be_energy/services/pde_assignment_summary_service.dart';
 import 'package:flutter/material.dart';
 
 import '../admin/admin_community_offers_screen.dart';
@@ -21,6 +22,7 @@ import 'components/home_header.dart';
 import 'components/pde_state_machine/pde_state_machine_card.dart';
 import 'controllers/home_controller.dart';
 import 'pde_cobro_screen.dart';
+import 'pde_historical_periods_screen.dart';
 import 'pde_renuncia_screen.dart';
 import 'widgets/price_reference_cards.dart';
 
@@ -37,6 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
   static const bool _showActivities = false;
 
   final HomeController _controller = HomeController();
+  final PdeAssignmentSummaryService _assignmentSummaryService =
+      PdeAssignmentSummaryService();
 
   int get _currentCommunityId => widget.myUser?.communityId ?? 1;
 
@@ -290,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
           SizedBox(height: AppTokens.space16),
           if (current != null)
             _ConsumptionBar(
-              label: 'Actual',
+              label: 'Consumo actual',
               value: current,
               maxValue: maxValue,
               color: AppTokens.primaryColor,
@@ -299,7 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: AppTokens.space12),
           if (previous != null)
             _ConsumptionBar(
-              label: 'Mes anterior',
+              label: 'Consumo anterior',
               value: previous,
               maxValue: maxValue,
               color: AppTokens.primaryColor.withValues(alpha: 0.72),
@@ -309,11 +313,125 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(height: AppTokens.space12),
           if (historicalAverage != null)
             _ConsumptionBar(
-              label: 'Promedio histórico',
+              label: 'Consumo histórico',
               value: historicalAverage,
               maxValue: maxValue,
               color: AppTokens.primaryColor.withValues(alpha: 0.48),
             ),
+          if (hasData) ...[
+            SizedBox(height: AppTokens.space16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _showConsumptionDetail,
+                icon: const Icon(Icons.insights_rounded, size: 18),
+                label: const Text('Ver detalle de consumo'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showConsumptionDetail() {
+    final current = _currentConsumption();
+    final previous = _previousConsumption();
+    final historicalAverage = _historicalAverageConsumption();
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTokens.radiusXLarge),
+        ),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            AppTokens.space24,
+            AppTokens.space8,
+            AppTokens.space24,
+            AppTokens.space32,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Detalle de consumo',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: AppTokens.fontWeightBold,
+                  color: AppTokens.grey900,
+                ),
+              ),
+              SizedBox(height: AppTokens.space16),
+              _consumptionDetailRow('Consumo actual', current),
+              _consumptionDetailRow('Consumo anterior', previous),
+              _consumptionDetailRow('Consumo histórico', historicalAverage),
+              if (current != null && previous != null)
+                _comparisonRow(
+                  'Variación vs anterior',
+                  current,
+                  previous,
+                ),
+              if (current != null && historicalAverage != null)
+                _comparisonRow(
+                  'Variación vs histórico',
+                  current,
+                  historicalAverage,
+                ),
+              SizedBox(height: AppTokens.space12),
+              // Text(
+              //   'Origen del dato: dato disponible en el sistema. Si el backend informa si es medido o estimado, esta etiqueta se actualizará automáticamente.',
+              //   style: context.textStyles.bodySmall?.copyWith(
+              //     color: context.colors.onSurfaceVariant,
+              //     height: 1.35,
+              //   ),
+              // ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _consumptionDetailRow(String label, double? value) {
+    return _detailRow(
+      label,
+      value == null ? 'Sin dato' : Formatters.formatEnergy(value, decimals: 2),
+    );
+  }
+
+  Widget _comparisonRow(String label, double current, double reference) {
+    if (reference <= 0) {
+      return _detailRow(label, 'Sin referencia');
+    }
+    final delta = current - reference;
+    final percent = (delta / reference) * 100;
+    final sign = delta >= 0 ? '+' : '';
+    return _detailRow(
+      label,
+      '$sign${Formatters.formatEnergy(delta, decimals: 2)} (${sign}${Formatters.formatNumber(percent, decimals: 1)}%)',
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppTokens.space12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: Text(label, style: context.textStyles.bodyMedium)),
+          SizedBox(width: AppTokens.space12),
+          Text(
+            value,
+            style: context.textStyles.bodyMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightBold,
+              color: AppTokens.grey900,
+            ),
+          ),
         ],
       ),
     );
@@ -341,6 +459,8 @@ class _HomeScreenState extends State<HomeScreen> {
             communityAverageGeneration != null
         ? communityAverageGeneration * (effectivePdePercentage / 100)
         : null;
+    final canShowAssignmentSummary =
+        (_controller.pdePeriodStatus?.statusCode ?? 0) >= 3;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -374,13 +494,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Tu PDE actual',
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: AppTokens.grey700,
-                        fontWeight: AppTokens.fontWeightSemiBold,
-                        letterSpacing: 0.3,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Tu PDE actual',
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: AppTokens.grey700,
+                            fontWeight: AppTokens.fontWeightSemiBold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        if (canShowAssignmentSummary) ...[
+                          SizedBox(width: AppTokens.space4),
+                          InkWell(
+                            onTap: _showPdeAssignmentSummary,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Icon(
+                              Icons.help_rounded,
+                              color: AppTokens.primaryColor,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     SizedBox(height: AppTokens.space4),
                     Text(
@@ -424,6 +561,120 @@ class _HomeScreenState extends State<HomeScreen> {
             style: context.textStyles.bodySmall?.copyWith(
               color: context.colors.onSurfaceVariant,
               height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPdeAssignmentSummary() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTokens.radiusXLarge),
+        ),
+      ),
+      builder: (sheetContext) {
+        return FutureBuilder(
+          future: _assignmentSummaryService.getSummary(
+            communityId: _currentCommunityId,
+            period: _selectedPeriod,
+          ),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
+              return Padding(
+                padding: EdgeInsets.all(AppTokens.space24),
+                child: Text(
+                  'No se pudo cargar el detalle de asignación PDE.',
+                  style: context.textStyles.bodyMedium,
+                ),
+              );
+            }
+
+            final summary = snapshot.data!;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppTokens.space24,
+                AppTokens.space8,
+                AppTokens.space24,
+                AppTokens.space32,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Detalle de asignación PDE',
+                    style: context.textStyles.titleLarge?.copyWith(
+                      fontWeight: AppTokens.fontWeightBold,
+                      color: AppTokens.grey900,
+                    ),
+                  ),
+                  SizedBox(height: AppTokens.space16),
+                  _assignmentSummaryRow(
+                    'PDE inicial',
+                    '${Formatters.formatNumber(summary.pdeInicial, decimals: 2)}%',
+                  ),
+                  _assignmentSummaryRow(
+                    summary.cambioLabel,
+                    '${Formatters.formatNumber(summary.cambioAbsoluto, decimals: 2)}%',
+                  ),
+                  _assignmentSummaryRow(
+                    'PDE final',
+                    '${Formatters.formatNumber(summary.pdeFinalAsignado, decimals: 2)}%',
+                  ),
+                  _assignmentSummaryRow(
+                    'Equivalencia final',
+                    Formatters.formatEnergy(summary.pdeFinalKwh, decimals: 2),
+                  ),
+                  if (summary.changedKwh > 0)
+                    _assignmentSummaryRow(
+                      summary.aportoPde
+                          ? 'Energía aportada'
+                          : 'Energía adicional',
+                      Formatters.formatEnergy(summary.changedKwh, decimals: 2),
+                    ),
+                  SizedBox(height: AppTokens.space12),
+                  Text(
+                    summary.hasAssignmentDetail
+                        ? 'Este resultado corresponde al cierre del periodo y puede variar según la generación disponible.'
+                        : 'No hay reasignación adicional registrada para este periodo; se muestra tu PDE vigente.',
+                    style: context.textStyles.bodySmall?.copyWith(
+                      color: context.colors.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _assignmentSummaryRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppTokens.space12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: context.textStyles.bodyMedium),
+          Text(
+            value,
+            style: context.textStyles.bodyMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightBold,
+              color: AppTokens.grey900,
             ),
           ),
         ],
@@ -701,6 +952,24 @@ class _HomeScreenState extends State<HomeScreen> {
       onMoveToReconciliationTap: _showConfirmReconciliationModal,
       onVoluntaryWaiverTap: _navigateToPdeRenuncia,
       onPaymentTap: _navigateToPdeCobro,
+      onHistoricalTap: _navigateToPdeHistorical,
+    );
+  }
+
+  void _navigateToPdeHistorical() {
+    if (widget.myUser == null) {
+      context.showInfoSnackbar('No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdeHistoricalPeriodsScreen(
+          myUser: widget.myUser!,
+          communityId: _currentCommunityId,
+        ),
+      ),
     );
   }
 

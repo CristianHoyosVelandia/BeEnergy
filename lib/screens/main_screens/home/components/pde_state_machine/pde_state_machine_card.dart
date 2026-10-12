@@ -24,6 +24,7 @@ class PdeStateMachineCard extends StatelessWidget {
   final VoidCallback onMoveToReconciliationTap;
   final VoidCallback onVoluntaryWaiverTap;
   final VoidCallback onPaymentTap;
+  final VoidCallback onHistoricalTap;
 
   const PdeStateMachineCard({
     super.key,
@@ -41,6 +42,7 @@ class PdeStateMachineCard extends StatelessWidget {
     required this.onMoveToReconciliationTap,
     required this.onVoluntaryWaiverTap,
     required this.onPaymentTap,
+    required this.onHistoricalTap,
   });
 
   @override
@@ -240,6 +242,8 @@ class PdeStateMachineCard extends StatelessWidget {
           loading: isLoadingOffer,
           offer: buyerOffer,
           enabledSteps: enabledSteps,
+          periodDisplayName: periodDisplayName,
+          onHistoricalTap: onHistoricalTap,
         );
     }
   }
@@ -366,10 +370,14 @@ class _AvailableCard extends StatelessWidget {
             title: isAdminView ? 'Revisar Ofertas' : message,
             subtitle: isAdminView
                 ? '$periodDisplayName - Gestión Comunitaria'
-                : '$periodDisplayName - Modelo de Ofertas',
+                : _actionDeadline(1, periodDisplayName) ?? periodDisplayName,
           ),
           SizedBox(height: AppTokens.space20),
-          PdeProgressTimeline(currentStatus: 1, enabledSteps: enabledSteps),
+          PdeProgressTimeline(
+            currentStatus: 1,
+            enabledSteps: enabledSteps,
+            periodDisplayName: periodDisplayName,
+          ),
           SizedBox(height: AppTokens.space16),
           Row(
             children: [
@@ -383,7 +391,7 @@ class _AvailableCard extends StatelessWidget {
               SizedBox(width: AppTokens.space12),
               Expanded(
                 child: _MetricBox(
-                  label: 'Rango Precio',
+                  label: 'Precio comunitario',
                   value:
                       '${Formatters.formatCurrency(minValue, decimals: 2, showSymbol: false)} - ${Formatters.formatCurrency(maxValue, decimals: 2, showSymbol: false)} COP',
                 ),
@@ -433,12 +441,14 @@ class _InfoCard extends StatelessWidget {
           _Header(
             icon: icon,
             title: title,
-            subtitle: periodDisplayName,
+            subtitle: _actionDeadline(statusCode, periodDisplayName) ??
+                periodDisplayName,
           ),
           SizedBox(height: AppTokens.space20),
           PdeProgressTimeline(
             currentStatus: statusCode,
             enabledSteps: enabledSteps,
+            periodDisplayName: periodDisplayName,
           ),
           SizedBox(height: AppTokens.space16),
           _MessageBox(message: message),
@@ -520,6 +530,7 @@ class _ConsumerOfferCard extends StatelessWidget {
               currentStatus: statusCode,
               onDark: false,
               enabledSteps: enabledSteps,
+              periodDisplayName: periodDisplayName,
             ),
           ],
         ),
@@ -535,6 +546,7 @@ class _ConsumerOfferCard extends StatelessWidget {
           PdeProgressTimeline(
             currentStatus: statusCode,
             enabledSteps: enabledSteps,
+            periodDisplayName: periodDisplayName,
           ),
           SizedBox(height: AppTokens.space16),
           _RowsBox(rows: rowsBuilder(currentOffer)),
@@ -551,12 +563,16 @@ class _HistoricalCard extends StatelessWidget {
   final bool loading;
   final ConsumerOffer? offer;
   final Map<int, bool> enabledSteps;
+  final String periodDisplayName;
+  final VoidCallback onHistoricalTap;
 
   const _HistoricalCard({
     required this.isAdminView,
     required this.loading,
     required this.offer,
     required this.enabledSteps,
+    required this.periodDisplayName,
+    required this.onHistoricalTap,
   });
 
   @override
@@ -611,7 +627,11 @@ class _HistoricalCard extends StatelessWidget {
             subtitle: rows.isEmpty ? '' : 'Resumen financiero',
           ),
           SizedBox(height: AppTokens.space16),
-          PdeProgressTimeline(currentStatus: 5, enabledSteps: enabledSteps),
+          PdeProgressTimeline(
+            currentStatus: 5,
+            enabledSteps: enabledSteps,
+            periodDisplayName: periodDisplayName,
+          ),
           SizedBox(height: AppTokens.space16),
           Text(
             rows.isEmpty
@@ -626,6 +646,8 @@ class _HistoricalCard extends StatelessWidget {
             SizedBox(height: AppTokens.space16),
             _RowsBox(rows: rows),
           ],
+          SizedBox(height: AppTokens.space16),
+          _Cta(label: 'Consultar históricos', onTap: onHistoricalTap),
         ],
       ),
     );
@@ -714,6 +736,22 @@ class _Header extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+String? _actionDeadline(int statusCode, String periodDisplayName) {
+  final month = periodDisplayName.trim().isEmpty
+      ? 'el periodo actual'
+      : periodDisplayName.trim();
+  switch (statusCode) {
+    case 6:
+      return 'Disponible hasta el 8 de $month';
+    case 1:
+      return 'Disponible hasta el 11 de $month';
+    case 7:
+      return 'Disponible hasta el 30 de $month';
+    default:
+      return null;
   }
 }
 
