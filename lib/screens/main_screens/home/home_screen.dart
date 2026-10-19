@@ -10,6 +10,7 @@ import 'package:be_energy/data/fake_periods_data.dart';
 import 'package:be_energy/models/models.dart';
 import 'package:be_energy/routes.dart';
 import 'package:be_energy/services/pde_assignment_summary_service.dart';
+import 'package:be_energy/widgets/logout_confirmation_dialog.dart';
 import 'package:flutter/material.dart';
 
 import '../admin/admin_community_offers_screen.dart';
@@ -413,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final sign = delta >= 0 ? '+' : '';
     return _detailRow(
       label,
-      '$sign${Formatters.formatEnergy(delta, decimals: 2)} (${sign}${Formatters.formatNumber(percent, decimals: 1)}%)',
+      '$sign${Formatters.formatEnergy(delta, decimals: 2)} ($sign${Formatters.formatNumber(percent, decimals: 1)}%)',
     );
   }
 
@@ -535,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Equivale a:',
+                    'Enérgia esperada:',
                     style: context.textStyles.bodySmall?.copyWith(
                       color: AppTokens.grey700,
                       fontWeight: AppTokens.fontWeightSemiBold,
@@ -556,13 +557,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           SizedBox(height: AppTokens.space20),
-          Text(
-            'Nota: el valor de equivalencia corresponde a una comparación de energía histórica de la comunidad que puede variar con el porcentaje de distribución de excedentes (PDE).',
-            style: context.textStyles.bodySmall?.copyWith(
-              color: context.colors.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
+          // Text(
+          //   'Nota: el valor de equivalencia corresponde a una comparación de energía histórica de la comunidad que puede variar con el porcentaje de distribución de excedentes (PDE).',
+          //   style: context.textStyles.bodySmall?.copyWith(
+          //     color: context.colors.onSurfaceVariant,
+          //     height: 1.35,
+          //   ),
+          // ),
         ],
       ),
     );
@@ -1237,36 +1238,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showLogoutDialog() {
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
-        title: Text(
-          'Cerrar sesión',
-          style: context.textStyles.titleLarge?.copyWith(
-            fontWeight: AppTokens.fontWeightBold,
-          ),
-        ),
-        content: const Text('¿Quieres cerrar tu sesión actual?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(dialogContext).pop();
-              DatabaseHelper().deleteUserLocal(widget.myUser?.idUser);
-              AppTokens.resetToDefaultColors();
-              if (!mounted) return;
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const Beenergy()),
-                (Route<dynamic> route) => false,
-              );
-            },
-            child: const Text('Cerrar sesión'),
-          ),
-        ],
+      barrierDismissible: true,
+      builder: (dialogContext) => LogoutConfirmationDialog(
+        onConfirm: () async {
+          Navigator.of(dialogContext).pop();
+          await Future.delayed(const Duration(milliseconds: 150));
+
+          DatabaseHelper().deleteUserLocal(widget.myUser?.idUser);
+          AppTokens.resetToDefaultColors();
+
+          if (!mounted) return;
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Beenergy()),
+            (Route<dynamic> route) => false,
+          );
+        },
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:be_energy/utils/metodos.dart';
 import 'package:flutter/material.dart';
 
 import 'pde_savings_screen.dart';
+import 'pde_economic_widgets.dart';
 
 class PdeCobroScreen extends StatefulWidget {
   final MyUser myUser;
@@ -76,7 +77,10 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
       _isPaid = true;
       _isSubmitting = false;
     });
-    context.showInfoSnackbar('Pago simulado correctamente.');
+    final monthlyTotal = _charge?.economics?.withMarket.total;
+    context.showInfoSnackbar(monthlyTotal == null
+        ? 'Pago simulado correctamente.'
+        : 'Pago mensual de ${Formatters.formatCurrency(monthlyTotal)} simulado correctamente.');
   }
 
   Future<void> _closePaymentStage() async {
@@ -90,13 +94,21 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          _charge?.economics != null ? const Color(0xFFF8FAFC) : null,
       appBar: _buildAppBar(),
-      body: ListView(
-        padding: EdgeInsets.all(AppTokens.space16),
-        children: [
-          if (widget.isAdminView) _buildAdminContent() else _buildUserContent(),
-        ],
-      ),
+      body: Center(
+          child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: ListView(
+                padding: EdgeInsets.all(AppTokens.space16),
+                children: [
+                  if (widget.isAdminView)
+                    _buildAdminContent()
+                  else
+                    _buildUserContent(),
+                ],
+              ))),
     );
   }
 
@@ -131,6 +143,16 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
   }
 
   Widget _buildUserContent() {
+    if (!_isLoading && _errorMessage == null && _charge?.economics != null) {
+      return PdeEconomicChargeContent(
+        charge: _charge!,
+        periodDisplayName: widget.periodDisplayName,
+        onCompare: _openSavings,
+        onSimulatePayment: _simulatePayment,
+        isPaid: _isPaid,
+        isSubmitting: _isSubmitting,
+      );
+    }
     return _CardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,9 +161,9 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
             icon: Icons.receipt_long,
             title: _screenTitle,
             subtitle: 'Liquidación ${widget.periodDisplayName}',
-            trailing: _charge?.hasCommunityRight == true
+            trailing: _charge?.hasSavingsComparison == true
                 ? IconButton(
-                    tooltip: 'Ver ahorros',
+                    tooltip: 'Ver ahorro y conveniencia',
                     onPressed: _openSavings,
                     icon: const Icon(Icons.add_circle_outline),
                     color: AppTokens.primaryColor,
@@ -241,6 +263,15 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
         MapEntry(pdeLabel, _formatPercentValue(charge.pdeTransactedPct)),
         MapEntry('Precio energía comunitaria',
             '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
+        if (charge.commercializationCostPerKwh > 0 && charge.isCharge)
+          MapEntry('Comercialización',
+              '${Formatters.formatCurrency(charge.commercializationCostPerKwh)} / kWh'),
+        if (charge.commercializationValue > 0)
+          MapEntry('Total comercialización',
+              Formatters.formatCurrency(charge.commercializationValue)),
+        if (charge.gridPricePerKwh > 0)
+          MapEntry('Tarifa sin VoltÁgora',
+              '${Formatters.formatCurrency(charge.gridPricePerKwh)} / kWh'),
       ]);
     }
 
@@ -255,7 +286,7 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
             RoundedRectangleBorder(borderRadius: AppTokens.borderRadiusLarge),
         title: const Text('Cómo se calcula'),
         content: const Text(
-          'Tu derecho comunitario es el PDE base que recibes sin costo por la generación comunitaria. Si usas más PDE que tu derecho, pagas solo ese excedente. Si cedes parte de tu derecho, recibes compensación por la diferencia.',
+          'Tu derecho comunitario es el PDE base que recibes sin costo por la generación comunitaria. Si usas más PDE que tu derecho, pagas solo ese excedente más el costo de comercialización. Si cedes parte de tu derecho, recibes compensación por la diferencia.',
         ),
         actions: [
           TextButton(
@@ -331,7 +362,7 @@ class _PdeCobroScreenState extends State<PdeCobroScreen> {
     return Text(
       _isPaid
           ? 'Tu pago quedó registrado visualmente. La conciliación real se habilitará cuando se integre la pasarela de pago.'
-          : 'Este valor corresponde a la energía comunitaria PDE que recibiste en la liquidación del periodo. El pago real queda pendiente hasta integrar la pasarela.',
+          : 'Este valor corresponde a la energía comunitaria PDE que recibiste más el costo de comercialización estimado para el periodo. El pago real queda pendiente hasta integrar la pasarela.',
       style: textStyle,
     );
   }
@@ -621,6 +652,15 @@ class _CommunityRightSummary extends StatelessWidget {
           MapEntry('PDE final', formatPercentValue(charge.pdeFinalPct)),
           MapEntry('Precio comunitario',
               '${Formatters.formatCurrency(charge.pricePerKwh)} / kWh'),
+          if (charge.commercializationCostPerKwh > 0)
+            MapEntry('Comercialización',
+                '${Formatters.formatCurrency(charge.commercializationCostPerKwh)} / kWh'),
+          if (charge.commercializationValue > 0)
+            MapEntry('Total comercialización',
+                Formatters.formatCurrency(charge.commercializationValue)),
+          if (charge.gridPricePerKwh > 0)
+            MapEntry('Tarifa sin VoltÁgora',
+                '${Formatters.formatCurrency(charge.gridPricePerKwh)} / kWh'),
         ]),
         Align(
           alignment: Alignment.centerRight,
