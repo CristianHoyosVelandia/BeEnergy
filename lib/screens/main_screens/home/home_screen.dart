@@ -8,6 +8,7 @@ import 'package:be_energy/data/fake_data_january_2026.dart';
 import 'package:be_energy/data/fake_data_phase2.dart';
 import 'package:be_energy/data/fake_periods_data.dart';
 import 'package:be_energy/models/models.dart';
+import 'package:be_energy/models/pde_assignment_summary.dart';
 import 'package:be_energy/routes.dart';
 import 'package:be_energy/services/pde_assignment_summary_service.dart';
 import 'package:be_energy/widgets/logout_confirmation_dialog.dart';
@@ -42,6 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final HomeController _controller = HomeController();
   final PdeAssignmentSummaryService _assignmentSummaryService =
       PdeAssignmentSummaryService();
+  Future<PdeAssignmentSummary>? _initialPdeFuture;
+  String? _initialPdeRequestKey;
 
   int get _currentCommunityId => widget.myUser?.communityId ?? 1;
 
@@ -80,6 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initializeData() async {
+    _initialPdeFuture = null;
+    _initialPdeRequestKey = null;
     try {
       await _controller.initialize(
         user: widget.myUser,
@@ -99,6 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _refreshHome() async {
+    _initialPdeFuture = null;
+    _initialPdeRequestKey = null;
     try {
       await _controller.initialize(
         user: widget.myUser,
@@ -460,8 +467,9 @@ class _HomeScreenState extends State<HomeScreen> {
             communityAverageGeneration != null
         ? communityAverageGeneration * (effectivePdePercentage / 100)
         : null;
+    // Los códigos no son cronológicos: 6 es Aporte, anterior a Asignado (3).
     final canShowAssignmentSummary =
-        (_controller.pdePeriodStatus?.statusCode ?? 0) >= 3;
+        const {3, 4, 7, 5}.contains(_controller.pdePeriodStatus?.statusCode);
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: AppTokens.space16),
@@ -529,6 +537,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 1,
                       ),
                     ),
+                    if (canShowAssignmentSummary && _selectedPeriod.isNotEmpty)
+                      _initialPdeLabel(),
                   ],
                 ),
               ),
@@ -566,6 +576,39 @@ class _HomeScreenState extends State<HomeScreen> {
           // ),
         ],
       ),
+    );
+  }
+
+  Widget _initialPdeLabel() {
+    final key =
+        '$_currentCommunityId:$_selectedPeriod:${_controller.pdePeriodStatus?.statusCode}';
+    if (_initialPdeFuture == null || _initialPdeRequestKey != key) {
+      _initialPdeRequestKey = key;
+      _initialPdeFuture = _assignmentSummaryService.getSummary(
+        communityId: _currentCommunityId,
+        period: _selectedPeriod,
+      );
+    }
+    return FutureBuilder<PdeAssignmentSummary>(
+      key: ValueKey(key),
+      future: _initialPdeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done ||
+            snapshot.hasError ||
+            !snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(top: AppTokens.space8),
+          child: Text(
+            'PDE inicial: ${Formatters.formatNumber(snapshot.data!.pdeInicial, decimals: 2)}%',
+            style: context.textStyles.bodySmall?.copyWith(
+              fontSize: AppTokens.fontSize11,
+              color: context.colors.onSurfaceVariant,
+            ),
+          ),
+        );
+      },
     );
   }
 

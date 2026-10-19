@@ -397,48 +397,33 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                                   pdeKwh: _pdeKwhForPercent(conservedValue),
                                   referenceKwh: _referenceConsumption(status)),
                               SizedBox(height: AppTokens.space24),
-                              _SectionLabel('Energía'),
-                              SizedBox(height: AppTokens.space8),
-                              _MetricStrip(items: [
-                                _MetricItem(
-                                    'Histórico',
-                                    Formatters.formatEnergy(
-                                        _referenceConsumption(status))),
-                                if (_currentConsumption() != null)
+                              _PdeEnergySummary(
+                                consumption: [
                                   _MetricItem(
-                                      'Actual',
-                                      Formatters.formatEnergy(
-                                          _currentConsumption()!)),
-                                if (_previousConsumption() != null)
-                                  _MetricItem(
-                                      'Mes anterior',
-                                      Formatters.formatEnergy(
-                                          _previousConsumption()!)),
-                              ]),
-                              SizedBox(height: AppTokens.space20),
-                              _SectionLabel('PDE'),
-                              SizedBox(height: AppTokens.space8),
-                              _MetricStrip(items: [
-                                _MetricItem(
-                                    'Aporte', _formatPercent(appliedValue)),
-                                _MetricItem('Conservado',
-                                    _formatPercent(conservedValue)),
-                              ]),
-                              SizedBox(height: AppTokens.space20),
-                              _SectionLabel('Equivalencia en energía'),
-                              SizedBox(height: AppTokens.space8),
-                              _MetricStrip(items: [
-                                _MetricItem(
-                                    'Aportada',
-                                    Formatters.formatEnergy(
-                                        _pdeKwhForPercent(appliedValue),
-                                        decimals: 2)),
-                                _MetricItem(
-                                    'Conservada',
-                                    Formatters.formatEnergy(
-                                        _pdeKwhForPercent(conservedValue),
-                                        decimals: 2)),
-                              ]),
+                                      'Histórico',
+                                      Formatters.formatNumber(
+                                          _referenceConsumption(status),
+                                          decimals: 2)),
+                                  if (_currentConsumption() != null)
+                                    _MetricItem(
+                                        'Actual',
+                                        Formatters.formatNumber(
+                                            _currentConsumption()!,
+                                            decimals: 2)),
+                                  if (_previousConsumption() != null)
+                                    _MetricItem(
+                                        'Mes anterior',
+                                        Formatters.formatNumber(
+                                            _previousConsumption()!,
+                                            decimals: 2)),
+                                ],
+                                contributedPercent:
+                                    _formatPercent(appliedValue),
+                                conservedPercent:
+                                    _formatPercent(conservedValue),
+                                contributedKwh: _pdeKwhForPercent(appliedValue),
+                                conservedKwh: _pdeKwhForPercent(conservedValue),
+                              ),
                             ],
                           ],
                         ),
@@ -617,7 +602,8 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         ? (pdeBase - pdeRenunciado).clamp(0, pdeBase).toDouble()
         : (pdeBase - renuncia.pdeRenunciado).clamp(0, pdeBase).toDouble();
 
-    return _CardContainer(
+    return Container(
+      padding: EdgeInsets.all(AppTokens.space8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -627,48 +613,27 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             subtitle: widget.periodDisplayName,
           ),
           SizedBox(height: AppTokens.space16),
-          _SectionLabel('Energía'),
-          SizedBox(height: AppTokens.space4),
-          _MetricStrip(items: [
-            _MetricItem(
-              'Histórico',
-              Formatters.formatEnergy(_referenceConsumption(status)),
-            ),
-            if (_currentConsumption() != null)
+          _PdeEnergySummary(
+            consumption: [
               _MetricItem(
-                  'Actual', Formatters.formatEnergy(_currentConsumption()!)),
-            if (_previousConsumption() != null)
-              _MetricItem('Mes anterior',
-                  Formatters.formatEnergy(_previousConsumption()!)),
-          ]),
-          SizedBox(height: AppTokens.space20),
-          _SectionLabel('PDE'),
-          SizedBox(height: AppTokens.space8),
-          _MetricStrip(items: [
-            _MetricItem(
-              'Aporte',
-              _formatPercent(pdeRenunciado),
-            ),
-            _MetricItem(
-              'Conservado',
-              _formatPercent(pdeConservado),
-            ),
-          ]),
-          SizedBox(height: AppTokens.space20),
-          _SectionLabel('Equivalencia en energía'),
-          SizedBox(height: AppTokens.space8),
-          _MetricStrip(items: [
-            _MetricItem(
-              'Aportada',
-              Formatters.formatEnergy(_pdeKwhForPercent(pdeRenunciado),
-                  decimals: 2),
-            ),
-            _MetricItem(
-              'Conservada',
-              Formatters.formatEnergy(_pdeKwhForPercent(pdeConservado),
-                  decimals: 2),
-            ),
-          ]),
+                'Histórico',
+                Formatters.formatNumber(_referenceConsumption(status),
+                    decimals: 2),
+              ),
+              if (_currentConsumption() != null)
+                _MetricItem('Actual',
+                    Formatters.formatNumber(_currentConsumption()!, decimals: 2)),
+              if (_previousConsumption() != null)
+                _MetricItem(
+                    'Mes anterior',
+                    Formatters.formatNumber(_previousConsumption()!,
+                        decimals: 2)),
+            ],
+            contributedPercent: _formatPercent(pdeRenunciado),
+            conservedPercent: _formatPercent(pdeConservado),
+            contributedKwh: _pdeKwhForPercent(pdeRenunciado),
+            conservedKwh: _pdeKwhForPercent(pdeConservado),
+          ),
           if (renuncia != null) ...[
             SizedBox(height: AppTokens.space12),
             _Rows(rows: [
@@ -1010,27 +975,120 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+/// Contexto de consumo y decisión en una sola tarjeta, sin cajas anidadas.
+class _PdeEnergySummary extends StatelessWidget {
+  final List<_MetricItem> consumption;
+  final String contributedPercent;
+  final String conservedPercent;
+  final double contributedKwh;
+  final double conservedKwh;
+
+  const _PdeEnergySummary({
+    required this.consumption,
+    required this.contributedPercent,
+    required this.conservedPercent,
+    required this.contributedKwh,
+    required this.conservedKwh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppTokens.space16),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: AppTokens.borderRadiusLarge,
+        border:
+            Border.all(color: context.colors.outline.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Resumen de tu energía',
+              style: context.textStyles.titleSmall?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+              )),
+          const SizedBox(height: AppTokens.space20),
+          const _SectionLabel('Consumo · kWh'),
+          const SizedBox(height: AppTokens.space12),
+          _MetricStrip(items: consumption, framed: false),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppTokens.space20),
+            child: Divider(
+                height: 1,
+                color: context.colors.outline.withValues(alpha: 0.15)),
+          ),
+          const _SectionLabel('Distribución de tu PDE'),
+          const SizedBox(height: AppTokens.space12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                  child: _distribution(
+                      context, 'Aportas', contributedPercent, contributedKwh)),
+              const SizedBox(width: AppTokens.space16),
+              Expanded(
+                  child: _distribution(
+                      context, 'Conservas', conservedPercent, conservedKwh)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _distribution(
+      BuildContext context, String label, String percentage, double kwh) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: context.textStyles.bodySmall
+                ?.copyWith(color: context.colors.onSurfaceVariant)),
+        const SizedBox(height: AppTokens.space8),
+        Text(percentage,
+            style: context.textStyles.titleLarge?.copyWith(
+              color: AppTokens.primaryColor,
+              fontWeight: AppTokens.fontWeightBold,
+            )),
+        const SizedBox(height: AppTokens.space4),
+        Text(Formatters.formatEnergy(kwh, decimals: 2),
+            style: context.textStyles.bodyMedium?.copyWith(
+              fontWeight: AppTokens.fontWeightSemiBold,
+            )),
+      ],
+    );
+  }
+}
+
 class _MetricStrip extends StatelessWidget {
   final List<_MetricItem> items;
+  final bool framed;
 
-  const _MetricStrip({required this.items});
+  const _MetricStrip({required this.items, this.framed = true});
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppTokens.space12,
-        vertical: AppTokens.space12,
-      ),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.7),
-        borderRadius: AppTokens.borderRadiusMedium,
-        border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.18),
-        ),
-      ),
+      padding: framed
+          ? EdgeInsets.symmetric(
+              horizontal: AppTokens.space12,
+              vertical: AppTokens.space12,
+            )
+          : EdgeInsets.zero,
+      decoration: framed
+          ? BoxDecoration(
+              color:
+                  context.colors.surfaceContainerHighest.withValues(alpha: 0.7),
+              borderRadius: AppTokens.borderRadiusMedium,
+              border: Border.all(
+                color: context.colors.outline.withValues(alpha: 0.18),
+              ),
+            )
+          : null,
       child: Row(
         children: [
           for (var i = 0; i < items.length; i++) ...[
@@ -1344,7 +1402,6 @@ class _RecommendedOptionCard extends StatelessWidget {
                       fontWeight: AppTokens.fontWeightMedium,
                       fontSize: 12,
                       color: AppTokens.grey900,
-
                     ),
                   ),
                   SizedBox(height: AppTokens.space4),
