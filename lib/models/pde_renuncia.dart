@@ -129,7 +129,8 @@ class PdeRenuncia {
     this.motivo,
   });
 
-  factory PdeRenuncia.fromJson(Map<String, dynamic> json) {
+  factory PdeRenuncia.fromJson(Map<String, dynamic> json,
+      {bool percentageValues = false}) {
     final pdeOriginal =
         json['pde_original'] as num? ?? json['pde_actual'] as num? ?? 0;
     final pdeRenunciado = json['pde_renunciado'] as num? ??
@@ -144,9 +145,17 @@ class PdeRenuncia {
       comunidadId: json['comunidad_id'] as int? ?? json['community_id'] as int,
       usuarioId: json['usuario_id'] as int? ?? json['user_id'] as int,
       periodo: json['periodo'] as String? ?? json['period'] as String,
-      pdeOriginal: _normalizePdeValue(pdeOriginal.toDouble()),
-      pdeRenunciado: _normalizePdeValue(pdeRenunciado.toDouble()),
-      pdeConservado: _normalizePdeValue(pdeConservado.toDouble()),
+      // El API PDE/forecast usa puntos porcentuales incluso por debajo de 1.
+      // 0.01 significa 0,01%, no 1%; no inferir la unidad por la magnitud.
+      pdeOriginal: percentageValues
+          ? pdeOriginal.toDouble() / 100
+          : _normalizePdeValue(pdeOriginal.toDouble()),
+      pdeRenunciado: percentageValues
+          ? pdeRenunciado.toDouble() / 100
+          : _normalizePdeValue(pdeRenunciado.toDouble()),
+      pdeConservado: percentageValues
+          ? pdeConservado.toDouble() / 100
+          : _normalizePdeValue(pdeConservado.toDouble()),
       consumoKwh: (json['consumo_kwh'] as num?)?.toDouble(),
       pdeSugeridoRenuncia: (json['pde_sugerido_renuncia'] as num?)?.toDouble(),
       renunciaKwh: (json['renuncia_kwh'] as num?)?.toDouble(),

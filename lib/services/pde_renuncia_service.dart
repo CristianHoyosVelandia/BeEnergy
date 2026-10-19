@@ -42,7 +42,7 @@ class PdeRenunciaService {
       permiteRenunciaManual: forecast.permiteRenunciaManual,
       renuncia: forecast.renuncia == null
           ? null
-          : PdeRenuncia.fromJson(forecast.renuncia!),
+          : PdeRenuncia.fromJson(forecast.renuncia!, percentageValues: true),
     );
   }
 
@@ -70,21 +70,27 @@ class PdeRenunciaService {
       throw Exception(body['message'] ?? 'Error creando renuncia PDE');
     }
 
-    return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>);
+    return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>,
+        percentageValues: true);
   }
 
   Future<PdeRenuncia> updateRenuncia({
-    required int renunciaId,
-    required int usuarioId,
+    required int comunidadId,
+    required String periodo,
     required double pdeRenunciado,
+    required double renunciaKwh,
     String? motivo,
   }) async {
-    final response = await _client.put(
-      '/community/pde-renuncias/$renunciaId',
+    // El endpoint canónico actualiza la decisión pendiente del mismo periodo y
+    // usa puntos porcentuales, igual que al crear. Evita mezclar unidades legacy.
+    final response = await _client.post(
+      ApiEndpoints.pdeRenuncia,
       data: {
-        'pde_renunciado': pdeRenunciado,
-        'motivo': motivo,
-        'actualizado_por': usuarioId,
+        'community_id': comunidadId,
+        'period': periodo,
+        'renuncia_porcentaje': pdeRenunciado * 100,
+        'renuncia_kwh': renunciaKwh,
+        'origen': 'manual',
       },
     );
 
@@ -93,7 +99,8 @@ class PdeRenunciaService {
       throw Exception(body['message'] ?? 'Error actualizando renuncia PDE');
     }
 
-    return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>);
+    return PdeRenuncia.fromJson(body['data'] as Map<String, dynamic>,
+        percentageValues: true);
   }
 
   Future<void> closeFlow({

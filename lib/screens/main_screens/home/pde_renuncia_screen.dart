@@ -2,6 +2,7 @@ import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/core/utils/logger.dart';
+import 'package:be_energy/core/utils/pde_contribution_policy.dart';
 import 'package:be_energy/models/models.dart';
 import 'package:be_energy/services/pde_renuncia_service.dart';
 import 'package:be_energy/utils/metodos.dart';
@@ -14,6 +15,7 @@ class PdeRenunciaScreen extends StatefulWidget {
   final String periodDisplayName;
   final bool isAdminView;
   final PdeAporteEnergyContext? energyContext;
+  final PdeRenunciaService? service;
 
   const PdeRenunciaScreen({
     super.key,
@@ -23,6 +25,7 @@ class PdeRenunciaScreen extends StatefulWidget {
     required this.periodDisplayName,
     required this.isAdminView,
     this.energyContext,
+    this.service,
   });
 
   @override
@@ -30,9 +33,8 @@ class PdeRenunciaScreen extends StatefulWidget {
 }
 
 class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
-  static const double _minimumPdeToKeep = 0.001; // 0.10%
   static const double _decimalTolerance = 0.000001;
-  final PdeRenunciaService _service = PdeRenunciaService();
+  late final PdeRenunciaService _service;
   PdeRenunciaStatus? _status;
   bool _isLoading = true;
   bool _isSubmitting = false;
@@ -42,6 +44,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? PdeRenunciaService();
     _loadStatus();
   }
 
@@ -80,15 +83,12 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
   Future<void> _submitRenuncia(double pdeRenunciado, String motivo,
       {PdeRenuncia? renuncia}) async {
-    final current = _status?.pdeActual ?? 0;
+    final current = renuncia?.pdeOriginal ?? _status?.pdeActual ?? 0;
     if (pdeRenunciado < 0 || pdeRenunciado > current) {
       context.showInfoSnackbar('El porcentaje de aporte no es válido.');
       return;
     }
-    if (pdeRenunciado - _maxRenunciable(current) > _decimalTolerance) {
-      context.showInfoSnackbar('Debes conservar mínimo 0,10% de tu PDE.');
-      return;
-    }
+    final applied = PdeContributionPolicy.applied(current, pdeRenunciado);
 
     setState(() => _isSubmitting = true);
     try {
@@ -98,15 +98,16 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           comunidadId: widget.communityId,
           usuarioId: widget.myUser.idUser!,
           periodo: widget.period,
-          pdeRenunciado: pdeRenunciado,
-          renunciaKwh: _pdeKwhForPercent(pdeRenunciado),
+          pdeRenunciado: applied,
+          renunciaKwh: _pdeKwhForPercent(applied),
           motivo: motivo,
         );
       } else {
         savedRenuncia = await _service.updateRenuncia(
-          renunciaId: renuncia.id,
-          usuarioId: widget.myUser.idUser!,
-          pdeRenunciado: pdeRenunciado,
+          comunidadId: widget.communityId,
+          periodo: widget.period,
+          pdeRenunciado: applied,
+          renunciaKwh: _pdeKwhForPercent(applied),
           motivo: motivo,
         );
       }
@@ -166,7 +167,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     PdeRenuncia? renuncia,
   }) async {
     final current = renuncia?.pdeOriginal ?? _status?.pdeActual ?? 0;
-    final pdeAportado = pdeRenunciado.clamp(0, current).toDouble();
+    final pdeAportado = PdeContributionPolicy.applied(current, pdeRenunciado);
     final pdeConservado = (current - pdeAportado).clamp(0, current).toDouble();
     final shouldSubmit = await showDialog<bool>(
       context: context,
@@ -205,6 +206,12 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                 ),
               ]),
               SizedBox(height: AppTokens.space12),
+              if (pdeRenunciado > pdeAportado + _decimalTolerance) ...[
+                Text(
+                    'Al aportar todo, se conserva una reserva técnica de 0,01% de PDE.',
+                    style: context.textStyles.bodySmall),
+                SizedBox(height: AppTokens.space12),
+              ],
               Text(
                 'Al aportar este porcentaje, liberas parte de tu PDE para que la comunidad pueda reasignarlo.',
                 style: context.textStyles.bodySmall?.copyWith(
@@ -263,24 +270,31 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     }
   }
 
-  void _showManualDialog({PdeRenuncia? renuncia}) {
+  Future<void> _showManualDialog({PdeRenuncia? renuncia}) async {
     final inputController = TextEditingController();
-    final current = _status?.pdeActual ?? 0;
+    final status = _status;
+    final current = renuncia?.pdeOriginal ?? status?.pdeActual ?? 0;
     final maxRenunciable = _maxRenunciable(current);
-    double selectedValue = renuncia?.pdeRenunciado ??
-        (maxRenunciable == 0 ? 0 : maxRenunciable / 2);
+    // El modal parte de la misma opción que se muestra en el resumen, no de la
+    // mitad del máximo. Al editar, se conserva el aporte ya registrado.
+    double selectedValue = (renuncia?.pdeRenunciado ??
+            (status == null ? 0.0 : _selectedRenunciaValue(status)))
+        .clamp(0, maxRenunciable)
+        .toDouble();
     inputController.text = Formatters.formatNumber(
       selectedValue * 100,
       decimals: 2,
     );
 
-    showDialog<void>(
+    final route = DialogRoute<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
           final status = _status;
+          final appliedValue =
+              PdeContributionPolicy.applied(current, selectedValue);
           final conservedValue =
-              (current - selectedValue).clamp(0, current).toDouble();
+              (current - appliedValue).clamp(0, current).toDouble();
 
           void updateFromSlider(double value) {
             selectedValue = value;
@@ -291,7 +305,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
           void updateFromInput(String value) {
             final parsed = double.tryParse(value.trim().replaceAll(',', '.'));
-            if (parsed == null) {
+            if (parsed == null || !parsed.isFinite) {
               return;
             }
             selectedValue = (parsed / 100).clamp(0, maxRenunciable).toDouble();
@@ -327,36 +341,9 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'PDE disponible para aportar: ${_formatPercent(maxRenunciable)}',
+                              'Puedes aportar hasta ${_formatPercent(maxRenunciable)} de tu asignación.',
                               style: context.textStyles.bodyMedium,
                             ),
-                            if (status != null) ...[
-                              SizedBox(height: AppTokens.space12),
-                              _SectionLabel('PDE'),
-                              SizedBox(height: AppTokens.space4),
-                              _MetricStrip(items: [
-                                _MetricItem(
-                                  'Aporte bolsa',
-                                  _formatPercent(selectedValue),
-                                ),
-                                _MetricItem(
-                                  'Conservado',
-                                  _formatPercent(conservedValue),
-                                ),
-                                _MetricItem(
-                                  'Equivale',
-                                  Formatters.formatEnergy(
-                                    _pdeKwhForPercent(conservedValue),
-                                    decimals: 2,
-                                  ),
-                                ),
-                              ]),
-                              SizedBox(height: AppTokens.space12),
-                              _PdeCoverageBar(
-                                pdeKwh: _pdeKwhForPercent(conservedValue),
-                                referenceKwh: _referenceConsumption(status),
-                              ),
-                            ],
                             SizedBox(height: AppTokens.space16),
                             Slider(
                               value: selectedValue
@@ -373,8 +360,9 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('0%', style: context.textStyles.bodySmall),
-                                Text(_formatPercent(maxRenunciable),
+                                Text('0% mínimo',
+                                    style: context.textStyles.bodySmall),
+                                Text('${_formatPercent(maxRenunciable)} máximo',
                                     style: context.textStyles.bodySmall),
                               ],
                             ),
@@ -397,6 +385,61 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                                 ),
                               ),
                             ),
+                            SizedBox(height: AppTokens.space12),
+                            Text(
+                                'Al aportar todo, se mantiene una reserva técnica de 0,01% de PDE.',
+                                style: context.textStyles.bodySmall?.copyWith(
+                                    color: context.colors.onSurfaceVariant,
+                                    height: 1.4)),
+                            if (status != null) ...[
+                              SizedBox(height: AppTokens.space24),
+                              _PdeCoverageBar(
+                                  pdeKwh: _pdeKwhForPercent(conservedValue),
+                                  referenceKwh: _referenceConsumption(status)),
+                              SizedBox(height: AppTokens.space24),
+                              _SectionLabel('Energía'),
+                              SizedBox(height: AppTokens.space8),
+                              _MetricStrip(items: [
+                                _MetricItem(
+                                    'Histórico',
+                                    Formatters.formatEnergy(
+                                        _referenceConsumption(status))),
+                                if (_currentConsumption() != null)
+                                  _MetricItem(
+                                      'Actual',
+                                      Formatters.formatEnergy(
+                                          _currentConsumption()!)),
+                                if (_previousConsumption() != null)
+                                  _MetricItem(
+                                      'Mes anterior',
+                                      Formatters.formatEnergy(
+                                          _previousConsumption()!)),
+                              ]),
+                              SizedBox(height: AppTokens.space20),
+                              _SectionLabel('PDE'),
+                              SizedBox(height: AppTokens.space8),
+                              _MetricStrip(items: [
+                                _MetricItem(
+                                    'Aporte', _formatPercent(appliedValue)),
+                                _MetricItem('Conservado',
+                                    _formatPercent(conservedValue)),
+                              ]),
+                              SizedBox(height: AppTokens.space20),
+                              _SectionLabel('Equivalencia en energía'),
+                              SizedBox(height: AppTokens.space8),
+                              _MetricStrip(items: [
+                                _MetricItem(
+                                    'Aportada',
+                                    Formatters.formatEnergy(
+                                        _pdeKwhForPercent(appliedValue),
+                                        decimals: 2)),
+                                _MetricItem(
+                                    'Conservada',
+                                    Formatters.formatEnergy(
+                                        _pdeKwhForPercent(conservedValue),
+                                        decimals: 2)),
+                              ]),
+                            ],
                           ],
                         ),
                       ),
@@ -427,9 +470,16 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
                                     .trim()
                                     .replaceAll(',', '.'),
                               );
-                              if (value == null) {
+                              if (value == null || !value.isFinite) {
                                 context.showInfoSnackbar(
                                     'Ingresa un porcentaje válido.');
+                                return;
+                              }
+                              if (value < 0 ||
+                                  value / 100 >
+                                      maxRenunciable + _decimalTolerance) {
+                                context.showInfoSnackbar(
+                                    'El aporte debe estar entre 0% y ${_formatPercent(maxRenunciable)}.');
                                 return;
                               }
                               Navigator.pop(dialogContext);
@@ -462,6 +512,11 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
         },
       ),
     );
+    await Navigator.of(context, rootNavigator: true).push(route);
+    // Esperar también la animación de salida: el TextField mantiene el
+    // controller mientras el diálogo todavía está en el overlay.
+    await route.completed;
+    inputController.dispose();
   }
 
   @override
@@ -471,7 +526,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: EdgeInsets.all(AppTokens.space16),
+              padding: const EdgeInsets.all(AppTokens.space8),
               children: [
                 if (widget.isAdminView)
                   _buildAdminContent()
@@ -556,8 +611,8 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
 
     final renuncia = _isCreatingNewDecision ? null : status.renuncia;
     final pdeBase = renuncia?.pdeOriginal ?? status.pdeActual;
-    final pdeRenunciado =
-        renuncia?.pdeRenunciado ?? _selectedRenunciaValue(status);
+    final pdeRenunciado = renuncia?.pdeRenunciado ??
+        PdeContributionPolicy.applied(pdeBase, _selectedRenunciaValue(status));
     final pdeConservado = renuncia == null
         ? (pdeBase - pdeRenunciado).clamp(0, pdeBase).toDouble()
         : (pdeBase - renuncia.pdeRenunciado).clamp(0, pdeBase).toDouble();
@@ -576,7 +631,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
           SizedBox(height: AppTokens.space4),
           _MetricStrip(items: [
             _MetricItem(
-              'Promedio',
+              'Histórico',
               Formatters.formatEnergy(_referenceConsumption(status)),
             ),
             if (_currentConsumption() != null)
@@ -586,20 +641,30 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
               _MetricItem('Mes anterior',
                   Formatters.formatEnergy(_previousConsumption()!)),
           ]),
-          SizedBox(height: AppTokens.space12),
+          SizedBox(height: AppTokens.space20),
           _SectionLabel('PDE'),
-          SizedBox(height: AppTokens.space4),
+          SizedBox(height: AppTokens.space8),
           _MetricStrip(items: [
             _MetricItem(
-              renuncia == null ? 'Aporte' : 'Registrado',
+              'Aporte',
               _formatPercent(pdeRenunciado),
             ),
             _MetricItem(
-              renuncia == null ? 'Conservado' : 'Nuevo',
+              'Conservado',
               _formatPercent(pdeConservado),
             ),
+          ]),
+          SizedBox(height: AppTokens.space20),
+          _SectionLabel('Equivalencia en energía'),
+          SizedBox(height: AppTokens.space8),
+          _MetricStrip(items: [
             _MetricItem(
-              'Equivale',
+              'Aportada',
+              Formatters.formatEnergy(_pdeKwhForPercent(pdeRenunciado),
+                  decimals: 2),
+            ),
+            _MetricItem(
+              'Conservada',
               Formatters.formatEnergy(_pdeKwhForPercent(pdeConservado),
                   decimals: 2),
             ),
@@ -610,7 +675,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
               MapEntry('Estado', renuncia.estado),
             ]),
           ],
-          SizedBox(height: AppTokens.space16),
+          SizedBox(height: AppTokens.space24),
           _PdeCoverageBar(
             pdeKwh: _pdeKwhForPercent(pdeConservado),
             referenceKwh: _referenceConsumption(status),
@@ -628,11 +693,10 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             ),
           ),
           if (renuncia == null) ...[
-            SizedBox(height: AppTokens.space20),
+            SizedBox(height: AppTokens.space32),
             Text(
               'Elige tu aporte',
               style: context.textStyles.titleMedium?.copyWith(
-                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
               ),
             ),
@@ -703,26 +767,34 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
     return [
       for (var i = 0; i < options.length; i++) ...[
         Builder(builder: (context) {
-          final renuncia = options[i].renunciaPorcentaje / 100;
+          final requested = options[i].renunciaPorcentaje / 100;
+          final renuncia =
+              PdeContributionPolicy.applied(status.pdeActual, requested);
           final conservado = (status.pdeActual - renuncia)
               .clamp(0, status.pdeActual)
               .toDouble();
           final keepsAllPde = renuncia == 0;
+          final contributesAll =
+              options[i].id == 'maxima' || options[i].id == 'total';
 
           return _RecommendedOptionCard(
             title:
                 keepsAllPde ? 'Conservar mi PDE' : _optionTitle(options[i].id),
             pdeLabel: keepsAllPde
                 ? 'Te quedas con ${_formatPercent(conservado)}'
-                : 'Aportas ${_formatPercent(renuncia)}',
+                : contributesAll
+                    ? 'Aportar toda mi asignación'
+                    : 'Aportas ${_formatPercent(renuncia)}',
             detail: keepsAllPde
                 ? 'No envías energía a la bolsa comunitaria'
-                : 'Conservas ${_formatPercent(conservado)}',
+                : contributesAll
+                    ? 'Reserva técnica: ${_formatPercent(conservado)}'
+                    : 'Conservas ${_formatPercent(conservado)}',
             selected: _selectedOptionIndex == i,
             enabled: !_isSubmitting && status.pdeActual > 0,
             onTap: () => setState(() => _selectedOptionIndex = i),
             onDoubleTap: () => _confirmAndSubmitRenuncia(
-              renuncia,
+              requested,
               keepsAllPde
                   ? 'Conservar todo el PDE asignado'
                   : options[i].descripcion,
@@ -759,12 +831,21 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
             PdeRenunciaOption(
               id: 'maxima',
               renunciaPorcentaje: _maxRenunciable(status.pdeActual) * 100,
-              descripcion: 'Aportar el máximo manteniendo 0.1%',
+              descripcion: 'Aporte total con reserva técnica de 0,01%',
             ),
           ]
         : status.opciones;
 
-    return _uniqueOptionsByRenuncia(rawOptions);
+    // Las recomendaciones pueden venir cacheadas con el mínimo anterior. La
+    // opción total siempre permite seleccionar todo; el cálculo aplica la reserva.
+    return _uniqueOptionsByRenuncia(rawOptions
+        .map((option) => option.id == 'maxima' || option.id == 'total'
+            ? PdeRenunciaOption(
+                id: option.id,
+                renunciaPorcentaje: status.pdeActual * 100,
+                descripcion: 'Aporte total con reserva técnica de 0,01%')
+            : option)
+        .toList());
   }
 
   List<PdeRenunciaOption> _compactOptions(PdeRenunciaStatus status) {
@@ -792,7 +873,7 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
       case 'total':
         return 'Aporte total';
       case 'maxima':
-        return 'Aporte máximo';
+        return 'Aporte total';
       default:
         return 'Aporte sugerido';
     }
@@ -803,26 +884,16 @@ class _PdeRenunciaScreenState extends State<PdeRenunciaScreen> {
   }
 
   double _selectedRenunciaValue(PdeRenunciaStatus status) {
-    final options = _effectiveOptions(status);
-    if (options.isNotEmpty && _selectedOptionIndex < options.length) {
-      return options[_selectedOptionIndex].renunciaPorcentaje / 100;
-    }
-
-    switch (_selectedOptionIndex) {
-      case 1:
-        return status.pdeActual * 0.25;
-      case 2:
-        return _maxRenunciable(status.pdeActual);
-      default:
-        return status.pdeSugeridoRenuncia;
-    }
+    // Las tarjetas muestran la lista compacta. Usar la lista completa con el
+    // mismo índice podía calcular un aporte distinto del que estaba marcado.
+    final options = _compactOptions(status);
+    if (options.isEmpty) return status.pdeSugeridoRenuncia;
+    final index = _selectedOptionIndex.clamp(0, options.length - 1).toInt();
+    return options[index].renunciaPorcentaje / 100;
   }
 
   double _maxRenunciable(double pdeActual) {
-    if (pdeActual <= _minimumPdeToKeep) {
-      return 0;
-    }
-    return (pdeActual - _minimumPdeToKeep).clamp(0, pdeActual).toDouble();
+    return pdeActual < 0 ? 0 : pdeActual;
   }
 
   double? _currentConsumption() => widget.energyContext?.consumoActualKwh;
@@ -954,10 +1025,10 @@ class _MetricStrip extends StatelessWidget {
         vertical: AppTokens.space12,
       ),
       decoration: BoxDecoration(
-        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.32),
+        color: context.colors.surfaceContainerHighest.withValues(alpha: 0.7),
         borderRadius: AppTokens.borderRadiusMedium,
         border: Border.all(
-          color: context.colors.outline.withValues(alpha: 0.1),
+          color: context.colors.outline.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -969,7 +1040,7 @@ class _MetricStrip extends StatelessWidget {
                 children: [
                   Text(
                     items[i].label,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: context.textStyles.bodySmall?.copyWith(
                       color: AppTokens.grey700,
@@ -1018,13 +1089,18 @@ class _Rows extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(row.key, style: context.textStyles.bodyMedium),
-                  Text(
+                  Expanded(
+                      child:
+                          Text(row.key, style: context.textStyles.bodyMedium)),
+                  SizedBox(width: AppTokens.space12),
+                  Flexible(
+                      child: Text(
                     row.value,
+                    textAlign: TextAlign.end,
                     style: context.textStyles.bodyMedium?.copyWith(
                       fontWeight: AppTokens.fontWeightBold,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),
@@ -1050,6 +1126,9 @@ class _PdeCoverageBar extends StatelessWidget {
     final total = safePde > safeReference ? safePde : safeReference;
     final pdeCovered = safePde > safeReference ? safeReference : safePde;
     final excess = safePde > safeReference ? safePde - safeReference : 0.0;
+    final missing = safeReference > safePde ? safeReference - safePde : 0.0;
+    final remainderColor =
+        excess > 0 ? AppTokens.energyGreen : AppTokens.warning;
 
     if (total <= 0) {
       return const SizedBox.shrink();
@@ -1058,33 +1137,49 @@ class _PdeCoverageBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Así queda tu energía',
+          style: context.textStyles.titleSmall?.copyWith(
+            fontWeight: AppTokens.fontWeightBold,
+          ),
+        ),
+        SizedBox(height: AppTokens.space8),
+        Text(
+          'Comparada con tu consumo histórico de ${Formatters.formatEnergy(safeReference, decimals: 2)}.',
+          style: context.textStyles.bodySmall?.copyWith(
+            color: AppTokens.grey700,
+            height: 1.4,
+          ),
+        ),
+        SizedBox(height: AppTokens.space16),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Cubiertos PDE',
+            Expanded(
+                child: Text(
+              'PDE conservado',
               style: context.textStyles.labelMedium?.copyWith(
                 color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
               ),
-            ),
-            Text(
-              'Consumo promedio',
-              style: context.textStyles.labelMedium?.copyWith(
-                color: AppTokens.grey700,
+            )),
+            SizedBox(width: AppTokens.space12),
+            Flexible(
+                child: Text(
+              Formatters.formatEnergy(safePde, decimals: 2),
+              textAlign: TextAlign.end,
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: AppTokens.primaryColor,
                 fontWeight: AppTokens.fontWeightBold,
               ),
-            ),
+            )),
           ],
         ),
-        SizedBox(height: AppTokens.space8),
+        SizedBox(height: AppTokens.space12),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
             final coveredWidth = width * (pdeCovered / total);
-            final excessWidth = width * (excess / total);
-            final pdeLabelLeft =
-                (coveredWidth - 42).clamp(0.0, width - 84).toDouble();
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1095,7 +1190,7 @@ class _PdeCoverageBar extends StatelessWidget {
                     width: double.infinity,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: AppTokens.primaryColor.withValues(alpha: 0.18),
+                      color: remainderColor.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: AppTokens.primaryColor.withValues(alpha: 0.28),
@@ -1109,69 +1204,78 @@ class _PdeCoverageBar extends StatelessWidget {
                           child: Container(
                             width: coveredWidth,
                             height: 22,
-                            decoration: BoxDecoration(
-                              color: AppTokens.primaryColor,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
+                            color: AppTokens.primaryColor,
                           ),
                         ),
-                        if (excess > 0)
+                        if (pdeCovered > 0 && (excess > 0 || missing > 0))
                           Positioned(
-                            left: coveredWidth,
+                            left: coveredWidth - 1,
+                            top: 0,
+                            bottom: 0,
                             child: Container(
-                              width: excessWidth,
-                              height: 22,
-                              color:
-                                  AppTokens.energyGreen.withValues(alpha: 0.35),
+                              width: 2,
+                              color: context.colors.surface,
                             ),
                           ),
                       ],
                     ),
                   ),
                 ),
-                SizedBox(height: AppTokens.space8),
-                SizedBox(
-                  height: 22,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: pdeLabelLeft,
-                        child: Text(
-                          Formatters.formatEnergy(safePde, decimals: 2),
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: AppTokens.primaryColor,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        child: Text(
-                          Formatters.formatEnergy(safeReference),
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: AppTokens.grey700,
-                            fontWeight: AppTokens.fontWeightBold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             );
           },
         ),
-        if (excess > 0) ...[
-          SizedBox(height: AppTokens.space4),
-          Text(
-            'Exceso disponible: ${Formatters.formatEnergy(excess, decimals: 2)}',
-            style: context.textStyles.bodySmall?.copyWith(
-              color: AppTokens.energyGreen,
-              fontWeight: AppTokens.fontWeightSemiBold,
-            ),
+        SizedBox(height: AppTokens.space12),
+        _legendRow(
+            context,
+            missing > 0 ? 'Cubierto con PDE' : 'Consumo cubierto',
+            pdeCovered,
+            AppTokens.primaryColor),
+        if (excess > 0)
+          _legendRow(context, 'Excedente de referencia', excess,
+              AppTokens.energyGreen),
+        if (missing > 0)
+          _legendRow(
+              context, 'Faltante por cubrir', missing, AppTokens.warning),
+        SizedBox(height: AppTokens.space8),
+        Text(
+          missing > 0
+              ? 'La barra representa tu consumo histórico: una parte se cubre con tu PDE y el resto queda por cubrir.'
+              : 'La barra representa todo tu PDE conservado: cubre el consumo histórico y, si sobra, queda un excedente.',
+          style: context.textStyles.bodySmall?.copyWith(
+            color: AppTokens.grey700,
+            height: 1.4,
           ),
-        ],
+        ),
       ],
+    );
+  }
+
+  Widget _legendRow(
+      BuildContext context, String label, double value, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppTokens.space4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Container(
+                width: 10,
+                height: 10,
+                decoration:
+                    BoxDecoration(color: color, shape: BoxShape.circle)),
+          ),
+          const SizedBox(width: AppTokens.space8),
+          Expanded(child: Text(label, style: context.textStyles.bodySmall)),
+          const SizedBox(width: AppTokens.space12),
+          Flexible(
+              child: Text(Formatters.formatEnergy(value, decimals: 2),
+                  textAlign: TextAlign.end,
+                  style: context.textStyles.bodySmall?.copyWith(
+                      color: color, fontWeight: AppTokens.fontWeightBold))),
+        ],
+      ),
     );
   }
 }
@@ -1208,7 +1312,9 @@ class _RecommendedOptionCard extends StatelessWidget {
           vertical: AppTokens.space12,
         ),
         decoration: BoxDecoration(
-          color: context.colors.surface,
+          color: Color.alphaBlend(
+              AppTokens.primaryColor.withValues(alpha: selected ? 0.10 : 0.04),
+              context.colors.surface),
           borderRadius: AppTokens.borderRadiusLarge,
           border: Border.all(
             color: selected
@@ -1235,8 +1341,10 @@ class _RecommendedOptionCard extends StatelessWidget {
                   Text(
                     title,
                     style: context.textStyles.bodyMedium?.copyWith(
-                      fontWeight: AppTokens.fontWeightBold,
+                      fontWeight: AppTokens.fontWeightMedium,
+                      fontSize: 12,
                       color: AppTokens.grey900,
+
                     ),
                   ),
                   SizedBox(height: AppTokens.space4),
