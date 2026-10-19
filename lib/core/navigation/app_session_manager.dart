@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/database_Helper.dart';
 import '../../services/community_theme_storage.dart';
+import '../../widgets/logout_confirmation_dialog.dart';
 import '../theme/app_tokens.dart';
 import '../utils/logger.dart';
 
@@ -44,19 +45,22 @@ class AppSessionManager {
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        appScaffoldMessengerKey.currentState
-          ?..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(
-              content: Text('Tu sesión ha expirado'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-
-        appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+        final navigatorState = appNavigatorKey.currentState;
+        navigatorState?.pushNamedAndRemoveUntil(
           'login',
           (Route<dynamic> route) => false,
         );
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final dialogContext = appNavigatorKey.currentContext;
+          if (dialogContext == null) return;
+
+          showDialog<void>(
+            context: dialogContext,
+            barrierDismissible: false,
+            builder: (_) => const SessionExpiredDialog(),
+          );
+        });
       });
     } finally {
       Future<void>.delayed(const Duration(seconds: 2), () {

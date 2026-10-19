@@ -1,3 +1,5 @@
+import 'pde_economic_summary.dart';
+
 class PdeCobroResumen {
   final int communityId;
   final String period;
@@ -11,6 +13,8 @@ class PdeCobroResumen {
   final double pricePerKwh;
   final double referencePricePerKwh;
   final double gridPricePerKwh;
+  final double commercializationCostPerKwh;
+  final double commercializationValue;
   final double userConsumptionKwh;
   final double amount;
   final int? offerId;
@@ -35,6 +39,9 @@ class PdeCobroResumen {
   final double savingsWithPlatform;
   final double additionalPlatformSavings;
   final String netPosition;
+  final PdeEconomicSummary? economics;
+  final String calculationStatus;
+  final List<String> defaultedEconomicParameters;
 
   const PdeCobroResumen({
     required this.communityId,
@@ -49,6 +56,8 @@ class PdeCobroResumen {
     required this.pricePerKwh,
     required this.referencePricePerKwh,
     required this.gridPricePerKwh,
+    required this.commercializationCostPerKwh,
+    required this.commercializationValue,
     required this.userConsumptionKwh,
     required this.amount,
     this.offerId,
@@ -73,6 +82,9 @@ class PdeCobroResumen {
     required this.savingsWithPlatform,
     required this.additionalPlatformSavings,
     required this.netPosition,
+    this.economics,
+    this.calculationStatus = 'estimated',
+    this.defaultedEconomicParameters = const [],
   });
 
   bool get isCharge => mode == 'charge';
@@ -82,8 +94,13 @@ class PdeCobroResumen {
   bool get hasCommunityRight => communityRightEnabled && pdeBaseRightPct > 0;
   bool get shouldPay => netPosition == 'pay' && payableValue > 0;
   bool get shouldReceive => netPosition == 'receive' && receivableValue > 0;
+  bool get hasSavingsComparison =>
+      economics != null || traditionalBillValue > 0 || platformBillValue > 0;
+  bool get hasPositiveSavings => savingsWithPlatform > 0;
 
   factory PdeCobroResumen.fromJson(Map<String, dynamic> json) {
+    final metadata = json['calculation_metadata'];
+    final calculation = metadata is Map ? metadata : const {};
     return PdeCobroResumen(
       communityId: json['community_id'] as int,
       period: json['period'] as String,
@@ -98,6 +115,10 @@ class PdeCobroResumen {
       referencePricePerKwh:
           (json['reference_price_per_kwh'] as num?)?.toDouble() ?? 0,
       gridPricePerKwh: (json['grid_price_per_kwh'] as num?)?.toDouble() ?? 0,
+      commercializationCostPerKwh:
+          (json['commercialization_cost_per_kwh'] as num?)?.toDouble() ?? 0,
+      commercializationValue:
+          (json['commercialization_value'] as num?)?.toDouble() ?? 0,
       userConsumptionKwh:
           (json['user_consumption_kwh'] as num?)?.toDouble() ?? 0,
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
@@ -129,6 +150,13 @@ class PdeCobroResumen {
       additionalPlatformSavings:
           (json['additional_platform_savings'] as num?)?.toDouble() ?? 0,
       netPosition: json['net_position'] as String? ?? 'neutral',
+      economics: PdeEconomicSummary.tryParse(json['economic_summary']),
+      calculationStatus: calculation['status'] as String? ?? 'estimated',
+      defaultedEconomicParameters:
+          (calculation['defaulted_parameters'] as List?)
+                  ?.map((value) => value.toString())
+                  .toList() ??
+              const [],
     );
   }
 }
