@@ -97,7 +97,7 @@ class _PdeHistoricalDetailScreenState extends State<PdeHistoricalDetailScreen> {
                       ),
                       SizedBox(height: AppTokens.space12),
                       _SectionCard(
-                        title: 'Consumo del periodo',
+                        title: 'Energía del periodo',
                         rows: [
                           MapEntry(
                             'Consumo',
@@ -107,12 +107,26 @@ class _PdeHistoricalDetailScreenState extends State<PdeHistoricalDetailScreen> {
                             ),
                           ),
                           MapEntry(
-                            'Energía importada',
+                            'Exc. Tipo I',
                             Formatters.formatEnergy(
-                              widget.period.energyRecord.energyImported,
+                              50.44,
                               decimals: 2,
                             ),
                           ),
+                          MapEntry(
+                            'Exc. Tipo II',
+                            Formatters.formatEnergy(
+                              131.36,
+                              decimals: 2,
+                            ),
+                          ),
+                          // MapEntry(
+                          //   'Energía importada',
+                          //   Formatters.formatEnergy(
+                          //     widget.period.energyRecord.energyImported,
+                          //     decimals: 2,
+                          //   ),
+                          // ),
                         ],
                       ),
                       SizedBox(height: AppTokens.space12),
@@ -137,7 +151,7 @@ class _PdeHistoricalDetailScreenState extends State<PdeHistoricalDetailScreen> {
       ),
       MapEntry('PDE final', _formatPercent(assignment.pdeFinalAsignado)),
       MapEntry(
-        'Equivalencia final',
+        'Energía asociada',
         Formatters.formatEnergy(assignment.pdeFinalKwh, decimals: 2),
       ),
     ];
@@ -147,8 +161,11 @@ class _PdeHistoricalDetailScreenState extends State<PdeHistoricalDetailScreen> {
     final charge = _charge;
     if (charge == null) return const [];
     return [
-      MapEntry('Posición', _positionLabel(charge.netPosition)),
-      MapEntry('Valor a pagar', Formatters.formatCurrency(charge.payableValue)),
+      MapEntry('Estado', _positionLabel(charge.netPosition)),
+      // TODO: traer el valor de Sin Volt Ágora desde el backend cuando esté disponible
+      MapEntry('Sin VoltÁgora', Formatters.formatCurrency(145440.00)),
+      MapEntry('Con VoltÁgora', Formatters.formatCurrency(charge.payableValue)),
+      // TODOO: solo traer este dato cuando existan exdentes tipo II
       MapEntry(
           'Valor a favor', Formatters.formatCurrency(charge.receivableValue)),
       MapEntry('Ahorro estimado',

@@ -5,6 +5,7 @@ import 'package:be_energy/screens/main_screens/miCuenta/cambiarClave.dart';
 import 'package:be_energy/screens/auth/community_selection_screen.dart';
 import 'package:be_energy/utils/metodos.dart';
 import 'package:be_energy/routes.dart';
+import 'package:be_energy/widgets/logout_confirmation_dialog.dart';
 import '../../../models/community_models.dart';
 import '../../../models/my_user.dart';
 import '../../../data/database_Helper.dart';
@@ -77,7 +78,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
     );
   }
 
-  IconButton _leading(BuildContext context, double width) {
+  IconButton _leading(BuildContext context) {
     return IconButton(
         icon: Icon(
           Icons.logout_rounded,
@@ -86,153 +87,30 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
         ),
         tooltip: "Cerrar Sesión",
         onPressed: () async {
-          _showLogoutDialog(context, width);
+          _showLogoutDialog(context);
         });
   }
 
-  void _showLogoutDialog(BuildContext context, double width) {
+  void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        elevation: 8,
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(AppTokens.space24),
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icono
-              Container(
-                padding: EdgeInsets.all(AppTokens.space16),
-                decoration: BoxDecoration(
-                  color: AppTokens.primaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.logout_rounded,
-                  size: 40,
-                  color: AppTokens.primaryColor,
-                ),
-              ),
+      builder: (dialogContext) => LogoutConfirmationDialog(
+        onConfirm: () async {
+          Navigator.pop(dialogContext);
+          await Future.delayed(const Duration(milliseconds: 150));
 
-              SizedBox(height: AppTokens.space20),
+          DatabaseHelper dbHelper = DatabaseHelper();
+          dbHelper.deleteUserLocal(widget.myUser.idUser);
+          AppTokens.resetToDefaultColors();
 
-              // Título
-              Text(
-                "Cerrar Sesión",
-                style: context.textStyles.titleLarge?.copyWith(
-                  fontWeight: AppTokens.fontWeightBold,
-                  color: AppTokens.primaryColor,
-                ),
-              ),
-
-              SizedBox(height: AppTokens.space12),
-
-              // Mensaje
-              Text(
-                "¿Estás seguro que deseas\ncerrar tu sesión?",
-                textAlign: TextAlign.center,
-                style: context.textStyles.bodyMedium?.copyWith(
-                  color: context.colors.onSurface.withValues(alpha: 0.7),
-                  height: 1.5,
-                ),
-              ),
-
-              SizedBox(height: AppTokens.space24),
-
-              // Botones
-              Row(
-                children: [
-                  // Botón Cancelar
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: OutlinedButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(vertical: AppTokens.space16),
-                        side: BorderSide(
-                          color: context.colors.outline.withValues(alpha: 0.3),
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Cancelar",
-                        style: context.textStyles.bodyLarge?.copyWith(
-                          fontWeight: AppTokens.fontWeightSemiBold,
-                          color:
-                              context.colors.onSurface.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: AppTokens.space12),
-
-                  // Botón Cerrar Sesión
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        // Cerrar el diálogo primero
-                        Navigator.pop(context);
-
-                        // Esperar un momento para que el diálogo se cierre completamente
-                        await Future.delayed(const Duration(milliseconds: 150));
-
-                        // Eliminar usuario de la base de datos
-                        DatabaseHelper dbHelper = DatabaseHelper();
-                        dbHelper.deleteUserLocal(widget.myUser.idUser);
-                        AppTokens.resetToDefaultColors();
-
-                        // Navegar a la pantalla de inicio
-                        if (!context.mounted) return;
-                        Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const Beenergy()),
-                            (Route<dynamic> route) => false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTokens.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding:
-                            EdgeInsets.symmetric(vertical: AppTokens.space16),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Cerrar Sesión",
-                        style: context.textStyles.bodyLarge?.copyWith(
-                          fontWeight: AppTokens.fontWeightBold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+          if (!context.mounted) return;
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const Beenergy()),
+            (Route<dynamic> route) => false,
+          );
+        },
       ),
     );
   }
@@ -298,7 +176,7 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           ),
 
           // Botón de logout
-          _leading(context, context.width),
+          _leading(context),
         ],
       ),
     );
