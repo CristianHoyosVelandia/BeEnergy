@@ -176,7 +176,20 @@ class _MicuentaScreenState extends State<MicuentaScreen> {
           ),
 
           // Botón de logout
-          _leading(context),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _leading(context),
+              Text(
+                'Salir',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

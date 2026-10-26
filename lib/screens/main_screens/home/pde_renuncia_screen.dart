@@ -1210,30 +1210,30 @@ class _PdeCoverageBar extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppTokens.space16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-                child: Text(
-              'PDE conservado',
-              style: context.textStyles.labelMedium?.copyWith(
-                color: AppTokens.primaryColor,
-                fontWeight: AppTokens.fontWeightBold,
-              ),
-            )),
-            SizedBox(width: AppTokens.space12),
-            Flexible(
-                child: Text(
-              Formatters.formatEnergy(safePde, decimals: 2),
-              textAlign: TextAlign.end,
-              style: context.textStyles.bodyMedium?.copyWith(
-                color: AppTokens.primaryColor,
-                fontWeight: AppTokens.fontWeightBold,
-              ),
-            )),
-          ],
-        ),
-        SizedBox(height: AppTokens.space12),
+        // Row(
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: [
+        //     // Expanded(
+        //     //     child: Text(
+        //     //   'PDE conservado',
+        //     //   style: context.textStyles.labelMedium?.copyWith(
+        //     //     color: AppTokens.primaryColor,
+        //     //     fontWeight: AppTokens.fontWeightBold,
+        //     //   ),
+        //     // )),
+        //     // SizedBox(width: AppTokens.space12),
+        //     // Flexible(
+        //     //     child: Text(
+        //     //   Formatters.formatEnergy(safePde, decimals: 2),
+        //     //   textAlign: TextAlign.end,
+        //     //   style: context.textStyles.bodyMedium?.copyWith(
+        //     //     color: AppTokens.primaryColor,
+        //     //     fontWeight: AppTokens.fontWeightBold,
+        //     //   ),
+        //     // )),
+        //   ],
+        // ),
+        // SizedBox(height: AppTokens.space12),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;

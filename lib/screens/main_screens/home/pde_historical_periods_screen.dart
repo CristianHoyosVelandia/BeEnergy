@@ -2,19 +2,23 @@ import 'package:be_energy/core/extensions/context_extensions.dart';
 import 'package:be_energy/core/theme/app_tokens.dart';
 import 'package:be_energy/core/utils/formatters.dart';
 import 'package:be_energy/models/models.dart';
+import 'package:be_energy/repositories/domain/pde_period_repository.dart';
 import 'package:be_energy/repositories/impl/pde_period_repository_api.dart';
 import 'package:flutter/material.dart';
 
 import 'pde_historical_detail_screen.dart';
+import 'components/pde_history_consumption_chart.dart';
 
 class PdeHistoricalPeriodsScreen extends StatefulWidget {
   final MyUser myUser;
   final int communityId;
+  final PDEPeriodRepository? repository;
 
   const PdeHistoricalPeriodsScreen({
     super.key,
     required this.myUser,
     required this.communityId,
+    this.repository,
   });
 
   @override
@@ -24,14 +28,19 @@ class PdeHistoricalPeriodsScreen extends StatefulWidget {
 
 class _PdeHistoricalPeriodsScreenState
     extends State<PdeHistoricalPeriodsScreen> {
-  final _repository = PDEPeriodRepositoryApi();
+  late final PDEPeriodRepository _repository;
   bool _isLoading = true;
   String? _error;
   UserPeriodHistory? _history;
+  String? _selectedPeriod;
+
+  List<UserPeriodItem> get _periods =>
+      [...?_history?.periods]..sort((a, b) => b.period.compareTo(a.period));
 
   @override
   void initState() {
     super.initState();
+    _repository = widget.repository ?? PDEPeriodRepositoryApi();
     _loadHistory();
   }
 
@@ -49,6 +58,15 @@ class _PdeHistoricalPeriodsScreenState
       if (!mounted) return;
       setState(() {
         _history = history;
+        final periods = _periods;
+        if (!periods.any((period) => period.period == _selectedPeriod)) {
+          final measured = periods.where((period) => period.hasData);
+          _selectedPeriod = measured.isNotEmpty
+              ? measured.first.period
+              : periods.isNotEmpty
+                  ? periods.first.period
+                  : null;
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -62,8 +80,13 @@ class _PdeHistoricalPeriodsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final periods = (_history?.periods ?? [])
-        .where((period) => period.status != 'current')
+    final periods = _periods;
+    final selected = _history?.getPeriodByKey(_selectedPeriod ?? '');
+    final chartPeriods = periods
+        .where((period) => period.hasData)
+        .take(6)
+        .toList()
+        .reversed
         .toList();
 
     return Scaffold(
@@ -86,20 +109,67 @@ class _PdeHistoricalPeriodsScreenState
                   ? const _EmptyState()
                   : RefreshIndicator(
                       onRefresh: _loadHistory,
-                      child: ListView.separated(
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         padding: EdgeInsets.all(AppTokens.space16),
-                        itemCount: periods.length,
-                        separatorBuilder: (_, __) =>
-                            SizedBox(height: AppTokens.space12),
-                        itemBuilder: (context, index) {
-                          return _PeriodCard(
-                            period: periods[index],
-                            onTap: () => _openDetail(periods[index]),
-                          );
-                        },
+                        children: [
+                          PdeHistoryConsumptionChart(
+                            periods: chartPeriods,
+                            selectedPeriod: _selectedPeriod,
+                            onPeriodSelected: _selectPeriod,
+                          ),
+                          SizedBox(height: AppTokens.space24),
+                          Theme(
+                            data: Theme.of(context).copyWith(
+                              focusColor: AppTokens.primaryColor
+                                  .withValues(alpha: 0.08),
+                              hoverColor: AppTokens.primaryColor
+                                  .withValues(alpha: 0.04),
+                            ),
+                            child: DropdownButtonFormField<String>(
+                              key: ValueKey(_selectedPeriod),
+                              initialValue: _selectedPeriod,
+                              isExpanded: true,
+                              dropdownColor: context.colors.surface,
+                              borderRadius: AppTokens.borderRadiusMedium,
+                              style: context.textStyles.bodyLarge?.copyWith(
+                                color: context.colors.onSurface,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: 'Seleccionar periodo',
+                                prefixIcon: const Icon(Icons.calendar_month),
+                                border: OutlineInputBorder(
+                                  borderRadius: AppTokens.borderRadiusMedium,
+                                ),
+                              ),
+                              items: periods
+                                  .map((period) => DropdownMenuItem(
+                                        value: period.period,
+                                        child: Text(
+                                          period.displayName,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ))
+                                  .toList(),
+                              onChanged: (value) {
+                                if (value != null) _selectPeriod(value);
+                              },
+                            ),
+                          ),
+                          SizedBox(height: AppTokens.space16),
+                          if (selected != null)
+                            _PeriodCard(
+                              period: selected,
+                              onTap: () => _openDetail(selected),
+                            ),
+                        ],
                       ),
                     ),
     );
+  }
+
+  void _selectPeriod(String period) {
+    setState(() => _selectedPeriod = period);
   }
 
   void _openDetail(UserPeriodItem period) {
@@ -160,13 +230,24 @@ class _PeriodCard extends StatelessWidget {
               SizedBox(height: AppTokens.space12),
               _InfoLine(
                 label: 'Consumo',
-                value: Formatters.formatEnergy(
-                  period.energyRecord.energyConsumed,
-                  decimals: 2,
+                value: period.hasData
+                    ? Formatters.formatEnergy(
+                        period.energyRecord.energyConsumed,
+                        decimals: 2,
+                      )
+                    : 'Sin medición',
+              ),
+              if (period.isCurrentPeriod && period.hasData)
+                _InfoLine(
+                    label: 'Estado', value: _statusName(period.pdeStatusCode)),
+              SizedBox(height: AppTokens.space8),
+              Text(
+                'Ver detalle del periodo',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: AppTokens.primaryColor,
+                  fontWeight: AppTokens.fontWeightSemiBold,
                 ),
               ),
-              _InfoLine(
-                  label: 'Estado', value: _statusName(period.pdeStatusCode)),
             ],
           ),
         ),
@@ -209,12 +290,16 @@ class _InfoLine extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: context.textStyles.bodyMedium),
-          Text(
-            value,
-            style: context.textStyles.bodyMedium?.copyWith(
-              fontWeight: AppTokens.fontWeightBold,
-              color: AppTokens.grey900,
+          Expanded(child: Text(label, style: context.textStyles.bodyMedium)),
+          SizedBox(width: AppTokens.space8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: context.textStyles.bodyMedium?.copyWith(
+                fontWeight: AppTokens.fontWeightBold,
+                color: AppTokens.grey900,
+              ),
             ),
           ),
         ],

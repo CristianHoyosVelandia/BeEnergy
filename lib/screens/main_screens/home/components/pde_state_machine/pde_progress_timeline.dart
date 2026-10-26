@@ -25,8 +25,8 @@ class PdeProgressTimeline extends StatelessWidget {
       MapEntry(2, 'Cerrado'),
       MapEntry(3, 'Asignado'),
       MapEntry(4, 'Conciliación'),
-      MapEntry(5, 'Histórico'),
       MapEntry(7, 'Cobro'),
+      MapEntry(5, 'Histórico'),
     ];
     final steps = allSteps;
     if (steps.isEmpty) {

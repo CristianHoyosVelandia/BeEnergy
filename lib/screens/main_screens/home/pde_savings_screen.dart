@@ -184,7 +184,7 @@ class PdeSavingsScreen extends StatelessWidget {
                         Formatters.formatCurrency(
                             charge.savingsWithoutPlatform)),
                   MapEntry(
-                      'Ahorro mercado interno',
+                      'Ahorro VoltÁgora',
                       Formatters.formatCurrency(
                           charge.additionalPlatformSavings)),
                 ]),
@@ -213,7 +213,7 @@ class PdeSavingsScreen extends StatelessWidget {
       return 'Con los supuestos usados, el precio comunitario más la comercialización no genera ahorro frente a la tarifa sin VoltÁgora para la energía comparada.';
     }
     if (charge.hasCommunityRight) {
-      return 'Incluye ${Formatters.formatCurrency(charge.savingsWithoutPlatform)} por derecho comunitario neto de comercialización y ${Formatters.formatCurrency(charge.additionalPlatformSavings)} adicionales por el mercado interno.';
+      return 'Incluye ${Formatters.formatCurrency(charge.savingsWithoutPlatform)} por derecho comunitario neto de comercialización y ${Formatters.formatCurrency(charge.additionalPlatformSavings)} adicionales por el VoltÁgora.';
     }
     return 'El ahorro compara la energía PDE recibida contra la tarifa sin VoltÁgora, descontando el precio comunitario y la comercialización.';
   }

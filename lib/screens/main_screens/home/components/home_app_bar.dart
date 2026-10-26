@@ -95,6 +95,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         _RoundActionButton(
           tooltip: 'Cerrar sesión',
+          label: 'Salir',
           icon: Icons.logout_rounded,
           onPressed: onLogoutTap,
           marginRight: 15,
@@ -106,12 +107,14 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 class _RoundActionButton extends StatelessWidget {
   final String tooltip;
+  final String? label;
   final IconData icon;
   final VoidCallback onPressed;
   final double marginRight;
 
   const _RoundActionButton({
     required this.tooltip,
+    this.label,
     required this.icon,
     required this.onPressed,
     this.marginRight = 10,
@@ -119,20 +122,37 @@ class _RoundActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 45,
-      height: 45,
-      margin: EdgeInsets.only(top: 7.5, bottom: 7.5, right: marginRight),
-      decoration: BoxDecoration(
-        color: AppTokens.primaryColor,
-        border: Border.all(width: 2, color: Colors.white),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: IconButton(
-        icon: Icon(icon, size: 22),
-        color: Colors.white,
-        tooltip: tooltip,
-        onPressed: onPressed,
+    return Padding(
+      padding: EdgeInsets.only(right: marginRight),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: AppTokens.primaryColor,
+              border: Border.all(width: 2, color: Colors.white),
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: IconButton(
+              icon: Icon(icon, size: 22),
+              color: Colors.white,
+              tooltip: tooltip,
+              onPressed: onPressed,
+            ),
+          ),
+          if (label != null)
+            Text(
+              label!,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -678,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     '${Formatters.formatNumber(summary.pdeFinalAsignado, decimals: 2)}%',
                   ),
                   _assignmentSummaryRow(
-                    'Equivalencia final',
+                    'Energía esperada',
                     Formatters.formatEnergy(summary.pdeFinalKwh, decimals: 2),
                   ),
                   if (summary.changedKwh > 0)

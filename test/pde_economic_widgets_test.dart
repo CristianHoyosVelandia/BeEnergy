@@ -68,8 +68,8 @@ void main() {
     await tester.pumpWidget(host(PdeSavingsScreen(
         charge: charge, periodDisplayName: 'Septiembre 2026')));
     expect(find.text('Mercado tradicional'), findsOneWidget);
-    expect(find.text('Comunidad sin mercado interno'), findsOneWidget);
-    expect(find.text('Comunidad con mercado interno'), findsOneWidget);
+    expect(find.text('Comunidad sin VoltÁgora'), findsOneWidget);
+    expect(find.text('Comunidad con VoltÁgora'), findsOneWidget);
     expect(find.text(Formatters.formatCurrency(999999)), findsNothing);
     expect(find.text(Formatters.formatCurrency(236700)), findsOneWidget);
     final breakdown = find.text('Ver desglose').at(2);
@@ -92,7 +92,7 @@ void main() {
       child: PdeEconomicSavingsContent(
           charge: charge, periodDisplayName: 'Septiembre 2026'),
     ))));
-    expect(find.text('Sobrecosto del mercado interno'), findsOneWidget);
+    expect(find.text('Sobrecosto del VoltÁgora'), findsOneWidget);
     expect(find.text('Ahorro frente al tradicional'), findsOneWidget);
     expect(find.text(Formatters.formatCurrency(2849)), findsOneWidget);
   });
@@ -115,7 +115,7 @@ void main() {
     expect(find.text('Valor de excedentes tipo II'), findsOneWidget);
     expect(find.text(Formatters.formatCurrency(240)), findsOneWidget);
     expect(find.text(Formatters.formatCurrency(13440)), findsWidgets);
-    expect(find.text('Derecho gratuito utilizado'), findsOneWidget);
+    expect(find.text('Derecho comunitario utilizado'), findsOneWidget);
     expect(find.text('Energía cedida'), findsNothing);
     final allocation = find.text('Tu asignación de energía');
     await tester.ensureVisible(allocation);
@@ -127,7 +127,7 @@ void main() {
   });
 
   testWidgets(
-      'Caluce no muestra derecho gratuito y conserva energía comunitaria pagada',
+      'Caluce no muestra derecho comunitario y conserva energía comunitaria pagada',
       (tester) async {
     final json = economicChargeFixture();
     final economics = json['economic_summary'] as Map;
@@ -147,7 +147,7 @@ void main() {
           isPaid: false,
           isSubmitting: false),
     ))));
-    expect(find.text('Derecho gratuito utilizado'), findsNothing);
+    expect(find.text('Derecho comunitario utilizado'), findsNothing);
     expect(find.text('Energía por derecho comunitario'), findsNothing);
     expect(find.text('Energía comunitaria pagada'), findsOneWidget);
     expect(find.text('Excedentes tipo II'), findsNothing);

@@ -113,7 +113,7 @@ class PdeEconomicChargeContent extends StatelessWidget {
                 value: _energy(bill.communityUsedKwh)),
           if (economics.hasFreeRight && bill.freeRightUsedKwh > 0)
             _ValueLine(
-                label: 'Derecho gratuito utilizado',
+                label: 'Derecho comunitario utilizado',
                 value: _energy(bill.freeRightUsedKwh),
                 color: AppTokens.primaryColor),
           if (bill.communityPaidKwh > 0)
@@ -128,7 +128,7 @@ class PdeEconomicChargeContent extends StatelessWidget {
                 value: _energy(bill.gridKwh)),
           if (economics.hasFreeRight && bill.freeRightUsedKwh > 0)
             const Text(
-                'El derecho gratuito no tiene costo de energía; la energía utilizada sí genera comercialización.',
+                'El derecho comunitario no tiene costo de energía; la energía utilizada sí genera comercialización.',
                 style: TextStyle(color: _muted, fontSize: 12, height: 1.5)),
         ])),
         const SizedBox(height: 16),
@@ -199,7 +199,7 @@ class PdeEconomicSavingsContent extends StatelessWidget {
       const SizedBox(height: 12),
       _ScenarioCard(
           number: '02',
-          title: 'Comunidad sin mercado interno',
+          title: 'Comunidad sin VoltÁgora',
           description: 'Conservas la asignación original, sin redistribución.',
           economics: economics,
           bill: economics.withoutMarket,
@@ -207,7 +207,7 @@ class PdeEconomicSavingsContent extends StatelessWidget {
       const SizedBox(height: 12),
       _ScenarioCard(
           number: '03',
-          title: 'Comunidad con mercado interno',
+          title: 'Comunidad con VoltÁgora',
           description: 'Usas la asignación final de este periodo.',
           economics: economics,
           bill: economics.withMarket,
@@ -225,17 +225,17 @@ class PdeEconomicSavingsContent extends StatelessWidget {
             : 'Ahorro frente al tradicional',
         value: totalSavings,
         description:
-            'Mercado tradicional comparado con comunidad con mercado interno.',
+            'Mercado tradicional comparado con comunidad con VoltÁgora.',
       ),
       const SizedBox(height: 12),
       _BenefitCard(
         title: extraSavings < 0
-            ? 'Sobrecosto del mercado interno'
-            : 'Ahorro adicional del mercado interno',
+            ? 'Sobrecosto del VoltÁgora'
+            : 'Ahorro adicional del VoltÁgora',
         value: extraSavings,
         description: extraSavings < 0
             ? 'Este periodo cuesta más que conservar la asignación original. El ahorro total se muestra por separado.'
-            : 'Beneficio de la redistribución frente a comunidad sin mercado interno.',
+            : 'Beneficio de la redistribución frente a comunidad sin VoltÁgora.',
       ),
       const SizedBox(height: 20),
       if (economics.energy.value('type2_surplus_kwh') > 0) ...[
